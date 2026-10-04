@@ -103,6 +103,25 @@ speed), +0x50 100, +0xB8 10 (duel gap threshold, m), +0xDC 0.999 (duel ease-off 
   (`0029A190`–`0029A1A4`, `0029A2F0`–`0029A304`). Near-player cap: `0029ABE0` `lui at,cap`,
   delay slot `0029ABE8` `sw at,0xA44(s0)`. No branches target the changed instructions.
 
+### Catch-up wrapper (000FFA00)
+
+`00298FEC` (`jal 002998E0` in the brain update) becomes `jal 000FFA00`. The wrapper calls `002998E0`,
+then, if the player exists (`[01ED8058]`), this isn't the player's own racer (`01ED8070`) and the
+race is running (racer+0x2500), compares track progress (`002C78C0` on racer+0x24E0, player
+racer+0x24E0 = `01EDA550`). With d = gap − start distance and boost = min(k·d, max):
+
+- target (brain+0xA04) = max(target, player speed + boost) (player car = `[01EDB7F0]`, speed +0xAC)
+- top speed car+0x1354 (mph) = stock (`[[car+0x1384]+0x1C0]`) + boost × 2.2369; reset to stock when
+  not far enough behind
+
+| Level | start distance | k (m/s per m) | max boost |
+|---|---|---|---|
+| Easy | 40 m | 0.25 | 20 m/s |
+| Medium | 25 m | 0.4 | 30 m/s |
+| Hard | 10 m | 0.6 | 40 m/s |
+
+Source: `tools/build_catchup.py`. Each level also writes its number (1–3) to `000FE110` for the tracker.
+
 An earlier single test version (0.9/0.95, −6..−3) was confirmed working in game.
 
 ## Still to check
