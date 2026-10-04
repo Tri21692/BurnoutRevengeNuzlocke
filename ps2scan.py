@@ -5,7 +5,7 @@ Instead of Changed/Unchanged scans one step at a time, you take labelled
 snapshots of PS2 RAM ("gold", "silver", ...) and the tool finds bytes that are
 the same in every snapshot with the same label but different between labels.
 
-Setup:  pip install pymem pefile numpy
+Setup:  pip install pymem pefile numpy   (plus rabbitizer for the dis command)
         Keep this file next to pine_probe.py and enable PINE in PCSX2.
 Run:    python ps2scan.py
 
@@ -43,6 +43,9 @@ Commands:
   findval <hex>    search live RAM for a 32-bit value (both byte orders), e.g. findval 289D56A6
   findtext <text>  search live RAM for ASCII text (case-sensitive), e.g. findtext K_01DH1E
   dump <addr> [n]  hex + text view of n bytes (default 128), e.g. dump 00C170C0 256
+  dis <addr> [n]   disassemble n instructions (default 32) of game code as text you can paste,
+                   e.g. dis 001EF00C 64 (needs: pip install rabbitizer)
+  saveram <file> [lo hi]  write PS2 RAM (all 32 MB, or lo..hi in hex) to a raw .bin file
   events [all]     list career events: index, label, result byte (played only, or all)
   evtable [addr] [n]  World Tour event list (default 00C16504, 0x40 bytes each): one line per event
                    with its label and the unexplained fields, to compare across ranks
@@ -69,6 +72,7 @@ Commands:
   clear            delete all snapshots
   quit
 """
+import re
 import struct
 import time
 
@@ -706,6 +710,34 @@ def main():
                     hexpart = " ".join(f"{b:02X}" for b in row)
                     text = "".join(chr(b) if 32 <= b < 127 else "." for b in row)
                     print(f"{addr + off:08X}  {hexpart:<47}  {text}")
+            elif cmd == "dis" and args:
+                try:
+                    import rabbitizer
+                except ImportError:
+                    print("dis needs the rabbitizer package: pip install rabbitizer")
+                    continue
+                addr = int(args[0], 16) & ~3
+                n = min(int(args[1], 0) if len(args) > 1 else 32, (RAM_SIZE - addr) // 4)
+                words = struct.unpack(f"<{n}I", pm.read_bytes(base + addr, n * 4))
+                for i, w in enumerate(words):
+                    a = addr + i * 4
+                    ins = rabbitizer.Instruction(w, vram=a, category=rabbitizer.InstrCategory.R5900)
+                    text = ins.disassemble()
+                    if ins.isBranch():
+                        text = re.sub(r"\. \+ 4 \+ \(.*\)$", f"{ins.getBranchVramGeneric():08X}", text)
+                    elif ins.isJumpWithAddress():
+                        text = re.sub(r"func_\w+", f"{ins.getInstrIndexAsVram():08X}", text)
+                    print(f"{a:08X}  {w:08X}  {text}")
+            elif cmd == "saveram" and args:
+                path = args[0] if args[0].endswith(".bin") else args[0] + ".bin"
+                lo, hi = (int(args[1], 16), int(args[2], 16)) if len(args) >= 3 else (0, RAM_SIZE)
+                hi = min(hi, RAM_SIZE)
+                if not 0 <= lo < hi:
+                    print("Give a range with lo below hi, e.g. saveram code 100000 600000")
+                    continue
+                with open(path, "wb") as f:
+                    f.write(pm.read_bytes(base + lo, hi - lo))
+                print(f"Saved {lo:08X}..{hi - 1:08X} ({(hi - lo) // 1024} KB) to {path}")
             elif cmd == "events":
                 count = struct.unpack("<I", pm.read_bytes(base + EVENT_COUNT, 4))[0]
                 if not 0 < count <= 512:
