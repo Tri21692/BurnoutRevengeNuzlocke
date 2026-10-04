@@ -92,13 +92,16 @@ speed), +0x50 100, +0xB8 10 (duel gap threshold, m), +0xDC 0.999 (duel ease-off 
 |---|---|---|---|
 | game | 0.8 (0.85) | −4..+4 s | 88 m/s |
 | Easy | 0.875 (0.925) | −5..−2 s | 100 m/s |
-| Medium | 0.925 (0.975) | −7..−4 s | 100 m/s |
-| Hard | 0.975 (1.0) | −9..−6 s | 100 m/s |
+| Medium | 0.925 (0.975) | −7..−4 s | 110 m/s |
+| Hard | 0.975 (1.0) | −9..−6 s | 115 m/s |
 
 - corner factor: `0029EE1C/20`, aggressive `0029EE30/34`
 - schedule offset clamp: low `0029A138`, `0029A298`; high `0029A154`, `0029A2B4`
-- speed cap ceiling 88 → 100 m/s by reading tuning +0x50 instead of +0x0C: `0029A1A0`, `0029A300`,
-  and the flat near-player cap `0029ABE0`
+- speed cap ceiling (all levels use the same patched instructions, so switching levels can't leave a
+  mix behind): a constant. In both cap functions the `addiu v0,v0,0x13E8` slot
+  becomes `lui at,cap`, then `mtc1 at,f3` / `lwc1 f1,0x13F8(v0)` / `max.s` / `min.s f0,f0,f3`
+  (`0029A190`–`0029A1A4`, `0029A2F0`–`0029A304`). Near-player cap: `0029ABE0` `lui at,cap`,
+  delay slot `0029ABE8` `sw at,0xA44(s0)`. No branches target the changed instructions.
 
 An earlier single test version (0.9/0.95, −6..−3) was confirmed working in game.
 
