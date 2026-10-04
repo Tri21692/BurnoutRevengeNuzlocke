@@ -142,3 +142,17 @@ Strings `$PRRetryRace`, `$REALLYRESTART`, `$QUIT`, `$REALLYQUIT`, `$REALLYRESTAR
 - around `001910DC`: jump table `004B7D70` by item + 1: [0] Quit `001911F8`, [1] `00191148`,
   [2] Retry `00191110`, [3] `0019115C`, [4] none, [5] Restart junction `00191230`, [6] Retry
   `00191268`. Patch: entries 0, 2, 5, 6 → exit `00191580`.
+
+## Patched ISOs (`isopatch/`, `nuzlocke_isopatch.exe`)
+
+`SLUS_212.42` (US, SHA-1 d861e1bf…) has two program headers right after the ELF header and no room for
+a third. The patcher moves the program header table to file offset 0x3EFC00 and adds a third PT_LOAD:
+file 0x3EBD00 (`.sndata`, 16 KB of zeros that is never loaded) → 004A3500, size 0xC00. 004A3500–004A7500
+is a gap between `.data` and `.rodata` that was all zeros in a mid-race dump. The mod's code moves there
+by a fixed offset (000FF000 → 004A3500, so 000FF100 → 004A3600, 000FF140 → 004A3640, 000FFA00 →
+004A3F00), j/jal hooks are retargeted, and the level number is a word at 004A40F0 instead of the
+`000FE110` marker. Data the tracker uses (000FE100 counter, 000FF400 dead-car table) stays in low RAM.
+
+`tools/build_isopatch.py` generates `isopatch/patches.go` from the .pnach; `tools/verify_isopatch.py`
+checks a patched ISO's loaded memory image against the original plus the .pnach (all three levels: 0
+mismatches).

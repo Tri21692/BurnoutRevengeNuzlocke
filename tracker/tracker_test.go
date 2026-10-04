@@ -304,4 +304,29 @@ func TestAILevel(t *testing.T) {
 			t.Errorf("marker %d: ai_level = %v, want %s", marker, got, want)
 		}
 	}
+	// patched ISO: different hook, level word in the mod's section
+	f.w32(aiMarker, 0)
+	f.w32(aiHook, aiHookISO)
+	f.w32(aiLevelISO, 2)
+	tr.readAILevel()
+	if got := tr.Snapshot()["ai_level"]; got != "Medium" {
+		t.Errorf("patched ISO: ai_level = %v, want Medium", got)
+	}
+}
+
+// The patch counts as active with either the .pnach's hooks or the patched ISO's.
+func TestPatchDetection(t *testing.T) {
+	for name, hooks := range map[string]map[uint32]uint32{"pnach": patchHooks, "iso": isoHooks} {
+		f := &fakeMem{ram: make([]byte, 0x2000000)}
+		tr := NewTracker(f, filepath.Join(t.TempDir(), "run.json"), func() float64 { return 0 })
+		if tr.hooksMatch(patchHooks) || tr.hooksMatch(isoHooks) {
+			t.Fatalf("%s: empty memory counted as patched", name)
+		}
+		for a, v := range hooks {
+			f.w32(a, v)
+		}
+		if !tr.hooksMatch(hooks) {
+			t.Errorf("%s: hooks not recognised", name)
+		}
+	}
 }

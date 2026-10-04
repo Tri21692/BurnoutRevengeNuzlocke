@@ -38,10 +38,18 @@ const (
 	aiHook   = 0x00298FEC // jal to the catch-up wrapper when a Harder AI level is active
 	aiHookOn = 0x0C03FE80
 	aiMarker = 0x000FE110 // 1 Easy, 2 Medium, 3 Hard
+
+	// The patched ISOs (isopatch/) carry the same code in a section at 004A3500 instead, so their hooks
+	// jump there, and the level is a word inside that section.
+	finishHookISO = 0x0C128D80
+	aiHookISO     = 0x0C128FC0
+	aiLevelISO    = 0x004A40F0
 )
 
 var patchHooks = map[uint32]uint32{0x002ACE00: 0x0C03FC00, 0x002A69DC: 0x0C03FC00, finishHook: finishHookOn,
 	0x0018F508: 0x0803FC50} // crash junction car select
+var isoHooks = map[uint32]uint32{0x002ACE00: 0x0C128D40, 0x002A69DC: 0x0C128D40, finishHook: finishHookISO,
+	0x0018F508: 0x08128D90}
 var difficulties = map[string]int{"Easy": 3, "Medium": 2, "Hard": 1}
 var medals = map[uint32]string{3: "Gold", 2: "Silver", 1: "Bronze", 0: "No medal"}
 var ratings = []string{"-", "Good", "Great", "Awesome", "Perfect"}
@@ -344,7 +352,7 @@ func (t *Tracker) pollConnected(now, dt float64) {
 		t.knownResults = results
 	}
 
-	hook := t.u32(finishHook) == finishHookOn
+	hook := t.u32(finishHook) == finishHookOn || t.u32(finishHook) == finishHookISO
 	if hook {
 		// Every event type stores its result through one function, which the patch counts.
 		c := int64(t.u32(finishCounter))
@@ -681,13 +689,7 @@ func (t *Tracker) slowChecks() {
 		t.restoreNames(region, base, false)
 	}
 
-	ok := true
-	for a, v := range patchHooks {
-		if t.u32(a) != v {
-			ok = false
-		}
-	}
-	if ok {
+	if t.hooksMatch(patchHooks) || t.hooksMatch(isoHooks) {
 		t.patchOK = 1
 	} else {
 		t.patchOK = 0
@@ -695,13 +697,28 @@ func (t *Tracker) slowChecks() {
 	t.readAILevel()
 }
 
-// readAILevel works out which Harder AI level is active from the .pnach's hook and marker.
+func (t *Tracker) hooksMatch(hooks map[uint32]uint32) bool {
+	for a, v := range hooks {
+		if t.u32(a) != v {
+			return false
+		}
+	}
+	return true
+}
+
+// readAILevel works out which Harder AI level is active from the hook and marker (.pnach) or the
+// level word (patched ISO).
 func (t *Tracker) readAILevel() {
 	level := aiLevels[0]
-	if t.u32(aiHook) == aiHookOn {
-		if m := t.u32(aiMarker); m >= 1 && int(m) < len(aiLevels) {
-			level = aiLevels[m]
-		}
+	var m uint32
+	switch t.u32(aiHook) {
+	case aiHookOn:
+		m = t.u32(aiMarker)
+	case aiHookISO:
+		m = t.u32(aiLevelISO)
+	}
+	if m >= 1 && int(m) < len(aiLevels) {
+		level = aiLevels[m]
 	}
 	t.aiLevel = level
 	if r := t.run(); r != nil && r.Active && !r.Dead && r.AILevel != level {
