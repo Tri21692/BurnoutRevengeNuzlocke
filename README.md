@@ -28,8 +28,7 @@
 | **Harder AI** | Opponents corner faster, keep their pace, and come back hard when they fall behind. |
 | **Run's dead** | When every car is wrecked, the run is over. Shut the game down, or carry on in **Grace mode**, where nothing counts. |
 
-Inspired by the Need for Speed Underground Nuzlocke mod.
-(https://github.com/xan1242/NFSU-nuzlocke)
+Inspired by the [Need for Speed Underground Nuzlocke mod](https://github.com/xan1242/NFSU-nuzlocke).
 
 ## What's included
 
@@ -101,5 +100,6 @@ After changing the `.pnach`, regenerate the ISO patcher's data with `python tool
 
 ## Credits and disclaimer
 
+- The idea and rules come from the [Need for Speed Underground Nuzlocke mod](https://github.com/xan1242/NFSU-nuzlocke) by xan1242.
 - Text ID hashes were checked against the IDs on The Cutting Room Floor's ([tcrf.net](https://tcrf.net)) Burnout Revenge prototype page.
 - This is a fan project, not affiliated with or endorsed by Criterion Games or Electronic Arts. **No game files are included.** You need your own copy of the game, and the ISO patcher only works on a clean US release.
