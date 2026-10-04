@@ -27,8 +27,9 @@ Commands:
   fspeed <stopped> <moving> <mph> [<mph> ...]  floats that are ~0 in every <stopped> snapshot and
                    match the speedometer in each <moving> snapshot (mph per snapshot, in order),
                    stored as mph, km/h or m/s
-  fnear <label> <addr> [pct] [lo hi]  floats that match the float at <addr> (within pct %,
-                   default 1) in every <label> snapshot, e.g. other cars' speed at the rolling start
+  fnear <label> <addr> [pct] [lo hi] [chg]  floats that match the float at <addr> (within pct %,
+                   default 1) in every <label> snapshot, e.g. other cars' speed at the rolling start.
+                   chg: only values that change between snapshots, and show the float 0x10 after each
   fzero <zero> <full> [lo hi]  floats that are exactly 0 in every <zero> snapshot and the same
                    non-zero value in every <full> snapshot (e.g. a boost meter: fzero empty full)
   range <lo> <hi>  keep only candidates between two PS2 addresses (hex), e.g. range 100000 1000000
@@ -423,6 +424,8 @@ def main():
                 if len(found) > 60:
                     print("  ... (take one more moving snapshot at a different speed to narrow it down)")
             elif cmd == "fnear" and len(args) >= 2:
+                changing = "chg" in args
+                args = [a for a in args if a != "chg"]
                 label, addr = args[0], int(args[1], 16) & ~3
                 pct = float(args[2]) / 100 if len(args) > 2 else 0.01
                 if label not in snaps:
@@ -437,6 +440,14 @@ def main():
                 with np.errstate(invalid="ignore"):
                     for v, r in zip(views, refs):
                         mask &= np.abs(v - r) <= pct * abs(r)
+                if changing:
+                    if len(views) < 2:
+                        print(f"chg needs at least two '{label}' snapshots.")
+                        continue
+                    moved = np.zeros(len(views[0]), dtype=bool)
+                    for v in views[1:]:
+                        moved |= v != views[0]
+                    mask &= moved
                 idx = np.flatnonzero(mask) * 4
                 if len(args) >= 5:
                     lo, hi = int(args[3], 16), int(args[4], 16)
@@ -446,7 +457,10 @@ def main():
                 prev = None
                 for a in idx[:80]:
                     gap = f"(+{a - prev:X})" if prev is not None else ""
-                    print(f"  {a:08X}  " + "  ".join(f"{float(v[a // 4]):.2f}" for v in views) + f"  {gap}")
+                    extra = ""
+                    if changing and (a + 0x10) // 4 < len(views[0]):
+                        extra = "   +10: " + "  ".join(f"{float(v[(a + 0x10) // 4]):.2f}" for v in views)
+                    print(f"  {a:08X}  " + "  ".join(f"{float(v[a // 4]):.2f}" for v in views) + f"  {gap}{extra}")
                     prev = a
                 if len(idx) > 80:
                     print("  ... (add an address range to narrow it down)")
