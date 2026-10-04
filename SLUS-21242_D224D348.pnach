@@ -104,3 +104,21 @@ patch=1,EE,000FF1C0,word,08063D44
 patch=1,EE,000FF1C4,word,24020C90
 patch=1,EE,0018F508,word,0803FC50
 patch=1,EE,0018F50C,word,00000000
+
+[Nuzlocke\Harder AI (experimental)]
+author=Nuzlocke mod
+description=Faster opponents: quicker cornering, no easing off when ahead of their pace, stronger catch-up when behind it, higher speed cap. Experimental, see notes/ai-catchup.md.
+// Corner speed: the AI drives at 0.8 of the racing line's limit (0.85 when aggressive). Now 0.9 / 0.95.
+patch=1,EE,0029EE1C,word,3C013F66
+patch=1,EE,0029EE20,word,34216666
+patch=1,EE,0029EE30,word,3C013F73
+patch=1,EE,0029EE34,word,34213333
+// Pace schedule: speed cap = section length / (planned section time + offset), offset clamped to -4..+4 s.
+// Behind schedule: allow -6 s (catch up harder). Ahead of schedule: max 0 s (never slow down).
+patch=1,EE,0029A138,word,3C01C0C0
+patch=1,EE,0029A298,word,3C01C0C0
+patch=1,EE,0029A154,word,3C010000
+patch=1,EE,0029A2B4,word,3C010000
+// Speed cap ceiling: 88 m/s (197 mph, tuning value 01C913F4) -> 100 m/s (tuning value 01C91438).
+patch=1,EE,0029A1A0,word,C4420050
+patch=1,EE,0029A300,word,C4420050
