@@ -45,7 +45,7 @@ Inspired by the [Need for Speed Underground Nuzlocke mod](https://github.com/xan
 
 ## Download
 
-Get **BurnoutRevengeNuzlocke-V1.0.zip** from the [Releases](../../releases) page. It contains both programs, the `.pnach`, a quick-start `README.txt` and the start-up guide. See the [changelog](CHANGELOG.md) for what's in each version.
+Get **[BurnoutRevengeNuzlocke-V1.0.zip](releases/BurnoutRevengeNuzlocke-V1.0.zip)** (click it, then the download button). It contains both programs, the `.pnach`, a quick-start `README.txt` and the start-up guide. See the [changelog](CHANGELOG.md) for what's in each version.
 
 ## Quick start
 
