@@ -105,23 +105,56 @@ patch=1,EE,000FF1C4,word,24020C90
 patch=1,EE,0018F508,word,0803FC50
 patch=1,EE,0018F50C,word,00000000
 
-[Nuzlocke\Harder AI (experimental)]
+[Nuzlocke\Harder AI\Easy]
 author=Nuzlocke mod
-description=Faster opponents: quicker cornering, a pace schedule they always run ahead of, and a higher speed cap. Experimental, see notes/ai-catchup.md.
-// Corner speed: the AI drives at 0.8 of the racing line's limit (0.85 when aggressive). Now 0.9 / 0.95.
-patch=1,EE,0029EE1C,word,3C013F66
-patch=1,EE,0029EE20,word,34216666
-patch=1,EE,0029EE30,word,3C013F73
-patch=1,EE,0029EE34,word,34213333
-// Far from the player, speed cap = section length / (planned section time + offset), where the offset
-// (seconds ahead/behind schedule) is clamped to -4..+4. Now -6..-3: always at least 3 s per section
-// quicker than planned, up to 6 s when behind schedule.
-patch=1,EE,0029A138,word,3C01C0C0
-patch=1,EE,0029A298,word,3C01C0C0
-patch=1,EE,0029A154,word,3C01C040
-patch=1,EE,0029A2B4,word,3C01C040
-// Speed cap ceiling 88 m/s (197 mph, tuning value 01C913F4) -> 100 m/s (tuning value 01C91438):
-// far from the player (0029A1A0, 0029A300) and near the player (0029ABE0, a flat cap).
+description=Harder opponents, Easy level. Enable only one Harder AI level. Corners at 0.875 of the racing line's limit (0.925 when aggressive); far from the player, 2-5 s per section quicker than their pace schedule; speed cap 100 m/s. See notes/ai-catchup.md.
+// Corner speed factor (game: 0.8, aggressive 0.85)
+patch=1,EE,0029EE1C,word,3C013F60
+patch=1,EE,0029EE20,word,34210000
+patch=1,EE,0029EE30,word,3C013F6C
+patch=1,EE,0029EE34,word,3421CCCD
+// Far-mode pace: offset to each section's planned time, clamped to -5..-2 s (game: -4..+4)
+patch=1,EE,0029A138,word,3C01C0A0
+patch=1,EE,0029A298,word,3C01C0A0
+patch=1,EE,0029A154,word,3C01C000
+patch=1,EE,0029A2B4,word,3C01C000
+// Speed cap ceiling 88 -> 100 m/s (reads tuning value 01C91438 instead of 01C913F4)
+patch=1,EE,0029A1A0,word,C4420050
+patch=1,EE,0029A300,word,C4420050
+patch=1,EE,0029ABE0,word,C4401438
+
+[Nuzlocke\Harder AI\Medium]
+author=Nuzlocke mod
+description=Harder opponents, Medium level. Enable only one Harder AI level. Corners at 0.925 of the racing line's limit (0.975 when aggressive); far from the player, 4-7 s per section quicker than their pace schedule; speed cap 100 m/s. See notes/ai-catchup.md.
+// Corner speed factor (game: 0.8, aggressive 0.85)
+patch=1,EE,0029EE1C,word,3C013F6C
+patch=1,EE,0029EE20,word,3421CCCD
+patch=1,EE,0029EE30,word,3C013F79
+patch=1,EE,0029EE34,word,3421999A
+// Far-mode pace: offset to each section's planned time, clamped to -7..-4 s (game: -4..+4)
+patch=1,EE,0029A138,word,3C01C0E0
+patch=1,EE,0029A298,word,3C01C0E0
+patch=1,EE,0029A154,word,3C01C080
+patch=1,EE,0029A2B4,word,3C01C080
+// Speed cap ceiling 88 -> 100 m/s (reads tuning value 01C91438 instead of 01C913F4)
+patch=1,EE,0029A1A0,word,C4420050
+patch=1,EE,0029A300,word,C4420050
+patch=1,EE,0029ABE0,word,C4401438
+
+[Nuzlocke\Harder AI\Hard]
+author=Nuzlocke mod
+description=Harder opponents, Hard level. Enable only one Harder AI level. Corners at 0.975 of the racing line's limit (1 when aggressive); far from the player, 6-9 s per section quicker than their pace schedule; speed cap 100 m/s. See notes/ai-catchup.md.
+// Corner speed factor (game: 0.8, aggressive 0.85)
+patch=1,EE,0029EE1C,word,3C013F79
+patch=1,EE,0029EE20,word,3421999A
+patch=1,EE,0029EE30,word,3C013F80
+patch=1,EE,0029EE34,word,34210000
+// Far-mode pace: offset to each section's planned time, clamped to -9..-6 s (game: -4..+4)
+patch=1,EE,0029A138,word,3C01C110
+patch=1,EE,0029A298,word,3C01C110
+patch=1,EE,0029A154,word,3C01C0C0
+patch=1,EE,0029A2B4,word,3C01C0C0
+// Speed cap ceiling 88 -> 100 m/s (reads tuning value 01C91438 instead of 01C913F4)
 patch=1,EE,0029A1A0,word,C4420050
 patch=1,EE,0029A300,word,C4420050
 patch=1,EE,0029ABE0,word,C4401438

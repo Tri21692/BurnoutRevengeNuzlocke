@@ -86,12 +86,21 @@ off for all five opponents, mostly in the pack at the start, then for whoever is
 speed), +0x50 100, +0xB8 10 (duel gap threshold, m), +0xDC 0.999 (duel ease-off factor), +0xF8 15
 (duel range). Full dump: 41200000 3F800000 42B40000 42B00000 41A00000 3F666666 41A00000 41200000 …
 
-## Patch: `[Nuzlocke\Harder AI (experimental)]` in the .pnach
+## Patches: `[Nuzlocke\Harder AI\Easy|Medium|Hard]` in the .pnach (enable one)
 
-- corner speed factor 0.8 → 0.9 (0.85 → 0.95): `0029EE1C/20`, `0029EE30/34`
-- schedule offset clamp −4..+4 → −6..−3 (always ahead of the plan): `0029A138/98`, `0029A154`, `0029A2B4`
+| Level | Corner factor (aggressive) | Far-mode schedule offset | Speed cap ceiling |
+|---|---|---|---|
+| game | 0.8 (0.85) | −4..+4 s | 88 m/s |
+| Easy | 0.875 (0.925) | −5..−2 s | 100 m/s |
+| Medium | 0.925 (0.975) | −7..−4 s | 100 m/s |
+| Hard | 0.975 (1.0) | −9..−6 s | 100 m/s |
+
+- corner factor: `0029EE1C/20`, aggressive `0029EE30/34`
+- schedule offset clamp: low `0029A138`, `0029A298`; high `0029A154`, `0029A2B4`
 - speed cap ceiling 88 → 100 m/s by reading tuning +0x50 instead of +0x0C: `0029A1A0`, `0029A300`,
   and the flat near-player cap `0029ABE0`
+
+An earlier single test version (0.9/0.95, −6..−3) was confirmed working in game.
 
 ## Still to check
 
