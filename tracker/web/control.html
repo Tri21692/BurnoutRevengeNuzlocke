@@ -130,7 +130,7 @@ function render(s) {
   $('conn').classList.toggle('ok', !!s.connected);
   const warns = [];
   if (s.connected && s.wrong_game) warns.push('This isn\'t Burnout Revenge (SLUS-21242). The tracker only works with that version.');
-  if (s.connected && s.patch_ok === 0) warns.push('The Nuzlocke patch isn\'t active. Enable "Block dead cars in garage" in the game\'s Patches tab (or Cheats tab, if the .pnach is in the cheats folder) and restart the game.');
+  if (s.connected && s.patch_ok === 0) warns.push('The Nuzlocke patch isn\'t active. Enable "Block dead cars in garage" in the game\'s Patches tab (or Cheats tab, if the .pnach is in the cheats folder) and restart the game, or play an ISO made with nuzlocke_isopatch.exe.');
   if (s.connected && !s.pine) warns.push('PINE isn\'t connected. Enable it in PCSX2 (Settings > Advanced) so wrecked cars can be blocked.');
   $('warnings').innerHTML = warns.map((w) => `<div class="warn">${w}</div>`).join('');
 
