@@ -49,7 +49,7 @@ func main() {
 }
 
 func run(args []string, in *bufio.Reader) error {
-	fmt.Println("Burnout Revenge Nuzlocke - ISO patcher")
+	fmt.Println("Burnout Revenge Nuzlocke - ISO patcher v" + version)
 	fmt.Println()
 	isoPath := ""
 	if len(args) > 0 {
@@ -128,26 +128,33 @@ func patchISO(isoPath, outPath string, level int) error {
 	if _, err := os.Stat(outPath); err == nil {
 		return fmt.Errorf("%s already exists. Delete or rename it first", outPath)
 	}
-	out, err := os.Create(outPath)
+	// Write to a temporary name and rename at the end, so a stopped run never leaves a broken ISO
+	// under the final name.
+	tmpPath := outPath + ".part"
+	out, err := os.Create(tmpPath)
 	if err != nil {
+		return err
+	}
+	fail := func(err error) error {
+		out.Close()
+		os.Remove(tmpPath)
 		return err
 	}
 	fmt.Printf("Writing %s (%s AI)...\n", filepath.Base(outPath), levels[level].name)
 	if _, err := iso.Seek(0, io.SeekStart); err != nil {
-		out.Close()
-		return err
+		return fail(err)
 	}
 	if _, err := io.Copy(out, iso); err != nil {
-		out.Close()
-		os.Remove(outPath)
-		return err
+		return fail(err)
 	}
 	if _, err := out.WriteAt(elf, int64(lba)*sectorSize); err != nil {
-		out.Close()
-		os.Remove(outPath)
+		return fail(err)
+	}
+	if err := out.Close(); err != nil {
+		os.Remove(tmpPath)
 		return err
 	}
-	return out.Close()
+	return os.Rename(tmpPath, outPath)
 }
 
 // findFile looks up a file in the ISO 9660 root directory and returns its first sector and size.

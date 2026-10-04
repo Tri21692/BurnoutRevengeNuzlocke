@@ -43,9 +43,13 @@ Inspired by the Need for Speed Underground Nuzlocke mod.
   <img src="docs/images/control.png" alt="The tracker's control page: the run's difficulty, stats, the current car's lives and recent results" width="560">
 </p>
 
+## Download
+
+Get **BurnoutRevengeNuzlocke-V1.0.zip** from the [Releases](../../releases) page. It contains both programs, the `.pnach`, a quick-start `README.txt` and the start-up guide. See the [changelog](CHANGELOG.md) for what's in each version.
+
 ## Quick start
 
-You need the **US version of Burnout Revenge (SLUS-21242)**, **PCSX2 2.x** on Windows, and the files from this repository. The full walkthrough, good practices and FAQ are in the **[Start-up guide](docs/GUIDE.md)**.
+You need the **US version of Burnout Revenge (SLUS-21242)**, **PCSX2 2.x** on Windows, and the files from the download. The full walkthrough, good practices and FAQ are in the **[Start-up guide](docs/GUIDE.md)**.
 
 1. **In PCSX2, turn on PINE** (Settings → Advanced, slot 28011).
 2. **Add the patch, either:**

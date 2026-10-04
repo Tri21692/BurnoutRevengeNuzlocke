@@ -30,7 +30,7 @@ func main() {
 		return
 	}
 
-	fmt.Println("Burnout Revenge Nuzlocke tracker")
+	fmt.Println("Burnout Revenge Nuzlocke tracker v" + version)
 	fmt.Println("  Control page:  " + url)
 	fmt.Println("  OBS overlay:   " + url + "/overlay   (Browser Source, about 800 x 400)")
 	fmt.Println("  Saved run:     " + statePath)
