@@ -29,6 +29,7 @@
 | **Run's dead** | When every car is wrecked, the run is over. Shut the game down, or carry on in **Grace mode**, where nothing counts. |
 
 Inspired by the Need for Speed Underground Nuzlocke mod.
+(https://github.com/xan1242/NFSU-nuzlocke)
 
 ## What's included
 
