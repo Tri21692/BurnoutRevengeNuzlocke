@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Burnout Nuzlocke</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --hazard: #F2B705; --ember: #E8571C; --wreck: #C8261B;
+    --steel: #24211D; --plate: #2E2A25; --chalk: #F3EAD3; --smoke: #9A8F7E;
+    --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --text: "Barlow", "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #1A1714; color: var(--chalk); font-family: var(--text); font-size: 16px; }
+  .stripe { height: 12px; background: repeating-linear-gradient(-45deg, var(--hazard) 0 12px, #1a1714 12px 24px); }
+  main { max-width: 760px; margin: 0 auto; padding: 22px 20px 40px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  h1 { font-family: var(--display); font-style: italic; font-weight: 800; font-size: 40px; margin: 0; color: var(--hazard); }
+  .conn { font-weight: 600; color: var(--smoke); }
+  .conn.ok { color: #9fd49a; }
+  .warn { background: rgba(200, 38, 27, 0.18); border-left: 4px solid var(--wreck); padding: 10px 14px; margin-top: 12px; }
+  section { background: var(--steel); border-bottom: 3px solid var(--ember); padding: 20px 22px; margin-top: 18px; }
+  h2 { font-family: var(--display); font-style: italic; font-weight: 800; font-size: 32px; margin: 0 0 4px; }
+  .sub { color: var(--smoke); margin: 0 0 14px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 14px 34px; }
+  .stats b { display: block; font-family: var(--display); font-style: italic; font-weight: 800; font-size: 34px; line-height: 1; }
+  .stats span { color: var(--smoke); font-size: 14px; }
+  .car { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(243,234,211,.15); }
+  .car .name { font-family: var(--display); font-style: italic; font-weight: 800; font-size: 26px; }
+  .car.wrecked .name { color: var(--wreck); text-decoration: line-through; }
+  .hearts svg { width: 22px; height: 20px; margin-right: 4px; }
+  .full { fill: var(--wreck); } .empty { fill: none; stroke: var(--smoke); stroke-width: 2; }
+  .msg { margin-top: 14px; padding: 8px 14px; font-weight: 600; }
+  .msg.win { background: var(--hazard); color: #1a1714; } .msg.loss { background: var(--wreck); }
+  .msg.info { background: var(--plate); }
+  ol { list-style: none; padding: 0; margin: 14px 0 0; }
+  li { display: grid; grid-template-columns: 52px 1fr; gap: 10px; padding: 6px 0; border-top: 1px solid rgba(243,234,211,.08); }
+  li .tag { font-family: var(--display); font-style: italic; font-weight: 800; }
+  li .tag.win { color: var(--hazard); } li .tag.loss { color: var(--wreck); }
+  li small { color: var(--smoke); }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+  button { font: 600 16px var(--text); color: #1a1714; background: var(--chalk); border: 0; padding: 12px 18px; cursor: pointer; }
+  button:hover { background: #fff; }
+  button:focus-visible { outline: 3px solid var(--hazard); outline-offset: 2px; }
+  button.hazard { background: var(--hazard); } button.danger { background: var(--wreck); color: var(--chalk); }
+  button.quiet { background: transparent; color: var(--chalk); border: 1px solid rgba(243,234,211,.3); }
+  button small { display: block; font-weight: 400; font-size: 13px; }
+  .dead h2 { font-size: 72px; color: var(--wreck); line-height: .9; }
+  footer { margin-top: 22px; color: var(--smoke); display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  code { color: var(--chalk); background: var(--plate); padding: 4px 8px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="stripe"></div>
+<main>
+  <header>
+    <h1>Burnout Revenge Nuzlocke</h1>
+    <div class="conn" id="conn">Waiting for PCSX2</div>
+  </header>
+  <div id="warnings"></div>
+
+  <section id="newrun" class="hidden">
+    <h2>Start a run</h2>
+    <p class="sub" id="newrun-sub">Choose how many lives each car gets. This is locked for the whole run.</p>
+    <div class="buttons">
+      <button class="hazard" data-diff="Easy">Easy<small>3 lives per car</small></button>
+      <button class="hazard" data-diff="Medium">Medium<small>2 lives per car</small></button>
+      <button class="hazard" data-diff="Hard">Hard<small>1 life per car</small></button>
+    </div>
+  </section>
+
+  <section id="dead" class="dead hidden">
+    <h2>Run's dead</h2>
+    <p class="sub">Every car you have is wrecked. Shut the game down, or keep playing in Grace mode where nothing counts.</p>
+    <div class="buttons">
+      <button class="danger" id="shutdown">Shut down game</button>
+      <button id="grace">Grace continue<small>doesn't count</small></button>
+      <button class="quiet" id="dead-new">Start a new run</button>
+    </div>
+  </section>
+
+  <section id="run" class="hidden">
+    <h2 id="mode"></h2>
+    <p class="sub" id="started"></p>
+    <div class="stats">
+      <div><b id="won"></b><span>events won</span></div>
+      <div><b id="lost"></b><span>cars wrecked</span></div>
+      <div><b id="time"></b><span>run time</span></div>
+      <div><b id="streak"></b><span>best win streak</span></div>
+    </div>
+    <div class="car hidden" id="car"><div class="name" id="carname"></div><div class="hearts" id="hearts"></div></div>
+    <div class="msg hidden" id="msg"></div>
+    <ol id="recent"></ol>
+  </section>
+
+  <footer>
+    <span>Stream overlay for OBS (Browser Source):</span>
+    <code id="ovurl"></code>
+    <button class="quiet" id="copy">Copy</button>
+    <button class="quiet" id="restart">Start a new run</button>
+  </footer>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const HEART = 'M10 18s-7-4.6-8.6-9C0.2 5.4 2.6 2 6 2c1.9 0 3.2 1 4 2.3C10.8 3 12.1 2 14 2c3.4 0 5.8 3.4 4.6 7-1.6 4.4-8.6 9-8.6 9z';
+const overlayUrl = `${location.origin}/overlay`;
+$('ovurl').textContent = overlayUrl;
+let state = {};
+
+async function post(path) { await fetch(path, { method: 'POST' }); refresh(); }
+function newRun(diff) {
+  const r = state.run;
+  if (r && !r.dead && !r.grace && !confirm('Start a new run? Your current run ends.')) return;
+  post(`/api/newrun?difficulty=${diff}`);
+  $('newrun').classList.add('hidden');
+}
+document.querySelectorAll('[data-diff]').forEach((b) => b.onclick = () => newRun(b.dataset.diff));
+$('shutdown').onclick = () => confirm('Close PCSX2 now?') && post('/api/shutdown');
+$('grace').onclick = () => post('/api/grace');
+$('dead-new').onclick = $('restart').onclick = () => { $('newrun').classList.remove('hidden'); $('newrun').scrollIntoView(); };
+$('copy').onclick = () => navigator.clipboard.writeText(overlayUrl).then(() => { $('copy').textContent = 'Copied'; setTimeout(() => $('copy').textContent = 'Copy', 1500); });
+
+function render(s) {
+  state = s;
+  $('conn').textContent = s.connected ? 'Connected to PCSX2' : 'Waiting for PCSX2';
+  $('conn').classList.toggle('ok', !!s.connected);
+  const warns = [];
+  if (s.connected && s.wrong_game) warns.push('This isn\'t Burnout Revenge (SLUS-21242). The tracker only works with that version.');
+  if (s.connected && s.patch_ok === 0) warns.push('The Nuzlocke patch isn\'t active. Enable "Block dead cars in garage" in the game\'s Patches tab (or Cheats tab, if the .pnach is in the cheats folder) and restart the game.');
+  if (s.connected && !s.pine) warns.push('PINE isn\'t connected. Enable it in PCSX2 (Settings > Advanced) so wrecked cars can be blocked.');
+  $('warnings').innerHTML = warns.map((w) => `<div class="warn">${w}</div>`).join('');
+
+  const r = s.run;
+  $('run').classList.toggle('hidden', !r);
+  $('dead').classList.toggle('hidden', !(r && r.dead && !r.grace));
+  if (!r) { $('newrun').classList.remove('hidden'); $('newrun-sub').textContent = 'Choose how many lives each car gets. This is locked for the whole run.'; return; }
+  $('mode').textContent = r.grace ? 'Grace mode (not counting)' : (r.dead ? 'Final stats' : `${r.difficulty} Nuzlocke`);
+  const ai = s.ai_level || r.ai_level;
+  const aiNote = ai ? ` Opponents: ${ai === 'Off' ? 'normal AI' : ai + ' AI'}.` : '';
+  $('started').textContent = `${r.lives_start} ${r.lives_start === 1 ? 'life' : 'lives'} per car.${aiNote} Started ${r.started}.`;
+  $('won').textContent = `${r.won}/${r.played}`;
+  $('lost').textContent = `${r.cars_lost}/${r.cars_total}`;
+  $('time').textContent = r.time;
+  $('streak').textContent = r.best_streak;
+
+  const car = s.car;
+  $('car').classList.toggle('hidden', !car);
+  if (car) {
+    $('carname').textContent = car.name;
+    $('car').classList.toggle('wrecked', car.lives === 0 && !r.grace);
+    let h = '';
+    for (let i = 0; i < r.lives_start; i++) h += `<svg viewBox="0 0 20 20" aria-hidden="true"><path class="${i < car.lives ? 'full' : 'empty'}" d="${HEART}"/></svg>`;
+    $('hearts').innerHTML = r.grace ? '' : h;
+  }
+  const m = s.message;
+  $('msg').classList.toggle('hidden', !m);
+  if (m) { $('msg').textContent = m.text; $('msg').className = `msg ${m.kind}`; }
+  $('recent').innerHTML = (s.recent || []).map((h) =>
+    `<li><span class="tag ${h.won ? 'win' : 'loss'}">${h.won ? 'Win' : 'Loss'}</span>` +
+    `<span>${esc(h.event)}<br><small>${esc(h.car)}, ${esc(h.result)}</small></span></li>`).join('');
+}
+function esc(t) { return String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); }
+
+async function refresh() {
+  try { render(await (await fetch('/state', { cache: 'no-store' })).json()); }
+  catch (e) { $('conn').textContent = 'Tracker closed'; $('conn').classList.remove('ok'); }
+}
+refresh(); setInterval(refresh, 1000);
+</script>
+</body>
+</html>
