@@ -1,0 +1,106 @@
+gametitle=Burnout Revenge (PS2) - Nuzlocke
+
+[Nuzlocke\Block dead cars in garage]
+author=Nuzlocke mod
+description=Blocks wrecked cars in the garage and in crash junctions, and signals every finished event to the tracker.
+// --- Part 1: block dead cars (v7) ---
+// The game's confirm check (002A64A8) is called from two places, both now go through the wrapper at
+// 000FF000: 002ACE00 (normal Select) and 002A69DC (a Select remembered while the carousel was busy).
+// Select is refused if the highlighted car (garage object + 0x1018 -> entry +0) or the car the
+// carousel is heading to (carousel list[byte +0x181 of the controller]) is in the dead-car table.
+// Dead-car table (written by the tracker): 000FF400 count (word), 000FF408 8-byte car labels.
+patch=1,EE,000FF000,word,27BDFFE0
+patch=1,EE,000FF004,word,FFBF0000
+patch=1,EE,000FF008,word,7FB00010
+patch=1,EE,000FF00C,word,0080802D
+patch=1,EE,000FF010,word,924E0181
+patch=1,EE,000FF014,word,000E70C0
+patch=1,EE,000FF018,word,01D07021
+patch=1,EE,000FF01C,word,DDCE03A0
+patch=1,EE,000FF020,word,8E081018
+patch=1,EE,000FF024,word,11000002
+patch=1,EE,000FF028,word,0000482D
+patch=1,EE,000FF02C,word,DD090000
+patch=1,EE,000FF030,word,3C0A000F
+patch=1,EE,000FF034,word,354AF400
+patch=1,EE,000FF038,word,8D4B0000
+patch=1,EE,000FF03C,word,254A0008
+patch=1,EE,000FF040,word,19600009
+patch=1,EE,000FF044,word,00000000
+patch=1,EE,000FF048,word,DD4C0000
+patch=1,EE,000FF04C,word,1189000A
+patch=1,EE,000FF050,word,00000000
+patch=1,EE,000FF054,word,118E0008
+patch=1,EE,000FF058,word,00000000
+patch=1,EE,000FF05C,word,256BFFFF
+patch=1,EE,000FF060,word,1000FFF7
+patch=1,EE,000FF064,word,254A0008
+patch=1,EE,000FF068,word,0C0A992A
+patch=1,EE,000FF06C,word,0200202D
+patch=1,EE,000FF070,word,10000002
+patch=1,EE,000FF074,word,00000000
+patch=1,EE,000FF078,word,24020001
+patch=1,EE,000FF07C,word,DFBF0000
+patch=1,EE,000FF080,word,7BB00010
+patch=1,EE,000FF084,word,03E00008
+patch=1,EE,000FF088,word,27BD0020
+patch=1,EE,002ACE00,word,0C03FC00
+patch=1,EE,002A69DC,word,0C03FC00
+// --- Part 2: finished-event signal (v8) ---
+// Every event type stores its result through the setter 001333D0, called from the pass-through at
+// 00115A50. That call (00115A60) now goes through a stub at 000FF100 that, before continuing into the
+// setter, writes to the mod's data page:
+//   000FE100  finished-event counter (+1 per stored result)
+//   000FE104  rating tier just stored
+//   000FE108  medal just stored
+patch=1,EE,000FF100,word,3C08000F
+patch=1,EE,000FF104,word,3508E100
+patch=1,EE,000FF108,word,8D090000
+patch=1,EE,000FF10C,word,25290001
+patch=1,EE,000FF110,word,AD090000
+patch=1,EE,000FF114,word,AD050004
+patch=1,EE,000FF118,word,AD060008
+patch=1,EE,000FF11C,word,0804CCF4
+patch=1,EE,000FF120,word,00000000
+patch=1,EE,00115A60,word,0C03FC40
+// --- Part 3: block dead cars in crash junctions (v9) ---
+// The crash junction car select has its own Select handler (0018F508): it sets controller +0x1FA to
+// start the junction. Its first two instructions now jump to a check at 000FF140 that returns at once
+// (as if Select wasn't pressed) when the highlighted car (crash carousel 01C958A8 + player x 0xC90,
+// current entry +0xC78) or the currently loaded car ([01C10C18] -> label) is in the dead-car table.
+patch=1,EE,000FF140,word,8C880174
+patch=1,EE,000FF144,word,24090C90
+patch=1,EE,000FF148,word,01094018
+patch=1,EE,000FF14C,word,3C0901C9
+patch=1,EE,000FF150,word,352958A8
+patch=1,EE,000FF154,word,01094021
+patch=1,EE,000FF158,word,8D080C78
+patch=1,EE,000FF15C,word,11000002
+patch=1,EE,000FF160,word,0000502D
+patch=1,EE,000FF164,word,DD0A0000
+patch=1,EE,000FF168,word,3C0901C1
+patch=1,EE,000FF16C,word,8D290C18
+patch=1,EE,000FF170,word,11200002
+patch=1,EE,000FF174,word,0000582D
+patch=1,EE,000FF178,word,DD2B0000
+patch=1,EE,000FF17C,word,3C0C000F
+patch=1,EE,000FF180,word,358CF400
+patch=1,EE,000FF184,word,8D8D0000
+patch=1,EE,000FF188,word,258C0008
+patch=1,EE,000FF18C,word,19A0000B
+patch=1,EE,000FF190,word,00000000
+patch=1,EE,000FF194,word,DD8E0000
+patch=1,EE,000FF198,word,11CA0006
+patch=1,EE,000FF19C,word,00000000
+patch=1,EE,000FF1A0,word,11CB0004
+patch=1,EE,000FF1A4,word,00000000
+patch=1,EE,000FF1A8,word,25ADFFFF
+patch=1,EE,000FF1AC,word,1000FFF7
+patch=1,EE,000FF1B0,word,258C0008
+patch=1,EE,000FF1B4,word,03E00008
+patch=1,EE,000FF1B8,word,0000102D
+patch=1,EE,000FF1BC,word,27BDFFE0
+patch=1,EE,000FF1C0,word,08063D44
+patch=1,EE,000FF1C4,word,24020C90
+patch=1,EE,0018F508,word,0803FC50
+patch=1,EE,0018F50C,word,00000000
