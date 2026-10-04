@@ -89,10 +89,14 @@ speed), +0x50 100, +0xB8 10 (duel gap threshold, m), +0xDC 0.999 (duel ease-off 
 ## Patch: `[Nuzlocke\Harder AI (experimental)]` in the .pnach
 
 - corner speed factor 0.8 → 0.9 (0.85 → 0.95): `0029EE1C/20`, `0029EE30/34`
-- schedule offset clamp −4..+4 → −6..0 (catch up harder, never ease off): `0029A138/98`, `0029A154`, `0029A2B4`
-- speed cap ceiling 88 → 100 m/s by reading tuning +0x50 instead of +0x0C: `0029A1A0`, `0029A300`
+- schedule offset clamp −4..+4 → −6..−3 (always ahead of the plan): `0029A138/98`, `0029A154`, `0029A2B4`
+- speed cap ceiling 88 → 100 m/s by reading tuning +0x50 instead of +0x0C: `0029A1A0`, `0029A300`,
+  and the flat near-player cap `0029ABE0`
 
 ## Still to check
 
 - Whether racer+0x24F4 (schedule column 0–7) changes with difficulty or event rank.
-- What `00298CD0` tests (it switches the cap to a flat 88 m/s in `0029AB60`).
+- `00298CD0` returns car+0x2E41, which looks like "full physics / near the player": a live log
+  showed caps at a flat 88 m/s most of the time, dropping to the schedule cap (54–59 m/s) only
+  while an opponent was in far mode. So the schedule only governs cars away from the player, and
+  its plain pace (offset 0) is slow, about 55 m/s.
