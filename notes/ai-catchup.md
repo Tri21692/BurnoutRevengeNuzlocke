@@ -131,3 +131,14 @@ An earlier single test version (0.9/0.95, −6..−3) was confirmed working in g
   showed caps at a flat 88 m/s most of the time, dropping to the schedule cap (54–59 m/s) only
   while an opponent was in far mode. So the schedule only governs cars away from the player, and
   its plain pace (offset 0) is slow, about 55 m/s.
+
+## Pause menu (not AI, kept here for now)
+
+Strings `$PRRetryRace`, `$REALLYRESTART`, `$QUIT`, `$REALLYQUIT`, `$REALLYRESTARTJUNCTION` at
+`004B7BD8`–`004B7D30` are used by two pause handlers:
+
+- around `00190800`: state at +0x10; on a selection, item −1 → Retry confirm (`001908C8`), −2 → Quit
+  confirm (`001908F8`), 0 → resume. Patch: nop the branches at `0019088C` and `0019089C`.
+- around `001910DC`: jump table `004B7D70` by item + 1: [0] Quit `001911F8`, [1] `00191148`,
+  [2] Retry `00191110`, [3] `0019115C`, [4] none, [5] Restart junction `00191230`, [6] Retry
+  `00191268`. Patch: entries 0, 2, 5, 6 → exit `00191580`.
