@@ -118,14 +118,25 @@ patch=1,EE,0029A138,word,3C01C0A0
 patch=1,EE,0029A298,word,3C01C0A0
 patch=1,EE,0029A154,word,3C01C000
 patch=1,EE,0029A2B4,word,3C01C000
-// Speed cap ceiling 88 -> 100 m/s (reads tuning value 01C91438 instead of 01C913F4)
-patch=1,EE,0029A1A0,word,C4420050
-patch=1,EE,0029A300,word,C4420050
-patch=1,EE,0029ABE0,word,C4401438
+// Speed cap ceiling 88 -> 100 m/s (224 mph), loaded as a constant instead of tuning value 01C913F4.
+// Far from the player (two copies): lui at,cap / mtc1 at,f3 / min speed via lwc1 f1,0x13F8(v0) / clamp.
+patch=1,EE,0029A190,word,3C0142C8
+patch=1,EE,0029A198,word,44811800
+patch=1,EE,0029A19C,word,C44113F8
+patch=1,EE,0029A1A0,word,46010028
+patch=1,EE,0029A1A4,word,46030029
+patch=1,EE,0029A2F0,word,3C0142C8
+patch=1,EE,0029A2F8,word,44811800
+patch=1,EE,0029A2FC,word,C44113F8
+patch=1,EE,0029A300,word,46010028
+patch=1,EE,0029A304,word,46030029
+// Near the player (flat cap): lui at,cap / sw at,0xA44(s0) in the branch delay slot.
+patch=1,EE,0029ABE0,word,3C0142C8
+patch=1,EE,0029ABE8,word,AE010A44
 
 [Nuzlocke\Harder AI\Medium]
 author=Nuzlocke mod
-description=Harder opponents, Medium level. Enable only one Harder AI level. Corners at 0.925 of the racing line's limit (0.975 when aggressive); far from the player, 4-7 s per section quicker than their pace schedule; speed cap 100 m/s. See notes/ai-catchup.md.
+description=Harder opponents, Medium level. Enable only one Harder AI level. Corners at 0.925 of the racing line's limit (0.975 when aggressive); far from the player, 4-7 s per section quicker than their pace schedule; speed cap 110 m/s. See notes/ai-catchup.md.
 // Corner speed factor (game: 0.8, aggressive 0.85)
 patch=1,EE,0029EE1C,word,3C013F6C
 patch=1,EE,0029EE20,word,3421CCCD
@@ -136,14 +147,25 @@ patch=1,EE,0029A138,word,3C01C0E0
 patch=1,EE,0029A298,word,3C01C0E0
 patch=1,EE,0029A154,word,3C01C080
 patch=1,EE,0029A2B4,word,3C01C080
-// Speed cap ceiling 88 -> 100 m/s (reads tuning value 01C91438 instead of 01C913F4)
-patch=1,EE,0029A1A0,word,C4420050
-patch=1,EE,0029A300,word,C4420050
-patch=1,EE,0029ABE0,word,C4401438
+// Speed cap ceiling 88 -> 110 m/s (246 mph), loaded as a constant instead of tuning value 01C913F4.
+// Far from the player (two copies): lui at,cap / mtc1 at,f3 / min speed via lwc1 f1,0x13F8(v0) / clamp.
+patch=1,EE,0029A190,word,3C0142DC
+patch=1,EE,0029A198,word,44811800
+patch=1,EE,0029A19C,word,C44113F8
+patch=1,EE,0029A1A0,word,46010028
+patch=1,EE,0029A1A4,word,46030029
+patch=1,EE,0029A2F0,word,3C0142DC
+patch=1,EE,0029A2F8,word,44811800
+patch=1,EE,0029A2FC,word,C44113F8
+patch=1,EE,0029A300,word,46010028
+patch=1,EE,0029A304,word,46030029
+// Near the player (flat cap): lui at,cap / sw at,0xA44(s0) in the branch delay slot.
+patch=1,EE,0029ABE0,word,3C0142DC
+patch=1,EE,0029ABE8,word,AE010A44
 
 [Nuzlocke\Harder AI\Hard]
 author=Nuzlocke mod
-description=Harder opponents, Hard level. Enable only one Harder AI level. Corners at 0.975 of the racing line's limit (1 when aggressive); far from the player, 6-9 s per section quicker than their pace schedule; speed cap 100 m/s. See notes/ai-catchup.md.
+description=Harder opponents, Hard level. Enable only one Harder AI level. Corners at 0.975 of the racing line's limit (1 when aggressive); far from the player, 6-9 s per section quicker than their pace schedule; speed cap 115 m/s. See notes/ai-catchup.md.
 // Corner speed factor (game: 0.8, aggressive 0.85)
 patch=1,EE,0029EE1C,word,3C013F79
 patch=1,EE,0029EE20,word,3421999A
@@ -154,7 +176,18 @@ patch=1,EE,0029A138,word,3C01C110
 patch=1,EE,0029A298,word,3C01C110
 patch=1,EE,0029A154,word,3C01C0C0
 patch=1,EE,0029A2B4,word,3C01C0C0
-// Speed cap ceiling 88 -> 100 m/s (reads tuning value 01C91438 instead of 01C913F4)
-patch=1,EE,0029A1A0,word,C4420050
-patch=1,EE,0029A300,word,C4420050
-patch=1,EE,0029ABE0,word,C4401438
+// Speed cap ceiling 88 -> 115 m/s (257 mph), loaded as a constant instead of tuning value 01C913F4.
+// Far from the player (two copies): lui at,cap / mtc1 at,f3 / min speed via lwc1 f1,0x13F8(v0) / clamp.
+patch=1,EE,0029A190,word,3C0142E6
+patch=1,EE,0029A198,word,44811800
+patch=1,EE,0029A19C,word,C44113F8
+patch=1,EE,0029A1A0,word,46010028
+patch=1,EE,0029A1A4,word,46030029
+patch=1,EE,0029A2F0,word,3C0142E6
+patch=1,EE,0029A2F8,word,44811800
+patch=1,EE,0029A2FC,word,C44113F8
+patch=1,EE,0029A300,word,46010028
+patch=1,EE,0029A304,word,46030029
+// Near the player (flat cap): lui at,cap / sw at,0xA44(s0) in the branch delay slot.
+patch=1,EE,0029ABE0,word,3C0142E6
+patch=1,EE,0029ABE8,word,AE010A44
