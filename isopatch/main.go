@@ -1,9 +1,10 @@
 // nuzlocke_isopatch builds a patched copy of a Burnout Revenge (USA, SLUS-21242) ISO with the Nuzlocke
 // mod built in: the dead-car block, the finished-event signal, the pause-menu Retry/Quit block and one
-// Harder AI level. The original ISO is never modified.
+// Harder AI level, optionally with widescreen 16:9 and 60 FPS menus (by SuperType1/remco). The
+// original ISO is never modified.
 //
-// Usage: nuzlocke_isopatch.exe [game.iso] [easy|medium|hard]
-// (or drag the ISO onto the .exe and pick a level when asked)
+// Usage: nuzlocke_isopatch.exe [game.iso] [easy|medium|hard] [widescreen] [60fps]
+// (or drag the ISO onto the .exe and answer the questions)
 package main
 
 import (
@@ -72,9 +73,33 @@ func run(args []string, in *bufio.Reader) error {
 		}
 	}
 
+	// Extras: given on the command line, or asked for when the level was chosen interactively.
+	var extras []int
+	tags := map[string]string{"widescreen": "16-9", "fps60": "60 FPS"}
+	for i, o := range options {
+		want := false
+		if len(args) > 1 {
+			for _, a := range args[2:] {
+				a = strings.ToLower(a)
+				want = want || a == o.key || (o.key == "fps60" && a == "60fps") || (o.key == "widescreen" && a == "ws")
+			}
+		} else {
+			fmt.Printf("Add %s? (y/n): ", o.name)
+			line, _ := in.ReadString('\n')
+			want = strings.HasPrefix(strings.ToLower(strings.TrimSpace(line)), "y")
+		}
+		if want {
+			extras = append(extras, i)
+		}
+	}
+
+	name := "Nuzlocke " + levels[level].name
+	for _, i := range extras {
+		name += ", " + tags[options[i].key]
+	}
 	ext := filepath.Ext(isoPath)
-	outPath := strings.TrimSuffix(isoPath, ext) + " (Nuzlocke " + levels[level].name + ")" + ext
-	if err := patchISO(isoPath, outPath, level); err != nil {
+	outPath := strings.TrimSuffix(isoPath, ext) + " (" + name + ")" + ext
+	if err := patchISO(isoPath, outPath, level, extras); err != nil {
 		return err
 	}
 	fmt.Println()
@@ -96,7 +121,7 @@ func levelIndex(s string) int {
 }
 
 // patchISO copies the ISO to outPath and replaces SLUS_212.42 inside the copy with the patched one.
-func patchISO(isoPath, outPath string, level int) error {
+func patchISO(isoPath, outPath string, level int, extras []int) error {
 	iso, err := os.Open(isoPath)
 	if err != nil {
 		return err
@@ -115,7 +140,7 @@ func patchISO(isoPath, outPath string, level int) error {
 	if hex.EncodeToString(sum[:]) != elfSHA1 {
 		return fmt.Errorf("%s isn't the unmodified US release (SLUS-21242). Use a clean copy of the game", elfName)
 	}
-	if err := patchELF(elf, level); err != nil {
+	if err := patchELF(elf, level, extras); err != nil {
 		return err
 	}
 
@@ -204,9 +229,9 @@ func readPhdrs(elf []byte) []phdr {
 	return out
 }
 
-// patchELF applies the chosen level's words. The mod's code goes into unused space inside the game's
+// patchELF applies the chosen level's words and those of the chosen extras. The mod's code goes into unused space inside the game's
 // .data section (freeLo-freeHi), so the file's layout stays exactly as it was.
-func patchELF(elf []byte, level int) error {
+func patchELF(elf []byte, level int, extras []int) error {
 	le := binary.LittleEndian
 	segs := readPhdrs(elf)
 	if len(segs) != 2 {
@@ -222,7 +247,11 @@ func patchELF(elf []byte, level int) error {
 			return errors.New("the space for the mod isn't empty")
 		}
 	}
-	for _, w := range levels[level].words {
+	words := levels[level].words
+	for _, i := range extras {
+		words = append(append([]word(nil), words...), options[i].words...)
+	}
+	for _, w := range words {
 		off, ok := fileOffset(segs, w.addr)
 		if !ok {
 			return fmt.Errorf("address %08X isn't in the game file", w.addr)

@@ -119,6 +119,34 @@ patch=1,EE,004B7D78,word,00191580
 patch=1,EE,004B7D84,word,00191580
 patch=1,EE,004B7D88,word,00191580
 
+[Nuzlocke\Widescreen 16:9]
+author=SuperType1/remco
+description=16:9 picture, FOV and HUD scaling. From "16:9 HUD Scale & 60 FPS Fix" by SuperType1/remco.
+// Force 16:9
+patch=1,EE,001398C0,word,00000000
+// FOV
+patch=1,EE,0032677C,word,3C013C9A
+// HUD width
+patch=1,EE,0016BCA8,word,3C013A9D
+// HUD elements
+patch=1,EE,01C02438,word,3FAA3D71
+patch=1,EE,01C02448,word,3FAA3D71
+patch=1,EE,01C02398,word,44610000
+patch=1,EE,01C02410,word,3F2E147B
+patch=1,EE,01BFE698,word,438C0000
+patch=1,EE,0010DA78,word,3C014448
+patch=1,EE,00167844,word,3C014F23
+patch=1,EE,01C02108,word,43C30000
+
+[Nuzlocke\60 FPS menus and crash mode]
+author=SuperType1/remco
+description=60 FPS in the front end, crashes and Crash mode. From "16:9 HUD Scale & 60 FPS Fix" by SuperType1/remco.
+// 60 FPS front end
+patch=1,EE,001125F4,word,24040001
+patch=1,EE,001125EC,word,00108002
+// 60 FPS crashes and Crash mode
+patch=1,EE,00104B9C,word,90850608
+
 [Nuzlocke\Harder AI\Easy]
 author=Nuzlocke mod
 description=Harder opponents, Easy level. Enable only one Harder AI level. Corners at 0.875 of the racing line's limit (0.925 when aggressive); far from the player, 2-5 s per section quicker than their pace schedule; catch-up from 40 m behind the player (up to +20 m/s); speed cap 100 m/s. See docs/research/ai-catchup.md.

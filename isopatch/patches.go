@@ -2,7 +2,7 @@
 
 package main
 
-const freeLo, freeHi = 0x00479D00, 0x0047A000 // must be zero in the original file
+const freeLo, freeHi = 0x00479B00, 0x0047A000 // must be zero in the original file
 const levelAddr = 0x00479FF0
 
 type word struct{ addr, value uint32 }
@@ -588,5 +588,47 @@ var levels = []struct {
 		{0x004B7D78, 0x00191580},
 		{0x004B7D84, 0x00191580},
 		{0x004B7D88, 0x00191580},
+	}},
+}
+
+var options = []struct {
+	key, name string
+	words     []word
+}{
+	{"widescreen", "Widescreen 16:9", []word{
+		{0x001044E0, 0x0C11E6C0},
+		{0x0010DA78, 0x3C014448},
+		{0x001398C0, 0x00000000},
+		{0x00167844, 0x3C014F23},
+		{0x0016BCA8, 0x3C013A9D},
+		{0x0032677C, 0x3C013C9A},
+		{0x00479B00, 0x3C0101C0},
+		{0x00479B04, 0x3C033FAA},
+		{0x00479B08, 0x34633D71},
+		{0x00479B0C, 0xAC232438},
+		{0x00479B10, 0x3C0101C0},
+		{0x00479B14, 0x3C033FAA},
+		{0x00479B18, 0x34633D71},
+		{0x00479B1C, 0xAC232448},
+		{0x00479B20, 0x3C0101C0},
+		{0x00479B24, 0x3C034461},
+		{0x00479B28, 0xAC232398},
+		{0x00479B2C, 0x3C0101C0},
+		{0x00479B30, 0x3C033F2E},
+		{0x00479B34, 0x3463147B},
+		{0x00479B38, 0xAC232410},
+		{0x00479B3C, 0x3C0101C0},
+		{0x00479B40, 0x3C03438C},
+		{0x00479B44, 0xAC23E698},
+		{0x00479B48, 0x3C0101C0},
+		{0x00479B4C, 0x3C0343C3},
+		{0x00479B50, 0xAC232108},
+		{0x00479B54, 0x08061798},
+		{0x00479B58, 0x00000000},
+	}},
+	{"fps60", "60 FPS menus and crash mode", []word{
+		{0x00104B9C, 0x90850608},
+		{0x001125EC, 0x00108002},
+		{0x001125F4, 0x24040001},
 	}},
 }

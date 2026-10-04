@@ -6,6 +6,8 @@
   no longer changes the game file's layout; the mod's code now goes into unused space inside the game's
   own data. Make your patched ISOs again with the new patcher.
 - The tracker recognises ISOs made with the new patcher.
+- **Widescreen 16:9** and **60 FPS menus and crash mode** ("16:9 HUD Scale & 60 FPS Fix" by SuperType1/remco)
+  added as optional groups in the `.pnach` and as options in the ISO patcher.
 
 ## V1.0
 

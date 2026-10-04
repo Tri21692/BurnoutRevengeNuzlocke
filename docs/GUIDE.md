@@ -34,7 +34,7 @@ The most important rule: back up your memory card and give each run its own card
 4. **Keep the game's autosave on.** The tracker reads your saved results, and autosave stops a result from being undone.
 5. **Start the tracker before your first event** and keep it open for the whole session. If you close it, do so in a menu, not during an event.
 6. **Only play World Tour during a run.** The tracker judges every finished event it sees, so other modes may be counted too.
-7. **Leave other cheats and patches off**, apart from a widescreen patch. Anything that writes to `000FE000`–`000FFFFF` or `00479D00`–`00479FFF` will clash with the mod.
+7. **Leave other cheats and patches off.** Widescreen and 60 FPS are included in the mod, so you don't need a separate widescreen patch. Anything that writes to `000FE000`–`000FFFFF` or `00479B00`–`00479FFF` will clash with the mod.
 8. **Don't edit `nuzlocke_state.json` while the tracker is running.** Copy it if you want to keep a finished run's history.
 
 ## Setup, step by step
@@ -47,9 +47,10 @@ Setup takes about ten minutes and only needs doing once.
      - **Nuzlocke\Block dead cars in garage** (required)
      - **Nuzlocke\Block pause-menu Retry and Quit** (recommended)
      - **one** of **Nuzlocke\Harder AI\Easy / Medium / Hard** (optional; never more than one)
+     - **Nuzlocke\Widescreen 16:9** and **Nuzlocke\60 FPS menus and crash mode** (optional, by SuperType1/remco)
 
      It also works from the `cheats` folder and the Cheats tab. Check Windows hasn't added a hidden `.txt` to the file name. Restart the game after changing anything.
-   - **Patched ISO.** Drag your clean Burnout Revenge ISO onto `nuzlocke_isopatch.exe` and choose Easy, Medium or Hard. It writes a new ISO next to the original, for example `Burnout Revenge (Nuzlocke Hard).iso`, with everything above built in. Add that ISO to PCSX2 and play it, **without** the `.pnach` enabled. Your original ISO isn't changed.
+   - **Patched ISO.** Drag your clean Burnout Revenge ISO onto `nuzlocke_isopatch.exe` choose Easy, Medium or Hard, and answer whether you want widescreen and 60 FPS. It writes a new ISO next to the original, for example `Burnout Revenge (Nuzlocke Hard, 16-9).iso`, with everything above built in. Add that ISO to PCSX2 and play it, **without** the `.pnach` enabled. Your original ISO isn't changed.
 3. **Set up the tracker.** Put `nuzlocke.exe` in a folder of its own, since it saves your run next to itself. Double-click it.
    - If Windows SmartScreen warns you, click More info, then Run anyway. The program isn't signed.
    - A small console window opens. Keep it open while you play; closing it stops the tracker.

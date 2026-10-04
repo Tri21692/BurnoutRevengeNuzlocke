@@ -22,9 +22,43 @@ BLOCKS = [
     (0x000FF140, 0x000FF200, 0x00479DD0),  # crash junction block (0x88)
     (0x000FFA00, 0x000FFC00, 0x00479E80),  # AI catch-up wrapper (about 0x140)
 ]
-FREE_LO, FREE_HI = 0x00479D00, 0x0047A000  # the space used; checked to be zero by the patcher
+FREE_LO, FREE_HI = 0x00479B00, 0x0047A000  # the space used; checked to be zero by the patcher
 LEVEL_ADDR = 0x00479FF0
 MARKER = 0x000FE110
+
+# Widescreen values that live in .bss (not in the file) are rewritten every frame, as PCSX2 does for
+# the .pnach: the main loop's call to 00185E60 at 001044E0 goes through a small writer routine.
+WRITER_ADDR = 0x00479B00
+FRAME_CALL, FRAME_CALL_TARGET = 0x001044E0, 0x00185E60
+FILE_RANGES = [(0x00100000, 0x004A34F8), (0x004A7500, 0x004EFBCC)]  # loaded from the file
+
+def in_file(a):
+    return any(lo <= a < hi for lo, hi in FILE_RANGES)
+
+def writer(words):
+    """lui at,hi / lui v1,val / ori v1,lo / sw v1,lo(at) per word, then j 00185E60 (at and v1 only)."""
+    code = []
+    for a, v in words:
+        hi = ((a + 0x8000) >> 16) & 0xFFFF
+        code.append(0x3C010000 | hi)                       # lui at, hi
+        code.append(0x3C030000 | (v >> 16))                # lui v1, value hi
+        if v & 0xFFFF:
+            code.append(0x34630000 | (v & 0xFFFF))         # ori v1, v1, value lo
+        code.append(0xAC230000 | (a & 0xFFFF))             # sw v1, lo(at)
+    code.append(0x08000000 | (FRAME_CALL_TARGET >> 2))     # j 00185E60 (ra still points at the caller)
+    code.append(0)                                          # nop
+    return [(WRITER_ADDR + 4 * i, w) for i, w in enumerate(code)]
+
+def option_patches(g, name):
+    direct, runtime = {}, []
+    for a, w in g[name]:
+        (direct.__setitem__(a, w) if in_file(a) else runtime.append((a, w)))
+    if runtime:
+        for a, w in writer(runtime):
+            direct[a] = w
+        assert WRITER_ADDR + 4 * len(writer(runtime)) <= 0x00479D00, "writer runs into the mod code"
+        direct[FRAME_CALL] = 0x0C000000 | (WRITER_ADDR >> 2)  # jal writer (delay slot unchanged)
+    return sorted(direct.items())
 
 def reloc_addr(a):
     for lo, hi, new in BLOCKS:
@@ -85,6 +119,13 @@ def main():
     for num, name in enumerate(("Easy", "Medium", "Hard"), 1):
         lines.append(f'\t{{"{name}", []word{{')
         for a, w in level_patches(g, name, num):
+            lines.append(f"\t\t{{0x{a:08X}, 0x{w:08X}}},")
+        lines.append("\t}},")
+    lines.append("}")
+    lines += ["", "var options = []struct {", "\tkey, name string", "\twords     []word", "}{"]
+    for key, name in (("widescreen", "Widescreen 16:9"), ("fps60", "60 FPS menus and crash mode")):
+        lines.append(f'\t{{"{key}", "{name}", []word{{')
+        for a, w in option_patches(g, "Nuzlocke\\" + name):
             lines.append(f"\t\t{{0x{a:08X}, 0x{w:08X}}},")
         lines.append("\t}},")
     lines.append("}")

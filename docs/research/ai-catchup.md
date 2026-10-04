@@ -157,8 +157,11 @@ code, data or heap pointer refers to and that was all zeros mid-race.
 | crash junction block | 000FF140 | 00479DD0 |
 | AI catch-up wrapper | 000FFA00 | 00479E80 |
 | difficulty level | 000FE110 (marker) | 00479FF0 (word) |
+| widescreen HUD writer (optional) | — (.pnach writes the values) | 00479B00 |
 
-j/jal hooks into the old area are retargeted. Data the tracker uses (000FE100 counter, 000FF400
+j/jal hooks into the old area are retargeted. The widescreen patch's HUD values live in `.bss`, so in a
+patched ISO a writer routine at 00479B00 stores them every frame: the main loop's `jal 00185E60` at
+001044E0 becomes `jal 00479B00`, which writes the values using only `at` and `v1` and then `j 00185E60`. Data the tracker uses (000FE100 counter, 000FF400
 dead-car table) stays in low RAM.
 
 The first patcher (V1.0) instead added a third program header for a new section at 004A3500 and moved
