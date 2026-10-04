@@ -105,6 +105,20 @@ patch=1,EE,000FF1C4,word,24020C90
 patch=1,EE,0018F508,word,0803FC50
 patch=1,EE,0018F50C,word,00000000
 
+[Nuzlocke\Block pause-menu Retry and Quit]
+author=Nuzlocke mod
+description=Retry, Restart and Quit in the pause menu do nothing, so an event can't be abandoned to save a life. Resume still works.
+// Pause handler 1 (around 00190800): selected item -1 = Retry (confirm "$PRRetryRace"), -2 = Quit
+// ("$QUIT"). The two branches to those confirm dialogs become nops, so both fall through to the exit.
+patch=1,EE,0019088C,word,00000000
+patch=1,EE,0019089C,word,00000000
+// Pause handler 2 (around 001910DC): jump table 004B7D70, indexed by item + 1. Quit (001911F8),
+// Retry (00191110), Restart junction (00191230) and Retry (00191268) now go to the exit at 00191580.
+patch=1,EE,004B7D70,word,00191580
+patch=1,EE,004B7D78,word,00191580
+patch=1,EE,004B7D84,word,00191580
+patch=1,EE,004B7D88,word,00191580
+
 [Nuzlocke\Harder AI\Easy]
 author=Nuzlocke mod
 description=Harder opponents, Easy level. Enable only one Harder AI level. Corners at 0.875 of the racing line's limit (0.925 when aggressive); far from the player, 2-5 s per section quicker than their pace schedule; catch-up from 40 m behind the player (up to +20 m/s); speed cap 100 m/s. See notes/ai-catchup.md.
