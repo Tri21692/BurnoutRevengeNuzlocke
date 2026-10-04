@@ -1,0 +1,33 @@
+# Publishes a GitHub release when a version tag (v1.0, v1.1, ...) is pushed.
+# The release gets the matching zip from releases/ and its notes from CHANGELOG.md.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find the package and release notes
+        id: info
+        run: |
+          ver="${GITHUB_REF_NAME#v}"
+          zip="releases/BurnoutRevengeNuzlocke-V${ver}.zip"
+          test -f "$zip" || { echo "::error::$zip is missing"; exit 1; }
+          awk -v h="## V${ver}" '$0==h{f=1;next} /^## /{f=0} f' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "::error::No '## V${ver}' section in CHANGELOG.md"; exit 1; }
+          echo "version=${ver}" >> "$GITHUB_OUTPUT"
+          echo "zip=${zip}" >> "$GITHUB_OUTPUT"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: V${{ steps.info.outputs.version }}
+          body_path: notes.md
+          files: ${{ steps.info.outputs.zip }}
