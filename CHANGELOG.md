@@ -1,5 +1,12 @@
 # Changelog
 
+## V1.1
+
+- **Fixed:** ISOs made with the ISO patcher crashed on boot ("Jump to unmapped recLUT page"). The patcher
+  no longer changes the game file's layout; the mod's code now goes into unused space inside the game's
+  own data. Make your patched ISOs again with the new patcher.
+- The tracker recognises ISOs made with the new patcher.
+
 ## V1.0
 
 First release.

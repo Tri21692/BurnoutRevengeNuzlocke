@@ -24,12 +24,6 @@ const (
 	elfName    = "SLUS_212.42"
 	elfSHA1    = "d861e1bfb8b29ed79a2fc78355d79a5aa54ea308" // unmodified US release
 
-	// The new loadable section's data goes into .sndata, 16 KB of zeros in the file that the game never
-	// loads. Its address 004A3500 is a gap between .data and .rodata. The program header table moves
-	// there too, since there's no room for a third entry after the ELF header.
-	sndataOffset = 0x3EBD00
-	sndataSize   = 0x4000
-	newPhdrOff   = sndataOffset + 0x3F00
 )
 
 func main() {
@@ -210,29 +204,24 @@ func readPhdrs(elf []byte) []phdr {
 	return out
 }
 
-// patchELF adds the mod's section and applies the chosen level's words.
+// patchELF applies the chosen level's words. The mod's code goes into unused space inside the game's
+// .data section (freeLo-freeHi), so the file's layout stays exactly as it was.
 func patchELF(elf []byte, level int) error {
 	le := binary.LittleEndian
 	segs := readPhdrs(elf)
 	if len(segs) != 2 {
 		return errors.New("unexpected program headers")
 	}
-	for _, b := range elf[sndataOffset : sndataOffset+sndataSize] {
+	lo, ok1 := fileOffset(segs, freeLo)
+	hi, ok2 := fileOffset(segs, freeHi-4)
+	if !ok1 || !ok2 {
+		return errors.New("the space for the mod isn't in the game file")
+	}
+	for _, b := range elf[lo : hi+4] {
 		if b != 0 {
 			return errors.New("the space for the mod isn't empty")
 		}
 	}
-	added := phdr{1, sndataOffset, newBase, newBase, newSize, newSize, 7, 0x80}
-	segs = append(segs, added)
-	for i, s := range segs {
-		b := elf[newPhdrOff+32*i:]
-		for j, v := range []uint32{s.typ, s.offset, s.vaddr, s.paddr, s.filesz, s.memsz, s.flags, s.align} {
-			le.PutUint32(b[4*j:], v)
-		}
-	}
-	le.PutUint32(elf[0x1C:], newPhdrOff)
-	le.PutUint16(elf[0x2C:], uint16(len(segs)))
-
 	for _, w := range levels[level].words {
 		off, ok := fileOffset(segs, w.addr)
 		if !ok {

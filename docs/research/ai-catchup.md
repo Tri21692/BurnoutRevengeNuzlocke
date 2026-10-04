@@ -145,14 +145,26 @@ Strings `$PRRetryRace`, `$REALLYRESTART`, `$QUIT`, `$REALLYQUIT`, `$REALLYRESTAR
 
 ## Patched ISOs (`isopatch/`, `nuzlocke_isopatch.exe`)
 
-`SLUS_212.42` (US, SHA-1 d861e1bf…) has two program headers right after the ELF header and no room for
-a third. The patcher moves the program header table to file offset 0x3EFC00 and adds a third PT_LOAD:
-file 0x3EBD00 (`.sndata`, 16 KB of zeros that is never loaded) → 004A3500, size 0xC00. 004A3500–004A7500
-is a gap between `.data` and `.rodata` that was all zeros in a mid-race dump. The mod's code moves there
-by a fixed offset (000FF000 → 004A3500, so 000FF100 → 004A3600, 000FF140 → 004A3640, 000FFA00 →
-004A3F00), j/jal hooks are retargeted, and the level number is a word at 004A40F0 instead of the
-`000FE110` marker. Data the tracker uses (000FE100 counter, 000FF400 dead-car table) stays in low RAM.
+The patched game file keeps its original layout (ELF header, program headers, sections); only words
+change, like the .pnach does in memory. The mod's code blocks, which the .pnach keeps below the game,
+move into unused space inside `.data`: the end of a 40 KB block of zeros (00470258–0047A25F) that no
+code, data or heap pointer refers to and that was all zeros mid-race.
+
+| Block | .pnach | Patched ISO |
+|---|---|---|
+| dead-car garage block | 000FF000 | 00479D00 |
+| finished-event signal | 000FF100 | 00479DA0 |
+| crash junction block | 000FF140 | 00479DD0 |
+| AI catch-up wrapper | 000FFA00 | 00479E80 |
+| difficulty level | 000FE110 (marker) | 00479FF0 (word) |
+
+j/jal hooks into the old area are retargeted. Data the tracker uses (000FE100 counter, 000FF400
+dead-car table) stays in low RAM.
+
+The first patcher (V1.0) instead added a third program header for a new section at 004A3500 and moved
+the program header table to make room. PCSX2 crashed on boot with it ("Jump to unmapped recLUT page,
+PC 0x02000000"), most likely because the loader doesn't handle a moved program header table.
 
 `tools/build_isopatch.py` generates `isopatch/patches.go` from the .pnach; `tools/verify_isopatch.py`
 checks a patched ISO's loaded memory image against the original plus the .pnach (all three levels: 0
-mismatches).
+mismatches; ELF headers and section table unchanged).

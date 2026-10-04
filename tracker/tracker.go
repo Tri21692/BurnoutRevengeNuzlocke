@@ -39,17 +39,17 @@ const (
 	aiHookOn = 0x0C03FE80
 	aiMarker = 0x000FE110 // 1 Easy, 2 Medium, 3 Hard
 
-	// The patched ISOs (isopatch/) carry the same code in a section at 004A3500 instead, so their hooks
-	// jump there, and the level is a word inside that section.
-	finishHookISO = 0x0C128D80
-	aiHookISO     = 0x0C128FC0
-	aiLevelISO    = 0x004A40F0
+	// The patched ISOs (isopatch/) carry the same code in unused space in the game's .data section
+	// (00479D00-00479FFF) instead, so their hooks jump there, and the level is a word in that space.
+	finishHookISO = 0x0C11E768
+	aiHookISO     = 0x0C11E7A0
+	aiLevelISO    = 0x00479FF0
 )
 
 var patchHooks = map[uint32]uint32{0x002ACE00: 0x0C03FC00, 0x002A69DC: 0x0C03FC00, finishHook: finishHookOn,
 	0x0018F508: 0x0803FC50} // crash junction car select
-var isoHooks = map[uint32]uint32{0x002ACE00: 0x0C128D40, 0x002A69DC: 0x0C128D40, finishHook: finishHookISO,
-	0x0018F508: 0x08128D90}
+var isoHooks = map[uint32]uint32{0x002ACE00: 0x0C11E740, 0x002A69DC: 0x0C11E740, finishHook: finishHookISO,
+	0x0018F508: 0x0811E774}
 var difficulties = map[string]int{"Easy": 3, "Medium": 2, "Hard": 1}
 var medals = map[uint32]string{3: "Gold", 2: "Silver", 1: "Bronze", 0: "No medal"}
 var ratings = []string{"-", "Good", "Great", "Awesome", "Perfect"}
