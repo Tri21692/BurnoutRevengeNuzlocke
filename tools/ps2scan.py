@@ -7,7 +7,7 @@ the same in every snapshot with the same label but different between labels.
 
 Setup:  pip install pymem pefile numpy   (plus rabbitizer for the dis command)
         Keep this file next to pine_probe.py and enable PINE in PCSX2.
-Run:    python ps2scan.py
+Run:    python tools/ps2scan.py
 
 Commands:
   snap <label>     take a snapshot of PS2 RAM under a label

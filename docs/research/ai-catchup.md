@@ -1,4 +1,4 @@
-# AI catch-up (rubberbanding) – research notes
+# AI catch-up and pause menu: research notes
 
 Burnout Revenge, SLUS-21242. Found from a RAM dump taken mid-race (code 00100000-005FFFFF,
 car/racer data 01DD0000-01EFFFFF). All addresses are PS2 EE addresses.
@@ -120,7 +120,7 @@ racer+0x24E0 = `01EDA550`). With d = gap − start distance and boost = min(k·d
 | Medium | 25 m | 0.4 | 30 m/s |
 | Hard | 10 m | 0.6 | 40 m/s |
 
-Source: `tools/build_catchup.py`. Each level also writes its number (1–3) to `000FE110` for the tracker.
+Source: [`tools/build_catchup.py`](../../tools/build_catchup.py). Each level also writes its number (1–3) to `000FE110` for the tracker.
 
 An earlier single test version (0.9/0.95, −6..−3) was confirmed working in game.
 
