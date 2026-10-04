@@ -52,6 +52,22 @@ If racer+0x3790 == 1, the AI car's top speed is also set to the player's top spe
 Constants in code: 20 m lead (`0029A5D8` lui 0x41A0), gain 0.5 (`0029A674` lui 0x3F00),
 ease-off floor −20 (`0029A6C0` lui 0x41A0).
 
+## Pace schedule and speed cap (`0029AB60`, `0029A060` / `0029A1C0`, `00298E90`)
+
+This is the main thing that decides how fast opponents go, and it doesn't look at the player.
+Each opponent has a planned time for each of 8 track sections (brain+0x800 normal, brain+0x900
+alternative; index = section × 8 + racer+0x24F4, which was 0 for all). The 5th opponent has the
+quickest schedule and the 1st the slowest (13.5–19.6 s per section).
+
+- `00298E90` (brain update) keeps a running planned time and compares it with the race clock
+  (racer+0x24EC): brain+0xA40 = seconds ahead (+) or behind (−) schedule.
+- Speed cap brain+0xA44 (= racer+0x3744) = section length / (planned section time + clamp(A40, −4, +4)),
+  clamped to [`[01C913F8]` 20, `[01C913F4]` 88] m/s. Ahead of schedule → slower, behind → faster.
+- The racing-line speed (`0029EDD0` → brain+0x1D0 → brain+0x7C0) is line limit × 0.8 (0.85 when
+  brain+0x201 is set) plus corrections, then capped by the speed cap above.
+
+In the dump the caps were 50–52 m/s for three opponents (ahead of schedule) and 88 m/s for two.
+
 ## Who gets catch-up: `00291EF0`
 
 Each frame mode is reset to 0, then set to 4 (or 5 if brain+0x192) with reference = a racer found by
@@ -59,9 +75,24 @@ Each frame mode is reset to 0, then set to 4 (or 5 if brain+0x192) with referenc
 reference is going at least 100 mph (`00291FBC` lui 0x42C8; speed × 2.2369 compared to 100).
 In the dump only one opponent was in mode 4 at a time.
 
-## Still to read
+The reference racer is only kept while the two cars are within 10 mph of each other and close
+(`00290F98`: progress gap between racer+0x3788 and that + 15 m), so modes 4/5 are a short-range
+"duel with the player", not a whole-race rubberband. A live log showed modes 4/5 switching on and
+off for all five opponents, mostly in the pack at the start, then for whoever is near.
 
-- The tuning block at `01C913E8` (not in the dump): +0x00 max decel/frame, +0x0C, +0x10 min speed,
-  +0xB8 gap threshold, +0xDC ease-off factor.
-- `00290F48`: how the reference racer is chosen (distance limit?).
-- How modes are assigned across the five opponents during a whole race.
+## Tuning block `01C913E8` (read live)
+
++0x00 10 (far-mode max decel/frame), +0x08 90, +0x0C 88 (speed cap ceiling, m/s), +0x10 20 (min
+speed), +0x50 100, +0xB8 10 (duel gap threshold, m), +0xDC 0.999 (duel ease-off factor), +0xF8 15
+(duel range). Full dump: 41200000 3F800000 42B40000 42B00000 41A00000 3F666666 41A00000 41200000 …
+
+## Patch: `[Nuzlocke\Harder AI (experimental)]` in the .pnach
+
+- corner speed factor 0.8 → 0.9 (0.85 → 0.95): `0029EE1C/20`, `0029EE30/34`
+- schedule offset clamp −4..+4 → −6..0 (catch up harder, never ease off): `0029A138/98`, `0029A154`, `0029A2B4`
+- speed cap ceiling 88 → 100 m/s by reading tuning +0x50 instead of +0x0C: `0029A1A0`, `0029A300`
+
+## Still to check
+
+- Whether racer+0x24F4 (schedule column 0–7) changes with difficulty or event rank.
+- What `00298CD0` tests (it switches the cap to a flat 88 m/s in `0029AB60`).
