@@ -37,6 +37,7 @@ Commands:
   peek <addr> [n]  read n 32-bit words (as hex and float); addr is rounded down to a word
   poke32 <addr> <value>   write a 32-bit hex value
   watch <addr> ... log every change to these 32-bit values until Ctrl+C (game keeps running)
+  fwatch <addr> ...  print these addresses as floats, one line every half second, until Ctrl+C
   fill <addr> <n> <byte>  set n bytes (hex) to one byte value, e.g. fill 01F65020 40 00
   findval <hex>    search live RAM for a 32-bit value (both byte orders), e.g. findval 289D56A6
   findtext <text>  search live RAM for ASCII text (case-sensitive), e.g. findtext K_01DH1E
@@ -641,6 +642,17 @@ def main():
                                 print(f"[{time.strftime('%H:%M:%S')}] {a:08X}: {last[a]:08X} -> {v:08X}")
                                 last[a] = v
                         time.sleep(0.01)
+                except KeyboardInterrupt:
+                    print("Stopped watching.")
+            elif cmd == "fwatch" and args:
+                addrs = [int(a, 16) & ~3 for a in args]
+                readf = lambda a: struct.unpack("<f", pm.read_bytes(base + a, 4))[0]
+                print("time      " + " ".join(f"{a:>9X}" for a in addrs))
+                print("Press Ctrl+C to stop")
+                try:
+                    while True:
+                        print(time.strftime("%H:%M:%S") + "  " + " ".join(f"{readf(a):9.2f}" for a in addrs))
+                        time.sleep(0.5)
                 except KeyboardInterrupt:
                     print("Stopped watching.")
             elif cmd == "fill" and len(args) >= 3:
