@@ -70,7 +70,7 @@ Every event must end in a first-time Gold + Perfect; anything else costs the car
 | Medium | 2 | 2 |
 | Hard | 1 | 1 |
 
-Every car has two separate pools. **Crash junctions** use the Crash pool; **every other event** (races, Grand Prix, Eliminator, Burning Lap, Road Rage, Traffic Attack, Preview) uses the Race pool. Each car gets both pools in full the first time it appears in your garage. The opponents' AI level is separate: it comes from the patch or ISO you chose, and the control page and overlay show it.
+Every car has two separate pools. **Crash junctions** use the Crash pool; **every other event** (races, Grand Prix, Eliminator, Burning Lap, Road Rage, Traffic Attack, Preview) uses the Race pool. Each car gets its pools in full the first time it appears. Cars only get the pools they can use: the tracker notes whether a car shows up in the garage (it can race) and in a crash junction's car select (it can crash). Crash cars, which only appear in crash junctions, have no Race pool, and the overlay only shows the hearts a car actually has. The opponents' AI level is separate: it comes from the patch or ISO you chose, and the control page and overlay show it.
 
 **How each event is judged.** Every event type counts, including Crash junctions and Preview events.
 
@@ -86,7 +86,7 @@ A Perfect is the game's way of rewarding Gold with Awesome-level driving: it rai
 
 **Wrecked cars.** A car out of **Race** lives is renamed `[RACE X]` and can't be selected in the garage, but can still be picked in crash junctions. A car out of **Crash** lives is renamed `[CRASH X]` and can't be picked in crash junctions, but can still race. A car out of both is `[WRECKED]`. (Short names get `[R X]`, `[C X]`, `[WRECK]` or `[X]`.) This is reapplied every time the game starts.
 
-**Run's dead.** When every car you have is wrecked in the Race pool, **or** every car is wrecked in the Crash pool, the control page and stream overlay show your final stats. You then choose:
+**Run's dead.** When every car that can race is wrecked in the Race pool, **or** every car that can crash is wrecked in the Crash pool, the control page and stream overlay show your final stats. You then choose:
 
 - **Shut down game:** closes PCSX2.
 - **Grace continue:** keep playing with all cars usable again, but nothing counts any more.

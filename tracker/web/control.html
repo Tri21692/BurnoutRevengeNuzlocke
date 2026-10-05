@@ -96,8 +96,8 @@
       <div><b id="streak"></b><span>best win streak</span></div>
     </div>
     <div class="car hidden" id="car"><div class="name" id="carname"></div>
-      <div class="pool"><i>RACE</i><div class="hearts" id="hearts"></div></div>
-      <div class="pool"><i>CRASH</i><div class="hearts" id="crashhearts"></div></div></div>
+      <div class="pool" id="racepool"><i>RACE</i><div class="hearts" id="hearts"></div></div>
+      <div class="pool" id="crashpool"><i>CRASH</i><div class="hearts" id="crashhearts"></div></div></div>
     <div class="msg hidden" id="msg"></div>
     <ol id="recent"></ol>
   </section>
@@ -149,8 +149,8 @@ function render(s) {
   const aiNote = ai ? ` Opponents: ${ai === 'Off' ? 'normal AI' : ai + ' AI'}.` : '';
   $('started').textContent = `${r.lives_start} Race + ${r.lives_start} Crash ${r.lives_start === 1 ? 'life' : 'lives'} per car.${aiNote} Started ${r.started}.`;
   $('won').textContent = `${r.won}/${r.played}`;
-  $('lost').textContent = `${r.cars_lost}/${r.cars_total}`;
-  $('crashlost').textContent = `${r.crash_cars_lost || 0}/${r.cars_total}`;
+  $('lost').textContent = `${r.cars_lost}/${r.race_cars_total ?? r.cars_total}`;
+  $('crashlost').textContent = `${r.crash_cars_lost || 0}/${r.crash_cars_total ?? r.cars_total}`;
   $('time').textContent = r.time;
   $('streak').textContent = r.best_streak;
 
@@ -159,7 +159,10 @@ function render(s) {
   if (car) {
     $('carname').textContent = car.name;
     const crashLives = car.crash_lives ?? car.lives;
-    $('car').classList.toggle('wrecked', car.lives === 0 && crashLives === 0 && !r.grace);
+    const canRace = car.can_race ?? true, canCrash = car.can_crash ?? true;
+    $('car').classList.toggle('wrecked', (!canRace || car.lives === 0) && (!canCrash || crashLives === 0) && !r.grace);
+    $('racepool').classList.toggle('hidden', !canRace);   // crash cars can't race
+    $('crashpool').classList.toggle('hidden', !canCrash); // garage-only cars can't crash
     const hearts = (n) => {
       let h = '';
       for (let i = 0; i < r.lives_start; i++) h += `<svg viewBox="0 0 20 20" aria-hidden="true"><path class="${i < n ? 'full' : 'empty'}" d="${HEART}"/></svg>`;

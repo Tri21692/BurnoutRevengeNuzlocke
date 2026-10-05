@@ -82,6 +82,9 @@ func runScenario(t *testing.T, signal bool) {
 	f.w32(carouselList+0xBA4, 2)
 	f.w64(carouselList, encodeLabel("HIGHASCAR1S1"))
 	f.w64(carouselList+8, encodeLabel("HIGHEUCAR2S1"))
+	f.w32(crashCarousel+0xBA4, 2) // both are offered in crash junctions too
+	f.w64(crashCarousel, encodeLabel("HIGHASCAR1S1"))
+	f.w64(crashCarousel+8, encodeLabel("HIGHEUCAR2S1"))
 
 	clock := 100.0
 	statePath := filepath.Join(t.TempDir(), "state.json")
@@ -359,8 +362,9 @@ func TestPoolsAndReplayNames(t *testing.T) {
 	tr := NewTracker(f, filepath.Join(t.TempDir(), "s.json"), func() float64 { return clock })
 	tr.StartRun("Medium")
 	r := tr.run()
-	tr.registerCar("HIGHASCAR1S1", "NIXON SPECIAL")
-	tr.registerCar("HIGHEUCAR2S1", "EA RACER GT")
+	tr.registerCar("HIGHASCAR1S1", "NIXON SPECIAL", false) // in the garage
+	tr.registerCar("HIGHEUCAR2S1", "EA RACER GT", false)
+	tr.registerCar("HIGHEUCAR2S1", "EA RACER GT", true) // and in crash junctions
 	finish := func(car, event string, idx, newByte int) {
 		f.w64(selectedCar, encodeLabel(car))
 		f.w64(obj, encodeLabel(car))
@@ -415,7 +419,7 @@ func TestOldPatchSharesTable(t *testing.T) {
 	f := &fakeMem{ram: make([]byte, 0x2000000)}
 	tr := NewTracker(f, filepath.Join(t.TempDir(), "s.json"), func() float64 { return 0 })
 	tr.StartRun("Hard")
-	tr.registerCar("HIGHASCAR1S1", "NIXON SPECIAL")
+	tr.registerCar("HIGHASCAR1S1", "NIXON SPECIAL", true)
 	tr.run().Cars["HIGHASCAR1S1"].CrashLives = 0
 	tr.slowChecks()
 	if n := binary.LittleEndian.Uint32(f.ram[deadTable:]); n != 1 || !tr.patchOld {
@@ -435,5 +439,40 @@ func TestOldRunMigrates(t *testing.T) {
 	r := tr.run()
 	if r.Cars["HIGHASCAR1S1"].CrashLives != 2 || r.Cars["HIGHEUCAR2S1"].CrashLives != 0 || r.CrashLost != 1 || !r.Pools {
 		t.Fatalf("migration: %+v %+v", r.Cars["HIGHASCAR1S1"], r)
+	}
+}
+
+// Crash cars only ever appear in crash junctions: they have no Race pool, don't keep the Race pool
+// alive, and are fully wrecked once their Crash lives are gone.
+func TestCrashOnlyCars(t *testing.T) {
+	f := &fakeMem{ram: make([]byte, 0x2000000)}
+	f.w32(crashTableRef, crashTableRefOn)
+	tr := NewTracker(f, filepath.Join(t.TempDir(), "s.json"), func() float64 { return 0 })
+	tr.StartRun("Hard")
+	r := tr.run()
+	tr.registerCar("HIGHASCAR1S1", "NIXON SPECIAL", false) // garage car
+	tr.registerCar("LOWRUSCAR1A", "CRASH VAN", true)       // crash car
+	van := r.Cars["LOWRUSCAR1A"]
+	if van.CanRace() || !van.CanCrash() || r.Cars["HIGHASCAR1S1"].CanCrash() {
+		t.Fatal("pools should follow where the cars were seen")
+	}
+	if snap := tr.Snapshot()["run"].(map[string]any); snap["race_cars_total"] != 1 || snap["crash_cars_total"] != 1 {
+		t.Fatalf("totals per pool: %v", snap)
+	}
+	r.Cars["HIGHASCAR1S1"].Lives = 0
+	if !tr.allDead() {
+		t.Fatal("the only car that can race is wrecked: the run should be dead (the crash car doesn't count)")
+	}
+	r.Cars["HIGHASCAR1S1"].Lives = 1
+	van.CrashLives = 0
+	if !tr.allDead() {
+		t.Fatal("the only crash car is wrecked: the run should be dead")
+	}
+	race, crash := tr.deadLabels()
+	if len(race) != 0 || len(crash) != 1 {
+		t.Fatalf("dead lists: race %v crash %v", race, crash)
+	}
+	if got := wreckedName(12, false, false, true); got != "[WRECKED]" {
+		t.Fatalf("a crash car with no Crash lives has nothing left: %q", got)
 	}
 }

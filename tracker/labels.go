@@ -135,11 +135,13 @@ var wreckedNames = func() map[string]bool {
 	return m
 }()
 
-func wreckedName(room int, race, crash bool) string {
+// wreckedName picks the name for a car that can't be used for Race events (raceOut), for Crash junctions
+// (crashOut), or at all (both): the longest version that fits in room characters.
+func wreckedName(room int, raceOut, crashOut, both bool) string {
 	set := wreckedSets[0]
-	if race && !crash {
+	if raceOut && !both {
 		set = wreckedSets[1]
-	} else if crash && !race {
+	} else if crashOut && !both {
 		set = wreckedSets[2]
 	}
 	for _, o := range set {

@@ -11,6 +11,9 @@
   blocked in the garage (`[RACE X]`), out of Crash lives it's blocked in crash junctions (`[CRASH X]`).
   The run is dead when every car is wrecked in either pool. Runs saved by V1.0 carry over, with each
   car's lives in both pools.
+- **Crash cars have no Race pool.** The tracker notes where each car appears (garage, crash junction car
+  select, or both) and only gives it the pools it can use. Crash cars only show Crash hearts, and only
+  cars that can race count towards the Race pool's "run's dead" check.
 - **Replayed events are named.** The tracker reads the event the game has loaded instead of guessing
   from the saved results, so replays no longer show as "Unknown / replayed event".
 - **Retry on the results screens is blocked**, so a car that has just been wrecked can't be raced again.

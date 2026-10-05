@@ -146,8 +146,8 @@ function render(s) {
     : `${r.difficulty} Nuzlocke <small>${r.lives_start} + ${r.lives_start} lives${aiText(s.ai_level || r.ai_level) ? ' · ' + aiText(s.ai_level || r.ai_level) : ''}</small>`;
   $('plate').classList.toggle('grace', r.grace);
   $('won').textContent = `${r.won}/${r.played}`;
-  $('lost').textContent = `${r.cars_lost}/${r.cars_total}`;
-  $('crashlost').textContent = `${r.crash_cars_lost || 0}/${r.cars_total}`;
+  $('lost').textContent = `${r.cars_lost}/${r.race_cars_total ?? r.cars_total}`;
+  $('crashlost').textContent = `${r.crash_cars_lost || 0}/${r.crash_cars_total ?? r.cars_total}`;
   $('time').textContent = r.time;
 
   const car = s.car;
@@ -155,9 +155,11 @@ function render(s) {
   if (car) {
     $('carname').textContent = car.name;
     const crashLives = car.crash_lives ?? car.lives;
-    $('car').classList.toggle('wrecked', car.lives === 0 && crashLives === 0 && !r.grace);
-    $('racepool').classList.toggle('hidden', r.grace);
-    $('crashpool').classList.toggle('hidden', r.grace);
+    const canRace = car.can_race ?? true, canCrash = car.can_crash ?? true;
+    const out = (!canRace || car.lives === 0) && (!canCrash || crashLives === 0);
+    $('car').classList.toggle('wrecked', out && !r.grace);
+    $('racepool').classList.toggle('hidden', r.grace || !canRace);   // crash cars can't race
+    $('crashpool').classList.toggle('hidden', r.grace || !canCrash); // garage-only cars can't crash
     $('racepool').classList.toggle('out', car.lives === 0);
     $('crashpool').classList.toggle('out', crashLives === 0);
     $('hearts').innerHTML = hearts(car.lives, r.lives_start);
@@ -179,10 +181,10 @@ function render(s) {
 
   // Run's dead card
   if (r.dead && !r.grace) {
-    const pool = r.cars_lost >= r.cars_total ? 'Race' : 'Crash';
+    const pool = r.cars_lost >= (r.race_cars_total ?? r.cars_total) ? 'Race' : 'Crash';
     $('deadsub').textContent = `Every car is wrecked for ${pool} events. Started ${r.started}.`;
     $('d-won').textContent = `${r.won}/${r.played}`;
-    $('d-lost').textContent = `${r.cars_lost} / ${r.crash_cars_lost || 0} of ${r.cars_total}`;
+    $('d-lost').textContent = `${r.cars_lost}/${r.race_cars_total ?? r.cars_total} · ${r.crash_cars_lost || 0}/${r.crash_cars_total ?? r.cars_total}`;
     $('d-time').textContent = r.time;
     $('d-streak').textContent = r.best_streak;
     $('d-rate').textContent = r.played ? `${Math.round(100 * r.won / r.played)}%` : '-';

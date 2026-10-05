@@ -77,7 +77,13 @@ type Car struct {
 	Name       string `json:"name"`
 	Lives      int    `json:"lives"`       // Race pool: every event type except Crash junctions
 	CrashLives int    `json:"crash_lives"` // Crash pool: Crash junctions
+	InGarage   bool   `json:"in_garage"`   // seen in the garage (or used in a Race event): can race
+	InCrash    bool   `json:"in_crash"`    // seen in a crash junction's car select (or used there)
 }
+
+// CanRace and CanCrash: which pools a car has. A car not seen anywhere yet (from an older save) has both.
+func (c *Car) CanRace() bool  { return c.InGarage || !c.InCrash }
+func (c *Car) CanCrash() bool { return c.InCrash || !c.InGarage }
 
 type HistoryEntry struct {
 	Time    string `json:"time"`
@@ -144,6 +150,7 @@ type Tracker struct {
 	pendingEvent      string            // event label read when the event started or its result came in
 	pendingCar        string            // car label read at the same time
 	patchOld          bool              // the crash junction block still uses the shared table
+	dirty             bool              // a car's garage / crash junction flags changed
 }
 
 // Names that are always in the text table, used to find it.
@@ -497,7 +504,7 @@ func (t *Tracker) finishEvent(before []byte) {
 		t.save()
 		return
 	}
-	t.registerCar(car, carName)
+	t.registerCar(car, carName, crash)
 	r.EventsPlayed++
 	if won {
 		r.EventsWon++
@@ -615,16 +622,26 @@ func (t *Tracker) repairNames(region []byte, base uint32) {
 	}
 }
 
-func (t *Tracker) registerCar(label, name string) {
+// registerCar adds a car the first time it's seen and records where it can be used: crash is true for a
+// crash junction (car select or event), false for the garage or a Race event.
+func (t *Tracker) registerCar(label, name string, crash bool) {
 	r := t.run()
 	if r == nil || !strings.Contains(label, "CAR") {
 		return
 	}
 	c := r.Cars[label]
 	if c == nil {
-		r.Cars[label] = &Car{Name: name, Lives: r.LivesStart, CrashLives: r.LivesStart}
+		c = &Car{Name: name, Lives: r.LivesStart, CrashLives: r.LivesStart}
+		r.Cars[label] = c
 	} else if (c.Name == "" || c.Name == "?" || c.Name == label) && !wreckedNames[name] {
 		c.Name = name
+	}
+	if crash && !c.InCrash {
+		c.InCrash = true
+		t.dirty = true
+	} else if !crash && !c.InGarage {
+		c.InGarage = true
+		t.dirty = true
 	}
 }
 
@@ -634,12 +651,20 @@ func (t *Tracker) allDead() bool {
 	if r == nil || len(r.Cars) == 0 {
 		return false
 	}
+	// only cars that have a pool count towards it: crash-only cars can't race, garage-only cars can't crash
 	race, crash := true, true
+	raceCars, crashCars := 0, 0
 	for _, c := range r.Cars {
-		race = race && c.Lives == 0
-		crash = crash && c.CrashLives == 0
+		if c.CanRace() {
+			raceCars++
+			race = race && c.Lives == 0
+		}
+		if c.CanCrash() {
+			crashCars++
+			crash = crash && c.CrashLives == 0
+		}
 	}
-	return race || crash
+	return (raceCars > 0 && race) || (crashCars > 0 && crash)
 }
 
 // deadLabels returns the cars wrecked in the Race pool and in the Crash pool.
@@ -649,10 +674,10 @@ func (t *Tracker) deadLabels() (race, crash []string) {
 		return nil, nil
 	}
 	for l, c := range r.Cars {
-		if c.Lives == 0 {
+		if c.CanRace() && c.Lives == 0 {
 			race = append(race, l)
 		}
-		if c.CrashLives == 0 {
+		if c.CanCrash() && c.CrashLives == 0 {
 			crash = append(crash, l)
 		}
 	}
@@ -698,7 +723,7 @@ func (t *Tracker) slowChecks() {
 	if r != nil && r.Active {
 		// cars in the garage and in either player's crash junction car select get their lives
 		before := len(r.Cars)
-		for _, list := range []uint32{carouselList, crashCarousel, crashCarousel + carouselSize} {
+		for li, list := range []uint32{carouselList, crashCarousel, crashCarousel + carouselSize} {
 			n := t.u32(list + 0xBA4)
 			if n == 0 || n > deadMax {
 				continue
@@ -714,11 +739,12 @@ func (t *Tracker) slowChecks() {
 			}
 			if allCars {
 				for _, l := range labels {
-					t.registerCar(l, t.carName(region, base, l))
+					t.registerCar(l, t.carName(region, base, l), li > 0)
 				}
 			}
 		}
-		if len(r.Cars) != before {
+		if len(r.Cars) != before || t.dirty {
+			t.dirty = false
 			t.save()
 		}
 	}
@@ -763,7 +789,10 @@ func (t *Tracker) slowChecks() {
 				c.Name = text
 			}
 		}
-		newName := wreckedName(room, inRace[label], inCrash[label])
+		c := r.Cars[label]
+		usableRace := c.CanRace() && !inRace[label]
+		usableCrash := c.CanCrash() && !inCrash[label]
+		newName := wreckedName(room, !usableRace && usableCrash, !usableCrash && usableRace, !usableRace && !usableCrash)
 		if text != newName {
 			data := utf16le(newName)
 			data = append(data, make([]byte, room*2+2-len(data))...)
@@ -870,11 +899,20 @@ func (t *Tracker) Snapshot() map[string]any {
 	if r == nil || !r.Active {
 		return snap
 	}
+	raceCars, crashCars := 0, 0
+	for _, c := range r.Cars {
+		if c.CanRace() {
+			raceCars++
+		}
+		if c.CanCrash() {
+			crashCars++
+		}
+	}
 	snap["run"] = map[string]any{
 		"difficulty": r.Difficulty, "lives_start": r.LivesStart, "grace": r.Grace, "dead": r.Dead,
 		"won": r.EventsWon, "played": r.EventsPlayed, "cars_total": len(r.Cars), "cars_lost": r.CarsLost,
-		"crash_cars_lost": r.CrashLost,
-		"time":            fmtTime(r.PlaySeconds), "best_streak": r.BestStreak, "streak": r.Streak, "started": r.Started,
+		"crash_cars_lost": r.CrashLost, "race_cars_total": raceCars, "crash_cars_total": crashCars,
+		"time": fmtTime(r.PlaySeconds), "best_streak": r.BestStreak, "streak": r.Streak, "started": r.Started,
 		"ai_level": r.AILevel,
 	}
 	if t.mem.Connected() {
@@ -882,7 +920,8 @@ func (t *Tracker) Snapshot() map[string]any {
 			defer func() { _ = recover() }()
 			label := decodeLabel(t.u64(selectedCar))
 			if c := r.Cars[label]; c != nil {
-				snap["car"] = map[string]any{"name": c.Name, "lives": c.Lives, "crash_lives": c.CrashLives}
+				snap["car"] = map[string]any{"name": c.Name, "lives": c.Lives, "crash_lives": c.CrashLives,
+					"can_race": c.CanRace(), "can_crash": c.CanCrash()}
 			}
 		}()
 	}
