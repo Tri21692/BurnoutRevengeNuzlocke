@@ -217,166 +217,37 @@ patch=1,EE,001125EC,word,00108002
 // 60 FPS crashes and Crash mode
 patch=1,EE,00104B9C,word,90850608
 
-[Nuzlocke\Aggressive AI\Easy]
-author=Nuzlocke mod
-description=Opponents go for takedowns more, Easy level. Enable only one Aggressive AI level; works with or without Harder AI. Opponents attack more often, from further away and sooner after the start, and slam 15% harder. See docs/research/ai-aggression.md.
-// The game's own AI attack settings (AI/Aggressive Driving in its tuning data), written every frame.
-// Min. aggression before attacking: 0.2 -> 0.1
-patch=1,EE,01C914AC,word,3DCCCCCD
-// Min. time between attacks (s): 0.38 -> 0.3
-patch=1,EE,01C914B0,word,3E99999A
-// Max. time between attacks (s): 3 -> 2.25
-patch=1,EE,01C914B4,word,40100000
-// Max. distance to start an attack when ahead (m): 40 -> 50
-patch=1,EE,01C914B8,word,42480000
-// Max. distance to start an attack when behind (m): 70 -> 85
-patch=1,EE,01C914BC,word,42AA0000
-// Min. speed to consider attacking (mph): 70 -> 60
-patch=1,EE,01C914C0,word,42700000
-// Wait at the start before attacking (s): 3 -> 2
-patch=1,EE,01C914D0,word,40000000
-// Min. time to block you (s): 3 -> 3.5
-patch=1,EE,01C914D8,word,40600000
-// Max. time to block you (s): 8 -> 9
-patch=1,EE,01C914DC,word,41100000
-// Max. distance ahead to start blocking you (m): 15 -> 20
-patch=1,EE,01C914E0,word,41A00000
-// Max. time to get into slamming position (s): 15 -> 18
-patch=1,EE,01C914E8,word,41900000
-// Slam time (s): 1.5 -> 1.75
-patch=1,EE,01C914FC,word,3FE00000
-// Time a rubbed opponent goes blind (s): 1 -> 0.75
-patch=1,EE,01C91508,word,3F400000
-// AI neutral slam force: 30 -> 34.5
-patch=1,EE,0045F108,word,420A0000
-// AI level 1 slam force: 35 -> 40.25
-patch=1,EE,0045F10C,word,42210000
-// AI level 2 slam force: 40 -> 46
-patch=1,EE,0045F110,word,42380000
-// AI neutral shunt force: 30 -> 34.5
-patch=1,EE,0045F114,word,420A0000
-// AI level 1 shunt force: 32 -> 36.8
-patch=1,EE,0045F118,word,42133333
-// AI level 2 shunt force: 35 -> 40.25
-patch=1,EE,0045F11C,word,42210000
-
-[Nuzlocke\Aggressive AI\Medium]
-author=Nuzlocke mod
-description=Opponents go for takedowns more, Medium level. Enable only one Aggressive AI level; works with or without Harder AI. Opponents attack much more often and from further away, block you for longer, and slam 30% harder. See docs/research/ai-aggression.md.
-// The game's own AI attack settings (AI/Aggressive Driving in its tuning data), written every frame.
-// Min. aggression before attacking: 0.2 -> 0.05
-patch=1,EE,01C914AC,word,3D4CCCCD
-// Min. time between attacks (s): 0.38 -> 0.25
-patch=1,EE,01C914B0,word,3E800000
-// Max. time between attacks (s): 3 -> 1.5
-patch=1,EE,01C914B4,word,3FC00000
-// Max. distance to start an attack when ahead (m): 40 -> 60
-patch=1,EE,01C914B8,word,42700000
-// Max. distance to start an attack when behind (m): 70 -> 100
-patch=1,EE,01C914BC,word,42C80000
-// Min. speed to consider attacking (mph): 70 -> 50
-patch=1,EE,01C914C0,word,42480000
-// Wait at the start before attacking (s): 3 -> 1.5
-patch=1,EE,01C914D0,word,3FC00000
-// Min. time to block you (s): 3 -> 4
-patch=1,EE,01C914D8,word,40800000
-// Max. time to block you (s): 8 -> 10
-patch=1,EE,01C914DC,word,41200000
-// Max. distance ahead to start blocking you (m): 15 -> 25
-patch=1,EE,01C914E0,word,41C80000
-// Max. time to get into slamming position (s): 15 -> 20
-patch=1,EE,01C914E8,word,41A00000
-// Slam time (s): 1.5 -> 2
-patch=1,EE,01C914FC,word,40000000
-// Time a rubbed opponent goes blind (s): 1 -> 0.5
-patch=1,EE,01C91508,word,3F000000
-// AI neutral slam force: 30 -> 39
-patch=1,EE,0045F108,word,421C0000
-// AI level 1 slam force: 35 -> 45.5
-patch=1,EE,0045F10C,word,42360000
-// AI level 2 slam force: 40 -> 52
-patch=1,EE,0045F110,word,42500000
-// AI neutral shunt force: 30 -> 39
-patch=1,EE,0045F114,word,421C0000
-// AI level 1 shunt force: 32 -> 41.6
-patch=1,EE,0045F118,word,42266666
-// AI level 2 shunt force: 35 -> 45.5
-patch=1,EE,0045F11C,word,42360000
-
-[Nuzlocke\Aggressive AI\Hard]
-author=Nuzlocke mod
-description=Opponents go for takedowns more, Hard level. Enable only one Aggressive AI level; works with or without Harder AI. Every opponent attacks, from far away and almost right after the start, blocks you for longer, and slams 50% harder. See docs/research/ai-aggression.md.
-// The game's own AI attack settings (AI/Aggressive Driving in its tuning data), written every frame.
-// Min. aggression before attacking: 0.2 -> 0
-patch=1,EE,01C914AC,word,00000000
-// Min. time between attacks (s): 0.38 -> 0.2
-patch=1,EE,01C914B0,word,3E4CCCCD
-// Max. time between attacks (s): 3 -> 1
-patch=1,EE,01C914B4,word,3F800000
-// Max. distance to start an attack when ahead (m): 40 -> 75
-patch=1,EE,01C914B8,word,42960000
-// Max. distance to start an attack when behind (m): 70 -> 120
-patch=1,EE,01C914BC,word,42F00000
-// Min. speed to consider attacking (mph): 70 -> 40
-patch=1,EE,01C914C0,word,42200000
-// Wait at the start before attacking (s): 3 -> 1
-patch=1,EE,01C914D0,word,3F800000
-// Min. time to block you (s): 3 -> 5
-patch=1,EE,01C914D8,word,40A00000
-// Max. time to block you (s): 8 -> 12
-patch=1,EE,01C914DC,word,41400000
-// Max. distance ahead to start blocking you (m): 15 -> 30
-patch=1,EE,01C914E0,word,41F00000
-// Max. time to get into slamming position (s): 15 -> 25
-patch=1,EE,01C914E8,word,41C80000
-// Slam time (s): 1.5 -> 2.25
-patch=1,EE,01C914FC,word,40100000
-// Time a rubbed opponent goes blind (s): 1 -> 0.3
-patch=1,EE,01C91508,word,3E99999A
-// AI neutral slam force: 30 -> 45
-patch=1,EE,0045F108,word,42340000
-// AI level 1 slam force: 35 -> 52.5
-patch=1,EE,0045F10C,word,42520000
-// AI level 2 slam force: 40 -> 60
-patch=1,EE,0045F110,word,42700000
-// AI neutral shunt force: 30 -> 45
-patch=1,EE,0045F114,word,42340000
-// AI level 1 shunt force: 32 -> 48
-patch=1,EE,0045F118,word,42400000
-// AI level 2 shunt force: 35 -> 52.5
-patch=1,EE,0045F11C,word,42520000
-
 [Nuzlocke\Harder AI\Easy]
 author=Nuzlocke mod
-description=Harder opponents, Easy level. Enable only one Harder AI level. Corners at 0.875 of the racing line's limit (0.925 when aggressive); far from the player, 2-5 s per section quicker than their pace schedule; catch-up from 40 m behind the player (up to +20 m/s); ease-off from 40 m ahead of the player (to 0.9 x the player's speed); speed cap 100 m/s. See docs/research/ai-catchup.md.
+description=Harder opponents, Easy level: faster and more aggressive. Enable only one Harder AI level. Corners at 0.8625 of the racing line's limit (0.9125 on aggressive stretches); far from the player, 1.5-4.5 s per section quicker than their pace schedule; catch-up from 40 m behind the player (up to +18 m/s); ease-off from 40 m ahead of the player (to 0.9 x the player's speed); speed cap 97 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 15% harder. See docs/research/ai-catchup.md and ai-aggression.md.
 // Corner speed factor (game: 0.8, aggressive 0.85)
-patch=1,EE,0029EE1C,word,3C013F60
-patch=1,EE,0029EE20,word,34210000
-patch=1,EE,0029EE30,word,3C013F6C
-patch=1,EE,0029EE34,word,3421CCCD
-// Far-mode pace: offset to each section's planned time, clamped to -5..-2 s (game: -4..+4)
-patch=1,EE,0029A138,word,3C01C0A0
-patch=1,EE,0029A298,word,3C01C0A0
-patch=1,EE,0029A154,word,3C01C000
-patch=1,EE,0029A2B4,word,3C01C000
-// Speed cap ceiling 88 -> 100 m/s (224 mph), loaded as a constant instead of tuning value 01C913F4.
+patch=1,EE,0029EE1C,word,3C013F5C
+patch=1,EE,0029EE20,word,3421CCCD
+patch=1,EE,0029EE30,word,3C013F69
+patch=1,EE,0029EE34,word,3421999A
+// Far-mode pace: offset to each section's planned time, clamped to -4.5..-1.5 s (game: -4..+4)
+patch=1,EE,0029A138,word,3C01C090
+patch=1,EE,0029A298,word,3C01C090
+patch=1,EE,0029A154,word,3C01BFC0
+patch=1,EE,0029A2B4,word,3C01BFC0
+// Speed cap ceiling 88 -> 97 m/s (217 mph), loaded as a constant instead of tuning value 01C913F4.
 // Far from the player (two copies): lui at,cap / mtc1 at,f3 / min speed via lwc1 f1,0x13F8(v0) / clamp.
-patch=1,EE,0029A190,word,3C0142C8
+patch=1,EE,0029A190,word,3C0142C2
 patch=1,EE,0029A198,word,44811800
 patch=1,EE,0029A19C,word,C44113F8
 patch=1,EE,0029A1A0,word,46010028
 patch=1,EE,0029A1A4,word,46030029
-patch=1,EE,0029A2F0,word,3C0142C8
+patch=1,EE,0029A2F0,word,3C0142C2
 patch=1,EE,0029A2F8,word,44811800
 patch=1,EE,0029A2FC,word,C44113F8
 patch=1,EE,0029A300,word,46010028
 patch=1,EE,0029A304,word,46030029
 // Near the player (flat cap): lui at,cap / sw at,0xA44(s0) in the branch delay slot.
-patch=1,EE,0029ABE0,word,3C0142C8
+patch=1,EE,0029ABE0,word,3C0142C2
 patch=1,EE,0029ABE8,word,AE010A44
 // Catch-up: the brain update's call to the target-speed function (00298FEC) goes through a wrapper at
 // 000FFA00. When this opponent is more than 40 m behind the player (track progress), boost =
-// min(0.25 x (gap - 40), 20) m/s: its target speed becomes at least the player's speed + boost, and
+// min(0.225 x (gap - 40), 18) m/s: its target speed becomes at least the player's speed + boost, and
 // its top speed (car+0x1354, mph) is set to stock + boost. Otherwise top speed is reset to stock.
 // When it is more than 40 m AHEAD of the player, its target speed is held to 0.9 x the player's speed
 // (but at least 40 m/s), so a leader can be caught.
@@ -391,15 +262,15 @@ patch=1,EE,000FFA18,word,0C0A6638
 patch=1,EE,000FFA1C,word,0080802D
 patch=1,EE,000FFA20,word,3C0801EE
 patch=1,EE,000FFA24,word,8D098058
-patch=1,EE,000FFA28,word,1120005B
+patch=1,EE,000FFA28,word,1120005C
 patch=1,EE,000FFA2C,word,00000000
 patch=1,EE,000FFA30,word,8E1107E0
 patch=1,EE,000FFA34,word,3C0801EE
 patch=1,EE,000FFA38,word,25088070
-patch=1,EE,000FFA3C,word,12280056
+patch=1,EE,000FFA3C,word,12280057
 patch=1,EE,000FFA40,word,00000000
 patch=1,EE,000FFA44,word,8E2A2500
-patch=1,EE,000FFA48,word,11400053
+patch=1,EE,000FFA48,word,11400054
 patch=1,EE,000FFA4C,word,00000000
 patch=1,EE,000FFA50,word,0C0B1E30
 patch=1,EE,000FFA54,word,262424E0
@@ -449,81 +320,122 @@ patch=1,EE,000FFB00,word,00000000
 patch=1,EE,000FFB04,word,E6020A04
 patch=1,EE,000FFB08,word,4480A800
 patch=1,EE,000FFB0C,word,00000000
-patch=1,EE,000FFB10,word,10000017
+patch=1,EE,000FFB10,word,10000018
 patch=1,EE,000FFB14,word,00000000
-patch=1,EE,000FFB18,word,3C013E80
-patch=1,EE,000FFB1C,word,44810800
-patch=1,EE,000FFB20,word,00000000
-patch=1,EE,000FFB24,word,4601AD42
-patch=1,EE,000FFB28,word,3C0141A0
-patch=1,EE,000FFB2C,word,44810800
-patch=1,EE,000FFB30,word,00000000
-patch=1,EE,000FFB34,word,46150834
-patch=1,EE,000FFB38,word,00000000
-patch=1,EE,000FFB3C,word,45000002
-patch=1,EE,000FFB40,word,00000000
-patch=1,EE,000FFB44,word,46000D46
-patch=1,EE,000FFB48,word,3C0801EE
-patch=1,EE,000FFB4C,word,8D09B7F0
-patch=1,EE,000FFB50,word,C52200AC
-patch=1,EE,000FFB54,word,46151080
-patch=1,EE,000FFB58,word,C6030A04
-patch=1,EE,000FFB5C,word,46021834
-patch=1,EE,000FFB60,word,00000000
-patch=1,EE,000FFB64,word,45000002
-patch=1,EE,000FFB68,word,00000000
-patch=1,EE,000FFB6C,word,E6020A04
-patch=1,EE,000FFB70,word,8E2A3780
-patch=1,EE,000FFB74,word,8D4B1384
-patch=1,EE,000FFB78,word,C56401C0
-patch=1,EE,000FFB7C,word,3C01400F
-patch=1,EE,000FFB80,word,3421295F
-patch=1,EE,000FFB84,word,44812800
-patch=1,EE,000FFB88,word,00000000
-patch=1,EE,000FFB8C,word,4605A942
-patch=1,EE,000FFB90,word,46052100
-patch=1,EE,000FFB94,word,E5441354
-patch=1,EE,000FFB98,word,DFBF0000
-patch=1,EE,000FFB9C,word,7BB00010
-patch=1,EE,000FFBA0,word,7BB10020
-patch=1,EE,000FFBA4,word,C7B40030
-patch=1,EE,000FFBA8,word,C7B50034
-patch=1,EE,000FFBAC,word,03E00008
-patch=1,EE,000FFBB0,word,27BD0040
+patch=1,EE,000FFB18,word,3C013E66
+patch=1,EE,000FFB1C,word,34216666
+patch=1,EE,000FFB20,word,44810800
+patch=1,EE,000FFB24,word,00000000
+patch=1,EE,000FFB28,word,4601AD42
+patch=1,EE,000FFB2C,word,3C014190
+patch=1,EE,000FFB30,word,44810800
+patch=1,EE,000FFB34,word,00000000
+patch=1,EE,000FFB38,word,46150834
+patch=1,EE,000FFB3C,word,00000000
+patch=1,EE,000FFB40,word,45000002
+patch=1,EE,000FFB44,word,00000000
+patch=1,EE,000FFB48,word,46000D46
+patch=1,EE,000FFB4C,word,3C0801EE
+patch=1,EE,000FFB50,word,8D09B7F0
+patch=1,EE,000FFB54,word,C52200AC
+patch=1,EE,000FFB58,word,46151080
+patch=1,EE,000FFB5C,word,C6030A04
+patch=1,EE,000FFB60,word,46021834
+patch=1,EE,000FFB64,word,00000000
+patch=1,EE,000FFB68,word,45000002
+patch=1,EE,000FFB6C,word,00000000
+patch=1,EE,000FFB70,word,E6020A04
+patch=1,EE,000FFB74,word,8E2A3780
+patch=1,EE,000FFB78,word,8D4B1384
+patch=1,EE,000FFB7C,word,C56401C0
+patch=1,EE,000FFB80,word,3C01400F
+patch=1,EE,000FFB84,word,3421295F
+patch=1,EE,000FFB88,word,44812800
+patch=1,EE,000FFB8C,word,00000000
+patch=1,EE,000FFB90,word,4605A942
+patch=1,EE,000FFB94,word,46052100
+patch=1,EE,000FFB98,word,E5441354
+patch=1,EE,000FFB9C,word,DFBF0000
+patch=1,EE,000FFBA0,word,7BB00010
+patch=1,EE,000FFBA4,word,7BB10020
+patch=1,EE,000FFBA8,word,C7B40030
+patch=1,EE,000FFBAC,word,C7B50034
+patch=1,EE,000FFBB0,word,03E00008
+patch=1,EE,000FFBB4,word,27BD0040
+// Aggression: the game's own attack settings (AI/Aggressive Driving in its tuning data) and the AI's
+// slam and shunt forces. They're loaded from the game's data, so they're written every frame.
+// Min. aggression before attacking: 0.2 -> 0.1
+patch=1,EE,01C914AC,word,3DCCCCCD
+// Min. time between attacks (s): 0.38 -> 0.3
+patch=1,EE,01C914B0,word,3E99999A
+// Max. time between attacks (s): 3 -> 2.25
+patch=1,EE,01C914B4,word,40100000
+// Max. distance to start an attack when ahead (m): 40 -> 50
+patch=1,EE,01C914B8,word,42480000
+// Max. distance to start an attack when behind (m): 70 -> 85
+patch=1,EE,01C914BC,word,42AA0000
+// Min. speed to consider attacking (mph): 70 -> 60
+patch=1,EE,01C914C0,word,42700000
+// Wait at the start before attacking (s): 3 -> 2
+patch=1,EE,01C914D0,word,40000000
+// Min. time to block you (s): 3 -> 3.5
+patch=1,EE,01C914D8,word,40600000
+// Max. time to block you (s): 8 -> 9
+patch=1,EE,01C914DC,word,41100000
+// Max. distance ahead to start blocking you (m): 15 -> 20
+patch=1,EE,01C914E0,word,41A00000
+// Max. time to get into slamming position (s): 15 -> 18
+patch=1,EE,01C914E8,word,41900000
+// Slam time (s): 1.5 -> 1.75
+patch=1,EE,01C914FC,word,3FE00000
+// Time a rubbed opponent goes blind (s): 1 -> 0.75
+patch=1,EE,01C91508,word,3F400000
+// AI neutral slam force: 30 -> 34.5
+patch=1,EE,0045F108,word,420A0000
+// AI level 1 slam force: 35 -> 40.25
+patch=1,EE,0045F10C,word,42210000
+// AI level 2 slam force: 40 -> 46
+patch=1,EE,0045F110,word,42380000
+// AI neutral shunt force: 30 -> 34.5
+patch=1,EE,0045F114,word,420A0000
+// AI level 1 shunt force: 32 -> 36.8
+patch=1,EE,0045F118,word,42133333
+// AI level 2 shunt force: 35 -> 40.25
+patch=1,EE,0045F11C,word,42210000
 // Difficulty marker for the tracker: 000FE110 = 1 Easy, 2 Medium, 3 Hard
 patch=1,EE,000FE110,word,00000001
 
 [Nuzlocke\Harder AI\Medium]
 author=Nuzlocke mod
-description=Harder opponents, Medium level. Enable only one Harder AI level. Corners at 0.925 of the racing line's limit (0.975 when aggressive); far from the player, 4-7 s per section quicker than their pace schedule; catch-up from 25 m behind the player (up to +30 m/s); ease-off from 70 m ahead of the player (to 0.94 x the player's speed); speed cap 110 m/s. See docs/research/ai-catchup.md.
+description=Harder opponents, Medium level: faster and more aggressive. Enable only one Harder AI level. Corners at 0.9125 of the racing line's limit (0.9625 on aggressive stretches); far from the player, 3.5-6.5 s per section quicker than their pace schedule; catch-up from 25 m behind the player (up to +27 m/s); ease-off from 70 m ahead of the player (to 0.94 x the player's speed); speed cap 107 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 30% harder. See docs/research/ai-catchup.md and ai-aggression.md.
 // Corner speed factor (game: 0.8, aggressive 0.85)
-patch=1,EE,0029EE1C,word,3C013F6C
-patch=1,EE,0029EE20,word,3421CCCD
-patch=1,EE,0029EE30,word,3C013F79
-patch=1,EE,0029EE34,word,3421999A
-// Far-mode pace: offset to each section's planned time, clamped to -7..-4 s (game: -4..+4)
-patch=1,EE,0029A138,word,3C01C0E0
-patch=1,EE,0029A298,word,3C01C0E0
-patch=1,EE,0029A154,word,3C01C080
-patch=1,EE,0029A2B4,word,3C01C080
-// Speed cap ceiling 88 -> 110 m/s (246 mph), loaded as a constant instead of tuning value 01C913F4.
+patch=1,EE,0029EE1C,word,3C013F69
+patch=1,EE,0029EE20,word,3421999A
+patch=1,EE,0029EE30,word,3C013F76
+patch=1,EE,0029EE34,word,34216666
+// Far-mode pace: offset to each section's planned time, clamped to -6.5..-3.5 s (game: -4..+4)
+patch=1,EE,0029A138,word,3C01C0D0
+patch=1,EE,0029A298,word,3C01C0D0
+patch=1,EE,0029A154,word,3C01C060
+patch=1,EE,0029A2B4,word,3C01C060
+// Speed cap ceiling 88 -> 107 m/s (239 mph), loaded as a constant instead of tuning value 01C913F4.
 // Far from the player (two copies): lui at,cap / mtc1 at,f3 / min speed via lwc1 f1,0x13F8(v0) / clamp.
-patch=1,EE,0029A190,word,3C0142DC
+patch=1,EE,0029A190,word,3C0142D6
 patch=1,EE,0029A198,word,44811800
 patch=1,EE,0029A19C,word,C44113F8
 patch=1,EE,0029A1A0,word,46010028
 patch=1,EE,0029A1A4,word,46030029
-patch=1,EE,0029A2F0,word,3C0142DC
+patch=1,EE,0029A2F0,word,3C0142D6
 patch=1,EE,0029A2F8,word,44811800
 patch=1,EE,0029A2FC,word,C44113F8
 patch=1,EE,0029A300,word,46010028
 patch=1,EE,0029A304,word,46030029
 // Near the player (flat cap): lui at,cap / sw at,0xA44(s0) in the branch delay slot.
-patch=1,EE,0029ABE0,word,3C0142DC
+patch=1,EE,0029ABE0,word,3C0142D6
 patch=1,EE,0029ABE8,word,AE010A44
 // Catch-up: the brain update's call to the target-speed function (00298FEC) goes through a wrapper at
 // 000FFA00. When this opponent is more than 25 m behind the player (track progress), boost =
-// min(0.4 x (gap - 25), 30) m/s: its target speed becomes at least the player's speed + boost, and
+// min(0.36 x (gap - 25), 27) m/s: its target speed becomes at least the player's speed + boost, and
 // its top speed (car+0x1354, mph) is set to stock + boost. Otherwise top speed is reset to stock.
 // When it is more than 70 m AHEAD of the player, its target speed is held to 0.94 x the player's speed
 // (but at least 45 m/s), so a leader can be caught.
@@ -598,12 +510,12 @@ patch=1,EE,000FFB08,word,4480A800
 patch=1,EE,000FFB0C,word,00000000
 patch=1,EE,000FFB10,word,10000018
 patch=1,EE,000FFB14,word,00000000
-patch=1,EE,000FFB18,word,3C013ECC
-patch=1,EE,000FFB1C,word,3421CCCD
+patch=1,EE,000FFB18,word,3C013EB8
+patch=1,EE,000FFB1C,word,342151EC
 patch=1,EE,000FFB20,word,44810800
 patch=1,EE,000FFB24,word,00000000
 patch=1,EE,000FFB28,word,4601AD42
-patch=1,EE,000FFB2C,word,3C0141F0
+patch=1,EE,000FFB2C,word,3C0141D8
 patch=1,EE,000FFB30,word,44810800
 patch=1,EE,000FFB34,word,00000000
 patch=1,EE,000FFB38,word,46150834
@@ -638,40 +550,80 @@ patch=1,EE,000FFBA8,word,C7B40030
 patch=1,EE,000FFBAC,word,C7B50034
 patch=1,EE,000FFBB0,word,03E00008
 patch=1,EE,000FFBB4,word,27BD0040
+// Aggression: the game's own attack settings (AI/Aggressive Driving in its tuning data) and the AI's
+// slam and shunt forces. They're loaded from the game's data, so they're written every frame.
+// Min. aggression before attacking: 0.2 -> 0.05
+patch=1,EE,01C914AC,word,3D4CCCCD
+// Min. time between attacks (s): 0.38 -> 0.25
+patch=1,EE,01C914B0,word,3E800000
+// Max. time between attacks (s): 3 -> 1.5
+patch=1,EE,01C914B4,word,3FC00000
+// Max. distance to start an attack when ahead (m): 40 -> 60
+patch=1,EE,01C914B8,word,42700000
+// Max. distance to start an attack when behind (m): 70 -> 100
+patch=1,EE,01C914BC,word,42C80000
+// Min. speed to consider attacking (mph): 70 -> 50
+patch=1,EE,01C914C0,word,42480000
+// Wait at the start before attacking (s): 3 -> 1.5
+patch=1,EE,01C914D0,word,3FC00000
+// Min. time to block you (s): 3 -> 4
+patch=1,EE,01C914D8,word,40800000
+// Max. time to block you (s): 8 -> 10
+patch=1,EE,01C914DC,word,41200000
+// Max. distance ahead to start blocking you (m): 15 -> 25
+patch=1,EE,01C914E0,word,41C80000
+// Max. time to get into slamming position (s): 15 -> 20
+patch=1,EE,01C914E8,word,41A00000
+// Slam time (s): 1.5 -> 2
+patch=1,EE,01C914FC,word,40000000
+// Time a rubbed opponent goes blind (s): 1 -> 0.5
+patch=1,EE,01C91508,word,3F000000
+// AI neutral slam force: 30 -> 39
+patch=1,EE,0045F108,word,421C0000
+// AI level 1 slam force: 35 -> 45.5
+patch=1,EE,0045F10C,word,42360000
+// AI level 2 slam force: 40 -> 52
+patch=1,EE,0045F110,word,42500000
+// AI neutral shunt force: 30 -> 39
+patch=1,EE,0045F114,word,421C0000
+// AI level 1 shunt force: 32 -> 41.6
+patch=1,EE,0045F118,word,42266666
+// AI level 2 shunt force: 35 -> 45.5
+patch=1,EE,0045F11C,word,42360000
 // Difficulty marker for the tracker: 000FE110 = 1 Easy, 2 Medium, 3 Hard
 patch=1,EE,000FE110,word,00000002
 
 [Nuzlocke\Harder AI\Hard]
 author=Nuzlocke mod
-description=Harder opponents, Hard level. Enable only one Harder AI level. Corners at 0.975 of the racing line's limit (1 when aggressive); far from the player, 6-9 s per section quicker than their pace schedule; catch-up from 10 m behind the player (up to +40 m/s); ease-off from 100 m ahead of the player (to 0.97 x the player's speed); speed cap 115 m/s. See docs/research/ai-catchup.md.
+description=Harder opponents, Hard level: faster and more aggressive. Enable only one Harder AI level. Corners at 0.9625 of the racing line's limit (0.9875 on aggressive stretches); far from the player, 5.5-8.5 s per section quicker than their pace schedule; catch-up from 10 m behind the player (up to +36 m/s); ease-off from 100 m ahead of the player (to 0.97 x the player's speed); speed cap 112 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 50% harder, and every opponent attacks. See docs/research/ai-catchup.md and ai-aggression.md.
 // Corner speed factor (game: 0.8, aggressive 0.85)
-patch=1,EE,0029EE1C,word,3C013F79
-patch=1,EE,0029EE20,word,3421999A
-patch=1,EE,0029EE30,word,3C013F80
-patch=1,EE,0029EE34,word,34210000
-// Far-mode pace: offset to each section's planned time, clamped to -9..-6 s (game: -4..+4)
-patch=1,EE,0029A138,word,3C01C110
-patch=1,EE,0029A298,word,3C01C110
-patch=1,EE,0029A154,word,3C01C0C0
-patch=1,EE,0029A2B4,word,3C01C0C0
-// Speed cap ceiling 88 -> 115 m/s (257 mph), loaded as a constant instead of tuning value 01C913F4.
+patch=1,EE,0029EE1C,word,3C013F76
+patch=1,EE,0029EE20,word,34216666
+patch=1,EE,0029EE30,word,3C013F7C
+patch=1,EE,0029EE34,word,3421CCCD
+// Far-mode pace: offset to each section's planned time, clamped to -8.5..-5.5 s (game: -4..+4)
+patch=1,EE,0029A138,word,3C01C108
+patch=1,EE,0029A298,word,3C01C108
+patch=1,EE,0029A154,word,3C01C0B0
+patch=1,EE,0029A2B4,word,3C01C0B0
+// Speed cap ceiling 88 -> 112 m/s (251 mph), loaded as a constant instead of tuning value 01C913F4.
 // Far from the player (two copies): lui at,cap / mtc1 at,f3 / min speed via lwc1 f1,0x13F8(v0) / clamp.
-patch=1,EE,0029A190,word,3C0142E6
+patch=1,EE,0029A190,word,3C0142E0
 patch=1,EE,0029A198,word,44811800
 patch=1,EE,0029A19C,word,C44113F8
 patch=1,EE,0029A1A0,word,46010028
 patch=1,EE,0029A1A4,word,46030029
-patch=1,EE,0029A2F0,word,3C0142E6
+patch=1,EE,0029A2F0,word,3C0142E0
 patch=1,EE,0029A2F8,word,44811800
 patch=1,EE,0029A2FC,word,C44113F8
 patch=1,EE,0029A300,word,46010028
 patch=1,EE,0029A304,word,46030029
 // Near the player (flat cap): lui at,cap / sw at,0xA44(s0) in the branch delay slot.
-patch=1,EE,0029ABE0,word,3C0142E6
+patch=1,EE,0029ABE0,word,3C0142E0
 patch=1,EE,0029ABE8,word,AE010A44
 // Catch-up: the brain update's call to the target-speed function (00298FEC) goes through a wrapper at
 // 000FFA00. When this opponent is more than 10 m behind the player (track progress), boost =
-// min(0.6 x (gap - 10), 40) m/s: its target speed becomes at least the player's speed + boost, and
+// min(0.54 x (gap - 10), 36) m/s: its target speed becomes at least the player's speed + boost, and
 // its top speed (car+0x1354, mph) is set to stock + boost. Otherwise top speed is reset to stock.
 // When it is more than 100 m AHEAD of the player, its target speed is held to 0.97 x the player's speed
 // (but at least 50 m/s), so a leader can be caught.
@@ -746,12 +698,12 @@ patch=1,EE,000FFB08,word,4480A800
 patch=1,EE,000FFB0C,word,00000000
 patch=1,EE,000FFB10,word,10000018
 patch=1,EE,000FFB14,word,00000000
-patch=1,EE,000FFB18,word,3C013F19
-patch=1,EE,000FFB1C,word,3421999A
+patch=1,EE,000FFB18,word,3C013F0A
+patch=1,EE,000FFB1C,word,34213D71
 patch=1,EE,000FFB20,word,44810800
 patch=1,EE,000FFB24,word,00000000
 patch=1,EE,000FFB28,word,4601AD42
-patch=1,EE,000FFB2C,word,3C014220
+patch=1,EE,000FFB2C,word,3C014210
 patch=1,EE,000FFB30,word,44810800
 patch=1,EE,000FFB34,word,00000000
 patch=1,EE,000FFB38,word,46150834
@@ -786,5 +738,45 @@ patch=1,EE,000FFBA8,word,C7B40030
 patch=1,EE,000FFBAC,word,C7B50034
 patch=1,EE,000FFBB0,word,03E00008
 patch=1,EE,000FFBB4,word,27BD0040
+// Aggression: the game's own attack settings (AI/Aggressive Driving in its tuning data) and the AI's
+// slam and shunt forces. They're loaded from the game's data, so they're written every frame.
+// Min. aggression before attacking: 0.2 -> 0
+patch=1,EE,01C914AC,word,00000000
+// Min. time between attacks (s): 0.38 -> 0.2
+patch=1,EE,01C914B0,word,3E4CCCCD
+// Max. time between attacks (s): 3 -> 1
+patch=1,EE,01C914B4,word,3F800000
+// Max. distance to start an attack when ahead (m): 40 -> 75
+patch=1,EE,01C914B8,word,42960000
+// Max. distance to start an attack when behind (m): 70 -> 120
+patch=1,EE,01C914BC,word,42F00000
+// Min. speed to consider attacking (mph): 70 -> 40
+patch=1,EE,01C914C0,word,42200000
+// Wait at the start before attacking (s): 3 -> 1
+patch=1,EE,01C914D0,word,3F800000
+// Min. time to block you (s): 3 -> 5
+patch=1,EE,01C914D8,word,40A00000
+// Max. time to block you (s): 8 -> 12
+patch=1,EE,01C914DC,word,41400000
+// Max. distance ahead to start blocking you (m): 15 -> 30
+patch=1,EE,01C914E0,word,41F00000
+// Max. time to get into slamming position (s): 15 -> 25
+patch=1,EE,01C914E8,word,41C80000
+// Slam time (s): 1.5 -> 2.25
+patch=1,EE,01C914FC,word,40100000
+// Time a rubbed opponent goes blind (s): 1 -> 0.3
+patch=1,EE,01C91508,word,3E99999A
+// AI neutral slam force: 30 -> 45
+patch=1,EE,0045F108,word,42340000
+// AI level 1 slam force: 35 -> 52.5
+patch=1,EE,0045F10C,word,42520000
+// AI level 2 slam force: 40 -> 60
+patch=1,EE,0045F110,word,42700000
+// AI neutral shunt force: 30 -> 45
+patch=1,EE,0045F114,word,42340000
+// AI level 1 shunt force: 32 -> 48
+patch=1,EE,0045F118,word,42400000
+// AI level 2 shunt force: 35 -> 52.5
+patch=1,EE,0045F11C,word,42520000
 // Difficulty marker for the tracker: 000FE110 = 1 Easy, 2 Medium, 3 Hard
 patch=1,EE,000FE110,word,00000003

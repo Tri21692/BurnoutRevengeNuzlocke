@@ -25,8 +25,7 @@
 | **Winning** | Every event must reach the difficulty's mark: at least **Silver + Great** on Easy, **Silver + Awesome** on Medium, **Gold + Perfect** on Hard. Anything less costs the car you drove a life. Crash junctions and Preview events count too. |
 | **Wrecked** | A car out of Race lives can't be selected in the garage (`[RACE X]`); out of Crash lives, it can't be picked in crash junctions (`[CRASH X]`); out of both, it's `[WRECKED]`. |
 | **No escape** | Retry and Quit in the pause menu don't work, so you can't bail out of an event to save a life, and Retry on the results screen just continues. |
-| **Harder AI** | Opponents corner faster, keep their pace, and come back hard when they fall behind. |
-| **Aggressive AI** | Optional: opponents go for takedowns more often, from further away, block you for longer and slam harder. |
+| **Harder AI** | Opponents corner faster, keep their pace, come back hard when they fall behind, and go for takedowns more often and harder. |
 | **Run's dead** | When every car that can race is wrecked for Race events, **or** every crash car is wrecked for Crash junctions, the run is over: the game stays on the results screen until you shut it down, choose **Grace mode** (where nothing counts) or start a new run. A car unlocked by the event that ended the run doesn't save it. |
 
 Inspired by the [Need for Speed Underground Nuzlocke mod](https://github.com/xan1242/NFSU-nuzlocke).
@@ -35,10 +34,10 @@ Inspired by the [Need for Speed Underground Nuzlocke mod](https://github.com/xan
 
 | | |
 |---|---|
-| 🛠️ **The patch** ([`patches/SLUS-21242_D224D348.pnach`](patches/SLUS-21242_D224D348.pnach)) | Native game code changes: blocks wrecked cars, blocks pause-menu Retry/Quit, signals every finished event to the tracker, three Harder AI levels, three Aggressive AI levels for more takedown attempts, plus optional widescreen 16:9 and 60 FPS menus. |
+| 🛠️ **The patch** ([`patches/SLUS-21242_D224D348.pnach`](patches/SLUS-21242_D224D348.pnach)) | Native game code changes: blocks wrecked cars, blocks pause-menu Retry/Quit, signals every finished event to the tracker, three Harder AI levels (speed and aggression), plus optional widescreen 16:9 and 60 FPS menus. |
 | 📊 **The tracker** ([`bin/nuzlocke.exe`](bin/nuzlocke.exe)) | Judges every result, counts lives, wrecks cars, and keeps your run's stats. No install, no Python. |
 | 🎥 **Stream overlay** | A Burnout-style HUD plate for OBS, served by the tracker. |
-| 💿 **ISO patcher** ([`bin/nuzlocke_isopatch.exe`](bin/nuzlocke_isopatch.exe)) | Builds the whole patch into your own copy of the game (one ISO per AI level; Aggressive AI, widescreen and 60 FPS optional), so no `.pnach` is needed. |
+| 💿 **ISO patcher** ([`bin/nuzlocke_isopatch.exe`](bin/nuzlocke_isopatch.exe)) | Builds the whole patch into your own copy of the game (one ISO per AI level, widescreen and 60 FPS optional), so no `.pnach` is needed. |
 
 <p align="center">
   <img src="docs/images/control.png" alt="The tracker's control page: the run's difficulty, stats, the current car's lives and its events as medals, one opened" width="560">
@@ -54,7 +53,7 @@ You need the **US version of Burnout Revenge (SLUS-21242)**, **PCSX2 2.x** on Wi
 
 1. **In PCSX2, turn on PINE** (Settings → Advanced, slot 28011).
 2. **Add the patch, either:**
-   - copy `patches/SLUS-21242_D224D348.pnach` into PCSX2's `patches` folder, then in the game's Properties → Patches tick **Block dead cars in garage**, **Block pause-menu Retry and Quit**, **one** Harder AI level, if you like **one** Aggressive AI level, and **Widescreen 16:9** and **60 FPS menus and crash mode**; **or**
+   - copy `patches/SLUS-21242_D224D348.pnach` into PCSX2's `patches` folder, then in the game's Properties → Patches tick **Block dead cars in garage**, **Block pause-menu Retry and Quit**, **one** Harder AI level, and if you like **Widescreen 16:9** and **60 FPS menus and crash mode**; **or**
    - drag your ISO onto `bin/nuzlocke_isopatch.exe`, pick a level and the extras, and play the ISO it makes.
 3. **Run `bin/nuzlocke.exe`.** The control page opens at `http://localhost:8765`. Pick a difficulty to start a run.
 4. **For streaming,** add a Browser Source in OBS: `http://localhost:8765/overlay`, about 800 × 400.
@@ -65,13 +64,13 @@ There are two separate settings: lives are chosen in the tracker when you start 
 
 | Lives (tracker) | | Harder AI (patch) | Cornering | Pace when out of sight | Speed limit | Catch-up | Eases off |
 |---|---|---|---|---|---|---|---|
-| **Easy** | 3 + 3 per car | **Easy** | 87.5% of the line's limit | 2–5 s per section quicker | 224 mph | from 40 m behind, up to +45 mph | 40 m ahead: 90% of your speed |
-| **Medium** | 2 + 2 per car | **Medium** | 92.5% | 4–7 s quicker | 246 mph | from 25 m behind, up to +67 mph | 70 m ahead: 94% |
-| **Hard** | 1 + 1 per car | **Hard** | 97.5% | 6–9 s quicker | 257 mph | from 10 m behind, up to +89 mph | 100 m ahead: 97% |
+| **Easy** | 3 + 3 per car | **Easy** | 86.25% of the line's limit | 1.5–4.5 s per section quicker | 217 mph | from 40 m behind, up to +40 mph | 40 m ahead: 90% of your speed |
+| **Medium** | 2 + 2 per car | **Medium** | 91.25% | 3.5–6.5 s quicker | 239 mph | from 25 m behind, up to +60 mph | 70 m ahead: 94% |
+| **Hard** | 1 + 1 per car | **Hard** | 96.25% | 5.5–8.5 s quicker | 251 mph | from 10 m behind, up to +81 mph | 100 m ahead: 97% |
 
-**Aggressive AI** (optional, with any Harder AI level or none) changes the game's own attack settings:
+Each Harder AI level also makes opponents more aggressive, through the game's own attack settings:
 
-| Aggressive AI | Attacks when aggression is at least | Time between attacks | Starts an attack from | First attack after the start | Blocks you for | Slam / shunt force |
+| Harder AI | Attacks when its aggression is at least | Time between attacks | Starts an attack from | First attack after the start | Blocks you for | Slam / shunt force |
 |---|---|---|---|---|---|---|
 | Stock game | 0.2 | 0.38–3 s | 40 m ahead, 70 m behind | 3 s | 3–8 s, from 15 m | 30–40 |
 | **Easy** | 0.1 | 0.3–2.25 s | 50 m ahead, 85 m behind | 2 s | 3.5–9 s, from 20 m | +15% |

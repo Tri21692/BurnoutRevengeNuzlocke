@@ -46,12 +46,11 @@ Setup takes about ten minutes and only needs doing once.
    - **Patch file (recommended).** Copy `SLUS-21242_D224D348.pnach` as it is into PCSX2's `patches` folder (usually `Documents\PCSX2\patches`). In the game's Properties, open the **Patches** tab and tick:
      - **Nuzlocke\Block dead cars in garage** (required)
      - **Nuzlocke\Block pause-menu Retry and Quit** (recommended)
-     - **one** of **Nuzlocke\Harder AI\Easy / Medium / Hard** (optional; never more than one)
-     - **one** of **Nuzlocke\Aggressive AI\Easy / Medium / Hard** (optional; more takedown attempts; never more than one)
+     - **one** of **Nuzlocke\Harder AI\Easy / Medium / Hard** (optional; faster and more aggressive opponents; never more than one)
      - **Nuzlocke\Widescreen 16:9** and **Nuzlocke\60 FPS menus and crash mode** (optional, by SuperType1/remco)
 
      It also works from the `cheats` folder and the Cheats tab. Check Windows hasn't added a hidden `.txt` to the file name. Restart the game after changing anything.
-   - **Patched ISO.** Drag your clean Burnout Revenge ISO onto `nuzlocke_isopatch.exe` choose Easy, Medium or Hard, then an Aggressive AI level (or 0 for off), and answer whether you want widescreen and 60 FPS. It writes a new ISO next to the original, for example `Burnout Revenge (Nuzlocke Hard, 16-9).iso`, with everything above built in. Add that ISO to PCSX2 and play it, **without** the `.pnach` enabled. Your original ISO isn't changed.
+   - **Patched ISO.** Drag your clean Burnout Revenge ISO onto `nuzlocke_isopatch.exe` choose Easy, Medium or Hard, and answer whether you want widescreen and 60 FPS. It writes a new ISO next to the original, for example `Burnout Revenge (Nuzlocke Hard, 16-9).iso`, with everything above built in. Add that ISO to PCSX2 and play it, **without** the `.pnach` enabled. Your original ISO isn't changed.
 3. **Set up the tracker.** Put `nuzlocke.exe` in a folder of its own, since it saves your run next to itself. Double-click it.
    - If Windows SmartScreen warns you, click More info, then Run anyway. The program isn't signed.
    - A small console window opens. Keep it open while you play; closing it stops the tracker.
@@ -71,7 +70,7 @@ Every event must reach the difficulty's result (from Silver + Great on Easy up t
 | Medium | 2 | 2 | Silver + Awesome |
 | Hard | 1 | 1 | Gold + Perfect (first time) |
 
-Every car has two separate pools. **Crash junctions** use the Crash pool; **every other event** (races, Grand Prix, Eliminator, Burning Lap, Road Rage, Traffic Attack, Preview) uses the Race pool. Each car gets its pools in full the first time it appears. Cars only get the pools they can use: the tracker notes whether a car shows up in the garage (it can race) and in a crash junction's car select (it can crash). Crash cars, which only appear in crash junctions, have no Race pool, and the overlay only shows the hearts a car actually has. The opponents' AI levels are separate: Harder AI and Aggressive AI come from the patch or ISO you chose, and the control page and overlay show both.
+Every car has two separate pools. **Crash junctions** use the Crash pool; **every other event** (races, Grand Prix, Eliminator, Burning Lap, Road Rage, Traffic Attack, Preview) uses the Race pool. Each car gets its pools in full the first time it appears. Cars only get the pools they can use: the tracker notes whether a car shows up in the garage (it can race) and in a crash junction's car select (it can crash). Crash cars, which only appear in crash junctions, have no Race pool, and the overlay only shows the hearts a car actually has. The opponents' AI level is separate: it comes from the patch or ISO you chose, and the control page and overlay show it.
 
 **How each event is judged.** Every event type counts, including Crash junctions and Preview events.
 
@@ -108,8 +107,8 @@ Not with the pause-menu block on: those options do nothing. Without it, the trac
 **Can I change difficulty mid-run?**
 Lives, no: they're locked for the run, so start a new run to change them. The AI level can be changed between sessions, and the overlay shows whichever is active.
 
-**What does Aggressive AI do?**
-Opponents go for takedowns more: they attack more often and from further away, start sooner after the green light, block you for longer and slam harder. On Hard every opponent attacks. It's separate from Harder AI, so you can mix them, for example Medium Harder AI with Hard Aggressive AI.
+**What does Harder AI change?**
+Two things, together. Speed: opponents corner faster, keep their pace when out of sight, catch up when far behind you, and ease off when far ahead so they can be caught. Aggression: they go for takedowns more often and from further away, start sooner after the green light, block you for longer and slam harder. On Hard every opponent attacks.
 
 **Which AI level should I pick?**
 Easy is already noticeably tougher than the stock game. Hard opponents corner close to the limit and come back very quickly when they fall behind you. Try a few races on each before starting a real run.

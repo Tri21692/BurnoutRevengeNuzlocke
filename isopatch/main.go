@@ -1,9 +1,9 @@
 // nuzlocke_isopatch builds a patched copy of a Burnout Revenge (USA, SLUS-21242) ISO with the Nuzlocke
 // mod built in: the dead-car block, the finished-event signal, the pause-menu Retry/Quit block and one
-// Harder AI level, optionally with an Aggressive AI level (more takedown attempts) and widescreen 16:9
-// and 60 FPS menus (by SuperType1/remco). The original ISO is never modified.
+// Harder AI level (faster and more aggressive opponents), optionally with widescreen 16:9 and 60 FPS
+// menus (by SuperType1/remco). The original ISO is never modified.
 //
-// Usage: nuzlocke_isopatch.exe [game.iso] [easy|medium|hard] [aggr-easy|aggr-medium|aggr-hard] [widescreen] [60fps]
+// Usage: nuzlocke_isopatch.exe [game.iso] [easy|medium|hard] [widescreen] [60fps]
 // (or drag the ISO onto the .exe and answer the questions)
 package main
 
@@ -64,38 +64,12 @@ func run(args []string, in *bufio.Reader) error {
 		level = levelIndex(args[1])
 	}
 	for level < 0 {
-		fmt.Println("Harder AI level:  1 = Easy   2 = Medium   3 = Hard")
+		fmt.Println("Harder AI level (opponents' speed and aggression):  1 = Easy   2 = Medium   3 = Hard")
 		fmt.Print("Choose 1, 2 or 3: ")
 		line, err := in.ReadString('\n')
 		level = levelIndex(strings.TrimSpace(line))
 		if level < 0 && err != nil {
 			return errors.New("no level chosen")
-		}
-	}
-
-	// Aggressive AI: given on the command line, or asked for when the level was chosen interactively.
-	aggr := -1
-	if len(args) > 1 {
-		for _, a := range args[2:] {
-			if strings.HasPrefix(strings.ToLower(a), "aggr-") {
-				aggr = levelIndex(strings.ToLower(a)[5:])
-			}
-		}
-	} else {
-		for {
-			fmt.Println("Aggressive AI (more takedown attempts):  0 = Off   1 = Easy   2 = Medium   3 = Hard")
-			fmt.Print("Choose 0, 1, 2 or 3: ")
-			line, err := in.ReadString('\n')
-			line = strings.TrimSpace(line)
-			if line == "0" || strings.EqualFold(line, "off") {
-				break
-			}
-			if aggr = levelIndex(line); aggr >= 0 {
-				break
-			}
-			if err != nil {
-				return errors.New("no Aggressive AI level chosen")
-			}
 		}
 	}
 
@@ -120,15 +94,12 @@ func run(args []string, in *bufio.Reader) error {
 	}
 
 	name := "Nuzlocke " + levels[level].name
-	if aggr >= 0 {
-		name += ", aggressive " + aggression[aggr].name
-	}
 	for _, i := range extras {
 		name += ", " + tags[options[i].key]
 	}
 	ext := filepath.Ext(isoPath)
 	outPath := strings.TrimSuffix(isoPath, ext) + " (" + name + ")" + ext
-	if err := patchISO(isoPath, outPath, level, aggr, extras); err != nil {
+	if err := patchISO(isoPath, outPath, level, extras); err != nil {
 		return err
 	}
 	fmt.Println()
@@ -150,7 +121,7 @@ func levelIndex(s string) int {
 }
 
 // patchISO copies the ISO to outPath and replaces SLUS_212.42 inside the copy with the patched one.
-func patchISO(isoPath, outPath string, level, aggr int, extras []int) error {
+func patchISO(isoPath, outPath string, level int, extras []int) error {
 	iso, err := os.Open(isoPath)
 	if err != nil {
 		return err
@@ -169,7 +140,7 @@ func patchISO(isoPath, outPath string, level, aggr int, extras []int) error {
 	if hex.EncodeToString(sum[:]) != elfSHA1 {
 		return fmt.Errorf("%s isn't the unmodified US release (SLUS-21242). Use a clean copy of the game", elfName)
 	}
-	if err := patchELF(elf, level, aggr, extras); err != nil {
+	if err := patchELF(elf, level, extras); err != nil {
 		return err
 	}
 
@@ -258,10 +229,9 @@ func readPhdrs(elf []byte) []phdr {
 	return out
 }
 
-// patchELF applies the chosen level's words, those of the Aggressive AI level (aggr < 0: none) and
-// those of the chosen extras. The mod's code goes into unused space inside the game's
+// patchELF applies the chosen level's words and those of the chosen extras. The mod's code goes into unused space inside the game's
 // .data section (freeLo-freeHi), so the file's layout stays exactly as it was.
-func patchELF(elf []byte, level, aggr int, extras []int) error {
+func patchELF(elf []byte, level int, extras []int) error {
 	le := binary.LittleEndian
 	segs := readPhdrs(elf)
 	if len(segs) != 2 {
@@ -278,9 +248,6 @@ func patchELF(elf []byte, level, aggr int, extras []int) error {
 		}
 	}
 	words := levels[level].words
-	if aggr >= 0 {
-		words = append(append([]word(nil), words...), aggression[aggr].words...)
-	}
 	for _, i := range extras {
 		words = append(append([]word(nil), words...), options[i].words...)
 	}

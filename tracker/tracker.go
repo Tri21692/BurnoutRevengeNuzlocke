@@ -95,21 +95,6 @@ var medals = map[uint32]string{3: "Gold", 2: "Silver", 1: "Bronze", 0: "No medal
 var ratings = []string{"-", "Good", "Great", "Awesome", "Perfect"}
 var aiLevels = []string{"Off", "Easy", "Medium", "Hard"}
 
-// Aggressive AI: read from the game's own attack settings, which the .pnach and the patched ISO both
-// rewrite. Max. time between attacks and max. distance to attack from behind identify the level.
-const (
-	aggrMaxWait  = 0x01C914B4
-	aggrBehind   = 0x01C914BC
-	aggrStockKey = 0x40400000<<32 | 0x428C0000 // 3 s, 70 m
-)
-
-var aggrKeys = map[uint64]string{
-	aggrStockKey:                "Off",
-	0x40100000<<32 | 0x42AA0000: "Easy",   // 2.25 s, 85 m
-	0x3FC00000<<32 | 0x42C80000: "Medium", // 1.5 s, 100 m
-	0x3F800000<<32 | 0x42F00000: "Hard",   // 1 s, 120 m
-}
-
 // Mem is the connection to PCSX2 (real on Windows, faked in tests).
 type Mem interface {
 	Connected() bool
@@ -168,8 +153,7 @@ type Run struct {
 	Started      string          `json:"started"`
 	PlaySeconds  float64         `json:"play_seconds"`
 	Grace        bool            `json:"grace"`
-	AILevel      string          `json:"ai_level,omitempty"`   // last Harder AI level seen during the run
-	AggrLevel    string          `json:"aggr_level,omitempty"` // last Aggressive AI level seen during the run
+	AILevel      string          `json:"ai_level,omitempty"` // last Harder AI level seen during the run
 	Dead         bool            `json:"dead"`
 	Cars         map[string]*Car `json:"cars"`
 	EventsPlayed int             `json:"events_played"`
@@ -203,7 +187,6 @@ type Tracker struct {
 	knownResults      []byte
 	patchOK           int    // -1 unknown, 0 no, 1 yes
 	aiLevel           string // Harder AI level in the game ("" until read)
-	aggrLevel         string // Aggressive AI level in the game ("" until read)
 	wrongGame         bool
 	lastSlow          float64
 	lastTick          float64
@@ -994,15 +977,6 @@ func (t *Tracker) readAILevel() {
 		r.AILevel = level
 		t.save()
 	}
-	// The attack settings only hold real values once the game has loaded them: keep the last level
-	// seen until they do.
-	if aggr, ok := aggrKeys[uint64(t.u32(aggrMaxWait))<<32|uint64(t.u32(aggrBehind))]; ok {
-		t.aggrLevel = aggr
-		if r := t.run(); r != nil && r.Active && !r.Dead && r.AggrLevel != aggr {
-			r.AggrLevel = aggr
-			t.save()
-		}
-	}
 }
 
 // restoreNames puts real names back on wrecked cars, only with a trusted original that fits.
@@ -1055,12 +1029,10 @@ func (t *Tracker) Snapshot() map[string]any {
 		"patch_old":  t.patchOK == 1 && (t.patchOld || !t.deadLockOn),
 		"pine":       t.mem.HasPine(),
 		"ai_level":   "",
-		"aggr_level": "",
 		"run":        nil,
 	}
 	if t.mem.Connected() {
 		snap["ai_level"] = t.aiLevel
-		snap["aggr_level"] = t.aggrLevel
 	}
 	if r == nil || !r.Active {
 		return snap
@@ -1079,7 +1051,7 @@ func (t *Tracker) Snapshot() map[string]any {
 		"won": r.EventsWon, "played": r.EventsPlayed, "cars_total": len(r.Cars), "cars_lost": r.CarsLost,
 		"crash_cars_lost": r.CrashLost, "race_cars_total": raceCars, "crash_cars_total": crashCars,
 		"time": fmtTime(r.PlaySeconds), "best_streak": r.BestStreak, "streak": r.Streak, "started": r.Started,
-		"ai_level": r.AILevel, "aggr_level": r.AggrLevel,
+		"ai_level": r.AILevel,
 	}
 	if t.mem.Connected() {
 		func() {

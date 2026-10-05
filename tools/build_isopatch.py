@@ -10,6 +10,8 @@ retargeted. The .pnach's difficulty marker (000FE110) is replaced by a level wor
 Run: python tools/build_isopatch.py
 """
 import re, sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from build_harder_ai import AGGRESSION
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PNACH = os.path.join(ROOT, "patches", "SLUS-21242_D224D348.pnach")
@@ -31,10 +33,11 @@ MARKER = 0x000FE110
 # the .pnach: the main loop's call to 00185E60 at 001044E0 goes through a small writer routine.
 WRITER_ADDR = 0x00479B00
 FRAME_CALL, FRAME_CALL_TARGET = 0x001044E0, 0x00185E60
-# The Aggressive AI settings are loaded from the game's data at run time, so they are rewritten every
-# frame too, by a second writer on the main loop's call to 0034A688 at 0010454C.
+# The Harder AI levels' aggression settings are loaded from the game's data at run time, so they are
+# rewritten every frame too, by a second writer on the main loop's call to 0034A688 at 0010454C.
 AGGR_WRITER = 0x00479E60
 AGGR_CALL, AGGR_CALL_TARGET = 0x0010454C, 0x0034A688
+AGGRESSION_ADDRS = {a for a, *_ in AGGRESSION}
 FILE_RANGES = [(0x00100000, 0x004A34F8), (0x004A7500, 0x004EFBCC)]  # loaded from the file
 
 def in_file(a):
@@ -85,10 +88,9 @@ def aggr_writer(words):
     assert AGGR_WRITER + 4 * len(code) <= LEVEL_ADDR, "aggression writer runs into the level word"
     return out
 
-def aggr_patches(g, level_name):
-    words = dict(aggr_writer(g["Nuzlocke\\Aggressive AI\\" + level_name]))
-    words[AGGR_CALL] = 0x0C000000 | (AGGR_WRITER >> 2)          # jal writer (delay slot is a nop)
-    return sorted(words.items())
+def runtime_word(a):
+    """Values the game loads from its data at run time (the aggression settings): written every frame."""
+    return a in AGGRESSION_ADDRS or (a >= 0x00100000 and not in_file(a))
 
 def reloc_addr(a):
     for lo, hi, new in BLOCKS:
@@ -119,10 +121,14 @@ def groups(text):
 
 def level_patches(g, level_name, level_num):
     words = {}
+    runtime = []
     for name in ("Nuzlocke\\Block dead cars in garage", "Nuzlocke\\Block pause-menu Retry and Quit",
                  "Nuzlocke\\Harder AI\\" + level_name):
         for a, w in g[name]:
             if a == MARKER:
+                continue
+            if runtime_word(a):
+                runtime.append((a, w))
                 continue
             na, nw = reloc_addr(a), reloc_word(w)
             if na < 0x00100000:
@@ -137,6 +143,10 @@ def level_patches(g, level_name, level_num):
         nxt = min(a for a in starts if a > new)
         top = max([a for a in used if new <= a < nxt] or [new])
         assert top + 4 <= nxt, f"block at {new:08X} runs into {nxt:08X}"
+    if runtime:
+        for a, w in aggr_writer(runtime):
+            words[a] = w
+        words[AGGR_CALL] = 0x0C000000 | (AGGR_WRITER >> 2)      # jal writer (delay slot is a nop)
     words[LEVEL_ADDR] = level_num
     return sorted(words.items())
 
@@ -158,13 +168,6 @@ def main():
     for key, name in (("widescreen", "Widescreen 16:9"), ("fps60", "60 FPS menus and crash mode")):
         lines.append(f'\t{{"{key}", "{name}", []word{{')
         for a, w in option_patches(g, "Nuzlocke\\" + name):
-            lines.append(f"\t\t{{0x{a:08X}, 0x{w:08X}}},")
-        lines.append("\t}},")
-    lines.append("}")
-    lines += ["", "var aggression = []struct {", "\tname  string", "\twords []word", "}{"]
-    for name in ("Easy", "Medium", "Hard"):
-        lines.append(f'\t{{"{name}", []word{{')
-        for a, w in aggr_patches(g, name):
             lines.append(f"\t\t{{0x{a:08X}, 0x{w:08X}}},")
         lines.append("\t}},")
     lines.append("}")

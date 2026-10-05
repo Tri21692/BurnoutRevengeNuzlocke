@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/binary"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -644,46 +643,5 @@ func TestHistoryAndLocation(t *testing.T) {
 	r.History = append(r.History, HistoryEntry{Event: "X", Car: "FACTORY R160 ST", Result: "Silver + Great"})
 	if hist := carHistory(r, "HIGHUSCAR1A", "FACTORY R160 ST"); len(hist) != 3 || hist[2]["medal"] != "silver" {
 		t.Fatalf("old entry should read as silver: %+v", hist)
-	}
-}
-
-// The Aggressive AI level is read from the attack settings each .pnach level writes; until the game
-// has loaded them (all zero) the last level seen stays.
-func TestAggrLevel(t *testing.T) {
-	pnach, err := os.ReadFile("../patches/SLUS-21242_D224D348.pnach")
-	if err != nil {
-		t.Fatal(err)
-	}
-	f := &fakeMem{ram: make([]byte, 0x2000000)}
-	tr := NewTracker(f, filepath.Join(t.TempDir(), "run.json"), func() float64 { return 0 })
-	tr.StartRun("Medium")
-	f.w32(aggrMaxWait, 0x40400000) // the game's own values
-	f.w32(aggrBehind, 0x428C0000)
-	tr.readAILevel()
-	if got := tr.Snapshot()["aggr_level"]; got != "Off" {
-		t.Fatalf("stock settings: aggr_level = %v, want Off", got)
-	}
-	for _, level := range []string{"Easy", "Medium", "Hard"} {
-		group := false
-		for _, line := range strings.Split(string(pnach), "\n") {
-			line = strings.TrimSpace(line)
-			if strings.HasPrefix(line, "[") {
-				group = line == `[Nuzlocke\Aggressive AI\`+level+`]`
-			}
-			var a, v uint32
-			if n, _ := fmt.Sscanf(line, "patch=1,EE,%08X,word,%08X", &a, &v); group && n == 2 {
-				f.w32(a, v)
-			}
-		}
-		tr.readAILevel()
-		if got := tr.Snapshot()["aggr_level"]; got != level {
-			t.Errorf("%s group: aggr_level = %v", level, got)
-		}
-	}
-	f.w32(aggrMaxWait, 0)
-	f.w32(aggrBehind, 0)
-	tr.readAILevel()
-	if got := tr.Snapshot()["aggr_level"]; got != "Hard" || tr.run().AggrLevel != "Hard" {
-		t.Errorf("settings not loaded: aggr_level = %v, want the last level (Hard)", got)
 	}
 }

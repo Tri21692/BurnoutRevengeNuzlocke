@@ -3,7 +3,7 @@
 Loads the patched SLUS_212.42 by its program headers, like the PS2 does, and compares the memory image
 with the original file's image plus the .pnach's changes (relocated). Needs: pip install pycdlib
 
-Run: python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard> [aggr-easy|aggr-medium|aggr-hard] [widescreen] [60fps]
+Run: python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard> [widescreen] [60fps]
 """
 import io, struct, sys, os
 import pycdlib
@@ -46,7 +46,7 @@ def main(orig_path, iso_path, name, *extras):
     for grp in ("Nuzlocke\\Block dead cars in garage", "Nuzlocke\\Block pause-menu Retry and Quit",
                 "Nuzlocke\\Harder AI\\" + name):
         for a, w in g[grp]:
-            if a != B.MARKER:
+            if a != B.MARKER and not B.runtime_word(a):
                 struct.pack_into("<I", exp, B.reloc_addr(a), B.reloc_word(w))
     struct.pack_into("<I", exp, B.LEVEL_ADDR, num)
     for key, grp in (("widescreen", "Widescreen 16:9"), ("60fps", "60 FPS menus and crash mode")):
@@ -62,16 +62,15 @@ def main(orig_path, iso_path, name, *extras):
                     struct.pack_into("<I", exp, a, w)
                 struct.pack_into("<I", exp, B.FRAME_CALL, 0x0C000000 | (B.WRITER_ADDR >> 2))
     mem = load(elf)
-    aggr = [e[5:].capitalize() for e in extras if e.startswith("aggr-")]
-    if aggr:  # the writer must store exactly the .pnach group's values
-        want = dict(g["Nuzlocke\\Aggressive AI\\" + aggr[0]])
-        call, = struct.unpack_from("<I", mem, B.AGGR_CALL)
-        assert call == 0x0C000000 | (B.AGGR_WRITER >> 2), "aggression writer isn't called"
-        got = run_writer(mem, B.AGGR_WRITER, B.AGGR_CALL_TARGET)
-        assert got == want, f"aggression writer stores {got}, the .pnach has {want}"
-        print(f"aggression writer: {len(got)} values match the .pnach")
-        for a, w in B.aggr_patches(g, aggr[0]):
-            struct.pack_into("<I", exp, a, w)
+    # the level's aggression settings: the writer must store exactly the .pnach's values
+    want = {a: w for a, w in g["Nuzlocke\\Harder AI\\" + name] if B.runtime_word(a)}
+    call, = struct.unpack_from("<I", mem, B.AGGR_CALL)
+    assert call == 0x0C000000 | (B.AGGR_WRITER >> 2), "aggression writer isn't called"
+    got = run_writer(mem, B.AGGR_WRITER, B.AGGR_CALL_TARGET)
+    assert got == want, f"aggression writer stores {got}, the .pnach has {want}"
+    print(f"aggression writer: {len(got)} values match the .pnach")
+    for a, w in B.aggr_writer(sorted(want.items())) + [(B.AGGR_CALL, call)]:
+        struct.pack_into("<I", exp, a, w)
     bad = [i for i in range(0, len(mem), 4) if mem[i:i + 4] != exp[i:i + 4]]
     label = " + ".join([name, *extras])
     print(f"{label}: {len(bad)} mismatching words" + ("" if bad else " - OK"))

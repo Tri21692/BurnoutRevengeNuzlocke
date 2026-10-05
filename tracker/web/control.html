@@ -159,9 +159,7 @@ function render(s) {
   if (!r) { $('newrun').classList.remove('hidden'); $('newrun-sub').textContent = 'Choose how many lives each car gets. This is locked for the whole run.'; return; }
   $('mode').textContent = r.grace ? 'Grace mode (not counting)' : (r.dead ? 'Final stats' : `${r.difficulty} Nuzlocke`);
   const ai = s.ai_level || r.ai_level;
-  const aggr = s.aggr_level || r.aggr_level;
-  const aggrNote = aggr && aggr !== 'Off' ? `, ${aggr} aggression` : '';
-  const aiNote = ai ? ` Opponents: ${ai === 'Off' ? 'normal AI' : ai + ' AI'}${aggrNote}.` : '';
+  const aiNote = ai ? ` Opponents: ${ai === 'Off' ? 'normal AI' : ai + ' AI'}.` : '';
   $('started').textContent = `${r.lives_start} Race + ${r.lives_start} Crash ${r.lives_start === 1 ? 'life' : 'lives'} per car.${r.requirement ? ' Each event needs ' + r.requirement + ' or better.' : ''}${aiNote} Started ${r.started}.`;
   $('won').textContent = `${r.won}/${r.played}`;
   $('lost').textContent = `${r.cars_lost}/${r.race_cars_total ?? r.cars_total}`;
