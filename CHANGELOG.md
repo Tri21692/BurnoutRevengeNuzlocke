@@ -2,6 +2,9 @@
 
 ## V1.1
 
+Emergency patch + QOL. **Upgrading from V1.0:** replace all three files (`nuzlocke.exe`, the `.pnach`
+and `nuzlocke_isopatch.exe`), and remake any patched ISOs. Your current run carries over.
+
 - **Fixed:** ISOs made with the ISO patcher crashed on boot ("Jump to unmapped recLUT page"). The patcher
   no longer changes the game file's layout; the mod's code now goes into unused space inside the game's
   own data. Make your patched ISOs again with the new patcher.

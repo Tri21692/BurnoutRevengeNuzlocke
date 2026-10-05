@@ -8,6 +8,9 @@ on:
       version:
         description: "Version to release, e.g. 1.0"
         required: true
+      title:
+        description: "Release title (optional, defaults to V<version>)"
+        required: false
   push:
     tags: ["v*"]
 
@@ -24,6 +27,7 @@ jobs:
         id: info
         env:
           INPUT_VERSION: ${{ inputs.version }}
+          INPUT_TITLE: ${{ inputs.title }}
         run: |
           if [ -n "$INPUT_VERSION" ]; then ver="${INPUT_VERSION#[vV]}"; else ver="${GITHUB_REF_NAME#v}"; fi
           zip="releases/BurnoutRevengeNuzlocke-V${ver}.zip"
@@ -32,11 +36,12 @@ jobs:
           test -s notes.md || { echo "::error::No '## V${ver}' section in CHANGELOG.md"; exit 1; }
           echo "version=${ver}" >> "$GITHUB_OUTPUT"
           echo "zip=${zip}" >> "$GITHUB_OUTPUT"
+          echo "title=${INPUT_TITLE:-V${ver}}" >> "$GITHUB_OUTPUT"
 
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.info.outputs.version }}
           target_commitish: ${{ github.sha }}
-          name: V${{ steps.info.outputs.version }}
+          name: ${{ steps.info.outputs.title }}
           body_path: notes.md
           files: ${{ steps.info.outputs.zip }}
