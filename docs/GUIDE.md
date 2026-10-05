@@ -88,7 +88,7 @@ The medal and the rating are checked separately: on Medium, Gold + Awesome and S
 
 **Wrecked cars.** A car out of **Race** lives is renamed `[RACE X]` and can't be selected in the garage, but can still be picked in crash junctions. A car out of **Crash** lives is renamed `[CRASH X]` and can't be picked in crash junctions, but can still race. A car out of both is `[WRECKED]`. (Short names get `[R X]`, `[C X]`, `[WRECK]` or `[X]`.) This is reapplied every time the game starts.
 
-**Run's dead.** When every car that can race is wrecked in the Race pool, **or** every car that can crash is wrecked in the Crash pool, the control page and stream overlay show your final stats. The game stays on the results screen (Continue and Retry don't respond) until you choose one of these on the control page. A car unlocked by the event that ended the run doesn't count. You then choose:
+**Run's dead.** When every car that can race is wrecked in the Race pool, **or** every car that can crash is wrecked in the Crash pool, the control page and stream overlay show your final stats. Every car, including one the event just unlocked, is then blocked in the garage and in crash junctions (shown as `[WRECKED]`), so nothing more can be played until you choose one of these on the control page. A car unlocked by the event that ended the run doesn't count. You then choose:
 
 - **Shut down game:** closes PCSX2.
 - **Grace continue:** keep playing with all cars usable again, but nothing counts any more.

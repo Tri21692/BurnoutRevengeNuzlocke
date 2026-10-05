@@ -26,7 +26,7 @@
 | **Wrecked** | A car out of Race lives can't be selected in the garage (`[RACE X]`); out of Crash lives, it can't be picked in crash junctions (`[CRASH X]`); out of both, it's `[WRECKED]`. |
 | **No escape** | Retry and Quit in the pause menu don't work, so you can't bail out of an event to save a life, and Retry on the results screen just continues. |
 | **Harder AI** | Opponents corner faster, keep their pace, come back hard when they fall behind, and go for takedowns more often and harder. |
-| **Run's dead** | When every car that can race is wrecked for Race events, **or** every crash car is wrecked for Crash junctions, the run is over: the game stays on the results screen until you shut it down, choose **Grace mode** (where nothing counts) or start a new run. A car unlocked by the event that ended the run doesn't save it, and a car only loaned to you (Burning Lap, Preview) doesn't count until you unlock it. Retrying a loaned-car event after the loaner is wrecked costs one of your own cars a life. |
+| **Run's dead** | When every car that can race is wrecked for Race events, **or** every crash car is wrecked for Crash junctions, the run is over: every car is blocked in the garage and in crash junctions until you shut the game down, choose **Grace mode** (where nothing counts) or start a new run. A car unlocked by the event that ended the run doesn't save it, and a car only loaned to you (Burning Lap, Preview) doesn't count until you unlock it. Retrying a loaned-car event after the loaner is wrecked costs one of your own cars a life. |
 
 Inspired by the [Need for Speed Underground Nuzlocke mod](https://github.com/xan1242/NFSU-nuzlocke).
 

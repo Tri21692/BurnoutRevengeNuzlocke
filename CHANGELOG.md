@@ -9,9 +9,10 @@
   (Easy: from 40 m ahead, 90%; Medium: 70 m, 94%; Hard: 100 m, 97%; never below 90 / 100 / 112 mph),
   so a leader can be caught. Remake patched ISOs to get it; the tracker recognizes old and new ones.
 - **Run's dead is final.** Only the cars you had before an event count towards whether it ended the run,
-  so a car unlocked by that same event can't save it. While the run is dead, the results screens refuse
-  Continue and Retry until you choose Grace, a new run or shut down on the control page (new part 4 of the
-  main `.pnach` group; remake patched ISOs).
+  so a car unlocked by that same event can't save it. While the run is dead, every car is blocked in the
+  garage and in crash junctions (the new car too) until you choose Grace, a new run or shut down on the
+  control page. (A test version held the game on the results screen instead, which could leave the screen
+  stuck with its buttons gone; that's been dropped.)
 - **Harder AI goes for takedowns.** Each level now also changes the game's own attack settings:
   opponents attack more often, from further away and sooner after the start, block you for longer and
   slam harder (+15 / 30 / 50%). On Hard every opponent attacks. To keep that fair, their speed is a

@@ -201,9 +201,10 @@ mismatches; ELF headers and section table unchanged).
 
 ## Run's dead lock (V1.1.2)
 
-The tracker writes 1 to `000FE120` while the run is dead. The three results handlers (`0019AD98`,
-`00191B58`, `00191FA8`) start with `j` to stubs at `000FF200`/`240`/`280` (`00479C00`/`40`/`80` in a
-patched ISO) that return straight away for message 7/8 (race results: Continue/Retry) or 5 (the other two:
-a selection) while the flag is set, before the handler sets its busy flag; otherwise they run the two
-replaced instructions and jump back. Source: `tools/build_deadlock.py`. (The front end's `01C0A2D0+0x5639`
-byte is a "go to the next screen" request, not an input lock, so it isn't usable for this.)
+A test version held the game on the results screens: the three results handlers (`0019AD98`,
+`00191B58`, `00191FA8`) started with a jump to stubs that returned straight away for Continue/Retry while
+a flag at `000FE120` was set. In the game the screen still hid its buttons on the press and then waited
+for an action that never came, so it stayed stuck even after Grace (the same trap as V1.1's Retry block).
+It was dropped: while the run is dead, the tracker puts every car on both dead-car tables instead, so
+nothing can be started until Grace or a new run, and the menus keep working. (The front end's
+`01C0A2D0+0x5639` byte is a "go to the next screen" request, not an input lock, so it isn't usable either.)

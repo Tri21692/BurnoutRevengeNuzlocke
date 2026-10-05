@@ -513,8 +513,8 @@ func TestRequirements(t *testing.T) {
 	}
 }
 
-// The event that wrecks the last car also unlocks a new one: the run is still dead, the patch is told
-// to hold the results screen, and Grace releases it.
+// The event that wrecks the last car also unlocks a new one: the run is still dead, every car (the new
+// one too) is blocked, and Grace unblocks them.
 func TestRewardCarCantSaveRun(t *testing.T) {
 	f := &fakeMem{ram: make([]byte, 0x2000000)}
 	f.w32(eventCount, 169)
@@ -526,7 +526,6 @@ func TestRewardCarCantSaveRun(t *testing.T) {
 		f.w32(a, v)
 	}
 	f.w32(crashTableRef, crashTableRefOn)
-	f.w32(deadLockHook, deadLockHookOn)
 	const obj = 0x01D00000
 	f.w32(currentEvent, obj)
 	f.w32(carouselList+0xBA4, 1) // the garage: one car
@@ -558,15 +557,19 @@ func TestRewardCarCantSaveRun(t *testing.T) {
 	if !dead || !tr.run().Dead {
 		t.Fatal("a car unlocked by the failing event must not save the run")
 	}
-	if binary.LittleEndian.Uint32(f.ram[deadFlag:]) != 1 {
-		t.Fatal("the patch should be told to hold the results screen")
+	clock += 3
+	tr.Poll()
+	if n := binary.LittleEndian.Uint32(f.ram[deadTable:]); n != 2 {
+		t.Fatalf("a dead run blocks every car, the reward car too: garage table holds %d", n)
 	}
 	if tr.Snapshot()["patch_old"] != false {
-		t.Fatal("patch with the lock reported as old")
+		t.Fatal("current patch reported as old")
 	}
 	tr.Grace()
-	if binary.LittleEndian.Uint32(f.ram[deadFlag:]) != 0 {
-		t.Fatal("Grace should release the results screen")
+	clock += 3
+	tr.Poll()
+	if n := binary.LittleEndian.Uint32(f.ram[deadTable:]); n != 0 {
+		t.Fatalf("Grace should unblock every car, %d still blocked", n)
 	}
 }
 
@@ -660,7 +663,6 @@ func TestLoanedCar(t *testing.T) {
 		f.w32(a, v)
 	}
 	f.w32(crashTableRef, crashTableRefOn)
-	f.w32(deadLockHook, deadLockHookOn)
 	const obj = 0x01D00000
 	f.w32(currentEvent, obj)
 	garage := func(labels ...string) {
