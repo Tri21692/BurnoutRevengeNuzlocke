@@ -46,11 +46,11 @@ Setup takes about ten minutes and only needs doing once.
    - **Patch file (recommended).** Copy `SLUS-21242_D224D348.pnach` as it is into PCSX2's `patches` folder (usually `Documents\PCSX2\patches`). In the game's Properties, open the **Patches** tab and tick:
      - **Nuzlocke\Block dead cars in garage** (required)
      - **Nuzlocke\Block pause-menu Retry and Quit** (recommended)
-     - **one** of **Nuzlocke\Harder AI\Easy / Medium / Hard** (optional; faster and more aggressive opponents; never more than one)
+     - **one** of **Nuzlocke\Harder AI\Easy / Medium / Hard / Insane** (optional; faster and more aggressive opponents; never more than one. Insane is not meant to be fair)
      - **Nuzlocke\Widescreen 16:9** and **Nuzlocke\60 FPS menus and crash mode** (optional, by SuperType1/remco)
 
      It also works from the `cheats` folder and the Cheats tab. Check Windows hasn't added a hidden `.txt` to the file name. Restart the game after changing anything.
-   - **Patched ISO.** Drag your clean Burnout Revenge ISO onto `nuzlocke_isopatch.exe` choose Easy, Medium or Hard, and answer whether you want widescreen and 60 FPS. It writes a new ISO next to the original, for example `Burnout Revenge (Nuzlocke Hard, 16-9).iso`, with everything above built in. Add that ISO to PCSX2 and play it, **without** the `.pnach` enabled. Your original ISO isn't changed.
+   - **Patched ISO.** Drag your clean Burnout Revenge ISO onto `nuzlocke_isopatch.exe` choose Easy, Medium, Hard or Insane (Insane shows a warning and asks you to type YES), and answer whether you want widescreen and 60 FPS. It writes a new ISO next to the original, for example `Burnout Revenge (Nuzlocke Hard, 16-9).iso`, with everything above built in. Add that ISO to PCSX2 and play it, **without** the `.pnach` enabled. Your original ISO isn't changed.
 3. **Set up the tracker.** Put `nuzlocke.exe` in a folder of its own, since it saves your run next to itself. Double-click it.
    - If Windows SmartScreen warns you, click More info, then Run anyway. The program isn't signed.
    - A small console window opens. Keep it open while you play; closing it stops the tracker.
@@ -108,7 +108,10 @@ Not with the pause-menu block on: those options do nothing. Without it, the trac
 Lives, no: they're locked for the run, so start a new run to change them. The AI level can be changed between sessions, and the overlay shows whichever is active.
 
 **What does Harder AI change?**
-Two things, together. Speed: opponents corner faster, keep their pace when out of sight, catch up when far behind you, and ease off when far ahead so they can be caught. Aggression: they go for takedowns more often and from further away, start sooner after the green light, block you for longer and slam harder. On Hard every opponent attacks.
+Two things, together. Speed: opponents corner faster, keep their pace when out of sight, catch up when far behind you, and ease off when far ahead so they can be caught. Aggression: they go for takedowns more often and from further away, start sooner after the green light, block you for longer and slam harder. On Hard and Insane every opponent attacks.
+
+**What's Insane?**
+A fourth AI level for when Hard isn't enough: opponents keep the full speed Hard had before the aggression was added (cornering right at the limit, 257 mph, the strongest catch-up), and attack almost constantly, from the start line and from up to 150 m away, blocking you for up to 15 s and slamming twice as hard. It isn't meant to be fair; with 1 + 1 lives most runs will end within a few events.
 
 **Which AI level should I pick?**
 Easy is already noticeably tougher than the stock game. Hard opponents corner close to the limit and come back very quickly when they fall behind you. Try a few races on each before starting a real run.

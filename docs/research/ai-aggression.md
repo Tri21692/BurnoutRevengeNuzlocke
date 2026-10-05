@@ -70,7 +70,7 @@ Values as read live in a race:
 - `00290E04`: the wait before its next attack is max + (min − max) × aggression (+0xCC, +0xC8), so the
   most aggressive opponents wait the minimum.
 
-## Patches: part of `[Nuzlocke\Harder AI\Easy|Medium|Hard]`
+## Patches: part of `[Nuzlocke\Harder AI\Easy|Medium|Hard|Insane]`
 
 Each Harder AI level writes +0xC4–+0xD8, +0xE8, +0xF0–+0xF8, +0x100, +0x114, +0x120 and the six AI slam and shunt
 forces every frame (values in the README). +0xB8 and +0xDC are left alone, since the speed catch-up

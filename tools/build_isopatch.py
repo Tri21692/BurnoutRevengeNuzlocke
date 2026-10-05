@@ -158,7 +158,7 @@ def main():
              f"const levelAddr = 0x{LEVEL_ADDR:08X}", "",
              "type word struct{ addr, value uint32 }", "",
              "var levels = []struct {", "\tname  string", "\twords []word", "}{"]
-    for num, name in enumerate(("Easy", "Medium", "Hard"), 1):
+    for num, name in enumerate(("Easy", "Medium", "Hard", "Insane"), 1):
         lines.append(f'\t{{"{name}", []word{{')
         for a, w in level_patches(g, name, num):
             lines.append(f"\t\t{{0x{a:08X}, 0x{w:08X}}},")

@@ -3,7 +3,7 @@
 Loads the patched SLUS_212.42 by its program headers, like the PS2 does, and compares the memory image
 with the original file's image plus the .pnach's changes (relocated). Needs: pip install pycdlib
 
-Run: python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard> [widescreen] [60fps]
+Run: python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard|Insane> [widescreen] [60fps]
 """
 import io, struct, sys, os
 import pycdlib
@@ -40,7 +40,7 @@ def main(orig_path, iso_path, name, *extras):
     iso = pycdlib.PyCdlib(); iso.open(iso_path); buf = io.BytesIO()
     iso.get_file_from_iso_fp(buf, iso_path="/SLUS_212.42;1"); iso.close()
     elf = buf.getvalue()
-    num = ("Easy", "Medium", "Hard").index(name) + 1
+    num = ("Easy", "Medium", "Hard", "Insane").index(name) + 1
     exp = load(orig)
     g = B.groups(open(B.PNACH).read())
     for grp in ("Nuzlocke\\Block dead cars in garage", "Nuzlocke\\Block pause-menu Retry and Quit",

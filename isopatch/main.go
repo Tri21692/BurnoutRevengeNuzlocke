@@ -3,7 +3,7 @@
 // Harder AI level (faster and more aggressive opponents), optionally with widescreen 16:9 and 60 FPS
 // menus (by SuperType1/remco). The original ISO is never modified.
 //
-// Usage: nuzlocke_isopatch.exe [game.iso] [easy|medium|hard] [widescreen] [60fps]
+// Usage: nuzlocke_isopatch.exe [game.iso] [easy|medium|hard|insane] [widescreen] [60fps]
 // (or drag the ISO onto the .exe and answer the questions)
 package main
 
@@ -62,14 +62,31 @@ func run(args []string, in *bufio.Reader) error {
 	level := -1
 	if len(args) > 1 {
 		level = levelIndex(args[1])
+		if level == insane {
+			fmt.Println(insaneWarning)
+			fmt.Println()
+		}
 	}
 	for level < 0 {
-		fmt.Println("Harder AI level (opponents' speed and aggression):  1 = Easy   2 = Medium   3 = Hard")
-		fmt.Print("Choose 1, 2 or 3: ")
+		fmt.Println("Harder AI level (opponents' speed and aggression):  1 = Easy   2 = Medium   3 = Hard   4 = Insane")
+		fmt.Print("Choose 1, 2, 3 or 4: ")
 		line, err := in.ReadString('\n')
 		level = levelIndex(strings.TrimSpace(line))
 		if level < 0 && err != nil {
 			return errors.New("no level chosen")
+		}
+		if level == insane {
+			fmt.Println()
+			fmt.Println(insaneWarning)
+			fmt.Print("Type YES to use Insane, or press Enter to choose again: ")
+			line, err := in.ReadString('\n')
+			if strings.TrimSpace(line) != "YES" {
+				if err != nil {
+					return errors.New("Insane not confirmed")
+				}
+				level = -1
+			}
+			fmt.Println()
 		}
 	}
 
@@ -108,6 +125,14 @@ func run(args []string, in *bufio.Reader) error {
 	return nil
 }
 
+const insane = 3 // index of the Insane level
+
+const insaneWarning = `WARNING: Insane is not meant to be fair.
+  Opponents have the full speed of the original Hard level (corner at the limit, 257 mph, the
+  strongest catch-up), and every one of them attacks you almost all the time: from the start
+  line, from up to 150 m away, blocking you for up to 15 s and slamming twice as hard.
+  Combined with 1 + 1 lives (Hard in the tracker), most runs will end within a few events.`
+
 func levelIndex(s string) int {
 	switch strings.ToLower(s) {
 	case "1", "easy":
@@ -116,6 +141,8 @@ func levelIndex(s string) int {
 		return 1
 	case "3", "hard":
 		return 2
+	case "4", "insane":
+		return insane
 	}
 	return -1
 }

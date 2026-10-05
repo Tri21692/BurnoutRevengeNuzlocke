@@ -41,7 +41,7 @@ const (
 	// Written by the Harder AI groups of the .pnach
 	aiHook   = 0x00298FEC // jal to the catch-up wrapper when a Harder AI level is active
 	aiHookOn = 0x0C03FE80
-	aiMarker = 0x000FE110 // 1 Easy, 2 Medium, 3 Hard
+	aiMarker = 0x000FE110 // 1 Easy, 2 Medium, 3 Hard, 4 Insane
 
 	// The patched ISOs (isopatch/) carry the same code in unused space in the game's .data section
 	// (00479D00-00479FFF) instead, so their hooks jump there, and the level is a word in that space.
@@ -93,7 +93,7 @@ func passes(difficulty string, medal uint32, shown int, perfectNow bool) bool {
 
 var medals = map[uint32]string{3: "Gold", 2: "Silver", 1: "Bronze", 0: "No medal"}
 var ratings = []string{"-", "Good", "Great", "Awesome", "Perfect"}
-var aiLevels = []string{"Off", "Easy", "Medium", "Hard"}
+var aiLevels = []string{"Off", "Easy", "Medium", "Hard", "Insane"}
 
 // Mem is the connection to PCSX2 (real on Windows, faked in tests).
 type Mem interface {

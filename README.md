@@ -67,6 +67,7 @@ There are two separate settings: lives are chosen in the tracker when you start 
 | **Easy** | 3 + 3 per car | **Easy** | 86.25% of the line's limit | 1.5–4.5 s per section quicker | 217 mph | from 40 m behind, up to +40 mph | 40 m ahead: 90% of your speed |
 | **Medium** | 2 + 2 per car | **Medium** | 91.25% | 3.5–6.5 s quicker | 239 mph | from 25 m behind, up to +60 mph | 70 m ahead: 94% |
 | **Hard** | 1 + 1 per car | **Hard** | 96.25% | 5.5–8.5 s quicker | 251 mph | from 10 m behind, up to +81 mph | 100 m ahead: 97% |
+| | | ⚠️ **Insane** | 97.5% | 6–9 s quicker | 257 mph | from 10 m behind, up to +89 mph | 100 m ahead: 97% |
 
 Each Harder AI level also makes opponents more aggressive, through the game's own attack settings:
 
@@ -76,6 +77,9 @@ Each Harder AI level also makes opponents more aggressive, through the game's ow
 | **Easy** | 0.1 | 0.3–2.25 s | 50 m ahead, 85 m behind | 2 s | 3.5–9 s, from 20 m | +15% |
 | **Medium** | 0.05 | 0.25–1.5 s | 60 m ahead, 100 m behind | 1.5 s | 4–10 s, from 25 m | +30% |
 | **Hard** | 0 (every opponent) | 0.2–1 s | 75 m ahead, 120 m behind | 1 s | 5–12 s, from 30 m | +50% |
+| ⚠️ **Insane** | 0 (every opponent) | 0.1–0.5 s | 100 m ahead, 150 m behind | 0.5 s | 6–15 s, from 40 m | +100% |
+
+**Insane** is not meant to be fair: it keeps the full speed Hard had before the aggression was added and has opponents attacking almost constantly. With 1 + 1 lives, expect most runs to end within a few events. The ISO patcher asks you to confirm it.
 
 Each opponent has its own aggression (0 to 1); the more aggressive it is, the shorter its wait between attacks. Slams also last longer, opponents try for longer to get into slamming position, and a rubbed opponent recovers sooner. Details are in the [aggression research notes](docs/research/ai-aggression.md).
 
@@ -103,7 +107,7 @@ cd isopatch && GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o 
 cd tracker  && go test ./...
 ```
 
-After changing the `.pnach`, regenerate the ISO patcher's data with `python tools/build_isopatch.py`. To check a patched ISO against the `.pnach`, run `python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard>` (needs `pip install pycdlib`).
+To retune the AI, edit the table in `tools/build_harder_ai.py` and run it. After changing the `.pnach`, regenerate the ISO patcher's data with `python tools/build_isopatch.py`. To check a patched ISO against the `.pnach`, run `python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard|Insane>` (needs `pip install pycdlib`).
 
 ## Research tools
 

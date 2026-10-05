@@ -94,6 +94,7 @@ speed), +0x50 100, +0xB8 10 (duel gap threshold, m), +0xDC 0.999 (duel ease-off 
 | Easy | 0.8625 (0.9125) | −4.5..−1.5 s | 97 m/s |
 | Medium | 0.9125 (0.9625) | −6.5..−3.5 s | 107 m/s |
 | Hard | 0.9625 (0.9875) | −8.5..−5.5 s | 112 m/s |
+| Insane | 0.975 (1.0) | −9..−6 s | 115 m/s |
 
 The groups are written by [`tools/build_harder_ai.py`](../../tools/build_harder_ai.py) from one table
 (speed and aggression); change a number there and run it, then `build_isopatch.py`.
@@ -122,12 +123,13 @@ racer+0x24E0 = `01EDA550`). With d = gap − start distance and boost = min(k·d
 | Easy | 40 m | 0.225 | 18 m/s | 40 m | 0.90 | 40 m/s |
 | Medium | 25 m | 0.36 | 27 m/s | 70 m | 0.94 | 45 m/s |
 | Hard | 10 m | 0.54 | 36 m/s | 100 m | 0.97 | 50 m/s |
+| Insane | 10 m | 0.6 | 40 m/s | 100 m | 0.97 | 50 m/s |
 
 Since V1.1.2 the wrapper also eases leaders off: when the opponent is further ahead of the player than
 the ease-off distance, its target becomes min(target, max(player speed x factor, minimum)). The wrapper
 is 0x1B8 bytes; in patched ISOs it sits at 00479800 (00479E80 before V1.1.2).
 
-Source: [`tools/build_catchup.py`](../../tools/build_catchup.py). Each level also writes its number (1–3) to `000FE110` for the tracker.
+Source: [`tools/build_catchup.py`](../../tools/build_catchup.py). Each level also writes its number (1–4, Insane = 4) to `000FE110` for the tracker.
 
 An earlier single test version (0.9/0.95, −6..−3) was confirmed working in game.
 

@@ -1,4 +1,4 @@
-"""Writes the [Nuzlocke\\Harder AI\\Easy|Medium|Hard] groups of the .pnach from the table below: the
+"""Writes the [Nuzlocke\\Harder AI\\Easy|Medium|Hard|Insane] groups of the .pnach from the table below: the
 opponents' speed (cornering, pace, speed cap, catch-up, ease-off) and their aggression (takedown
 attempts, blocking, slam force) in one option per level. Run it after changing a number here, then run
 build_isopatch.py. See docs/research/ai-catchup.md and docs/research/ai-aggression.md.
@@ -22,33 +22,36 @@ SPEED = {
                    ahead=70,  factor=0.94, minspeed=45),
     "Hard":   dict(corner=(0.9625, 0.9875), pace=(-8.5, -5.5), cap=112, d0=10, k=0.54,  bmax=36,
                    ahead=100, factor=0.97, minspeed=50),
+    # Insane: Hard's speed from before it was toned down for the aggression (V1.1.2's first Hard)
+    "Insane": dict(corner=(0.975, 1.0),     pace=(-9, -6),     cap=115, d0=10, k=0.6,   bmax=40,
+                   ahead=100, factor=0.97, minspeed=50),
 }
 
 # Aggression: the game's own AI/Aggressive Driving settings and the AI slam/shunt forces.
-# (address, what, stock, Easy, Medium, Hard)
+# (address, what, stock, Easy, Medium, Hard, Insane)
 AGGRESSION = [
-    (0x01C914AC, "Min. aggression before attacking", 0.2, 0.1, 0.05, 0.0),
-    (0x01C914B0, "Min. time between attacks (s)", 0.38, 0.3, 0.25, 0.2),
-    (0x01C914B4, "Max. time between attacks (s)", 3, 2.25, 1.5, 1.0),
-    (0x01C914B8, "Max. distance to start an attack when ahead (m)", 40, 50, 60, 75),
-    (0x01C914BC, "Max. distance to start an attack when behind (m)", 70, 85, 100, 120),
-    (0x01C914C0, "Min. speed to consider attacking (mph)", 70, 60, 50, 40),
-    (0x01C914D0, "Wait at the start before attacking (s)", 3, 2, 1.5, 1),
-    (0x01C914D8, "Min. time to block you (s)", 3, 3.5, 4, 5),
-    (0x01C914DC, "Max. time to block you (s)", 8, 9, 10, 12),
-    (0x01C914E0, "Max. distance ahead to start blocking you (m)", 15, 20, 25, 30),
-    (0x01C914E8, "Max. time to get into slamming position (s)", 15, 18, 20, 25),
-    (0x01C914FC, "Slam time (s)", 1.5, 1.75, 2.0, 2.25),
-    (0x01C91508, "Time a rubbed opponent goes blind (s)", 1, 0.75, 0.5, 0.3),
-    (0x0045F108, "AI neutral slam force", 30, 34.5, 39, 45),
-    (0x0045F10C, "AI level 1 slam force", 35, 40.25, 45.5, 52.5),
-    (0x0045F110, "AI level 2 slam force", 40, 46, 52, 60),
-    (0x0045F114, "AI neutral shunt force", 30, 34.5, 39, 45),
-    (0x0045F118, "AI level 1 shunt force", 32, 36.8, 41.6, 48),
-    (0x0045F11C, "AI level 2 shunt force", 35, 40.25, 45.5, 52.5),
+    (0x01C914AC, "Min. aggression before attacking", 0.2, 0.1, 0.05, 0.0, 0),
+    (0x01C914B0, "Min. time between attacks (s)", 0.38, 0.3, 0.25, 0.2, 0.1),
+    (0x01C914B4, "Max. time between attacks (s)", 3, 2.25, 1.5, 1.0, 0.5),
+    (0x01C914B8, "Max. distance to start an attack when ahead (m)", 40, 50, 60, 75, 100),
+    (0x01C914BC, "Max. distance to start an attack when behind (m)", 70, 85, 100, 120, 150),
+    (0x01C914C0, "Min. speed to consider attacking (mph)", 70, 60, 50, 40, 30),
+    (0x01C914D0, "Wait at the start before attacking (s)", 3, 2, 1.5, 1, 0.5),
+    (0x01C914D8, "Min. time to block you (s)", 3, 3.5, 4, 5, 6),
+    (0x01C914DC, "Max. time to block you (s)", 8, 9, 10, 12, 15),
+    (0x01C914E0, "Max. distance ahead to start blocking you (m)", 15, 20, 25, 30, 40),
+    (0x01C914E8, "Max. time to get into slamming position (s)", 15, 18, 20, 25, 30),
+    (0x01C914FC, "Slam time (s)", 1.5, 1.75, 2.0, 2.25, 2.5),
+    (0x01C91508, "Time a rubbed opponent goes blind (s)", 1, 0.75, 0.5, 0.3, 0.15),
+    (0x0045F108, "AI neutral slam force", 30, 34.5, 39, 45, 60),
+    (0x0045F10C, "AI level 1 slam force", 35, 40.25, 45.5, 52.5, 70),
+    (0x0045F110, "AI level 2 slam force", 40, 46, 52, 60, 80),
+    (0x0045F114, "AI neutral shunt force", 30, 34.5, 39, 45, 60),
+    (0x0045F118, "AI level 1 shunt force", 32, 36.8, 41.6, 48, 64),
+    (0x0045F11C, "AI level 2 shunt force", 35, 40.25, 45.5, 52.5, 70),
 ]
-SLAM_MORE = {"Easy": 15, "Medium": 30, "Hard": 50}
-LEVELS = ("Easy", "Medium", "Hard")
+SLAM_MORE = {"Easy": 15, "Medium": 30, "Hard": 50, "Insane": 100}
+LEVELS = ("Easy", "Medium", "Hard", "Insane")
 
 def lui(f):
     b = fbits(f); assert b & 0xFFFF == 0, f"{f} needs more than lui"
@@ -61,12 +64,13 @@ def group(level):
     p = lambda a, v: f"patch=1,EE,{a:08X},word,{v:08X}"
     L = [f"[Nuzlocke\\Harder AI\\{level}]", "author=Nuzlocke mod",
          f"description=Harder opponents, {level} level: faster and more aggressive. Enable only one Harder AI level. "
-         f"Corners at {cn:g} of the racing line's limit ({ca:g} on aggressive stretches); far from the player, "
+         + ("WARNING: Insane is not meant to be fair; most runs will end within a few events. " if level == "Insane" else "")
+         + f"Corners at {cn:g} of the racing line's limit ({ca:g} on aggressive stretches); far from the player, "
          f"{-hi:g}-{-lo:g} s per section quicker than their pace schedule; catch-up from {s['d0']} m behind the player "
          f"(up to +{s['bmax']} m/s); ease-off from {s['ahead']} m ahead of the player (to {s['factor']:g} x the "
          f"player's speed); speed cap {cap} m/s. Opponents go for takedowns more often, from further away and sooner "
          f"after the start, block you for longer and slam {SLAM_MORE[level]}% harder"
-         + (", and every opponent attacks" if level == "Hard" else "") + ". See docs/research/ai-catchup.md and ai-aggression.md.",
+         + (", and every opponent attacks" if level in ("Hard", "Insane") else "") + ". See docs/research/ai-catchup.md and ai-aggression.md.",
          "// Corner speed factor (game: 0.8, aggressive 0.85)"]
     for a, f in ((0x0029EE1C, cn), (0x0029EE30, ca)):
         b = fbits(f)
@@ -94,7 +98,7 @@ def group(level):
     L.append("// slam and shunt forces. They're loaded from the game's data, so they're written every frame.")
     for a, what, stock, *vals in AGGRESSION:
         L += [f"// {what}: {stock:g} -> {vals[n - 1]:g}", p(a, fbits(vals[n - 1]))]
-    L += ["// Difficulty marker for the tracker: 000FE110 = 1 Easy, 2 Medium, 3 Hard", p(0x000FE110, n)]
+    L += ["// Difficulty marker for the tracker: 000FE110 = 1 Easy, 2 Medium, 3 Hard, 4 Insane", p(0x000FE110, n)]
     return "\n".join(L) + "\n"
 
 def main():

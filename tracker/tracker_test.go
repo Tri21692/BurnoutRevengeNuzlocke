@@ -309,7 +309,7 @@ func TestAILevel(t *testing.T) {
 		t.Fatalf("marker without hook: ai_level = %v, want Off", got)
 	}
 	f.w32(aiHook, aiHookOn)
-	for marker, want := range map[uint32]string{1: "Easy", 2: "Medium", 3: "Hard", 7: "Off"} {
+	for marker, want := range map[uint32]string{1: "Easy", 2: "Medium", 3: "Hard", 4: "Insane", 7: "Off"} {
 		f.w32(aiMarker, marker)
 		tr.readAILevel()
 		if got := tr.Snapshot()["ai_level"]; got != want {

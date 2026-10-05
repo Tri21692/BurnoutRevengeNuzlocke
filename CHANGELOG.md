@@ -17,6 +17,10 @@
   slam harder (+15 / 30 / 50%). On Hard every opponent attacks. To keep that fair, their speed is a
   little lower: cornering 86.25 / 91.25 / 96.25% (was 87.5 / 92.5 / 97.5%), pace 0.5 s per section
   slower, speed limit 217 / 239 / 251 mph (was 224 / 246 / 257) and catch-up 10% weaker.
+- **Insane AI level.** A fourth Harder AI level with Hard's full speed from before it was toned down
+  (cornering at 97.5%, 257 mph, catch-up up to +89 mph) and far more aggression: every opponent attacks
+  every 0.1–0.5 s, from up to 150 m away and half a second after the start, blocks you for 6–15 s and
+  slams twice as hard. Not meant to be fair: the ISO patcher shows a warning and asks you to confirm.
 - **Medal strip.** The control page and the overlay show the current car's events in order as medals
   (gold, silver, bronze or none; red ribbon and slash for a loss, "C" for a Crash junction). Click a
   medal on the control page to see the event, its result, location and time. It replaces the recent
