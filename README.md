@@ -96,7 +96,7 @@ After changing the `.pnach`, regenerate the ISO patcher's data with `python tool
 
 ## Research tools
 
-[`tools/ps2scan.py`](tools/ps2scan.py) is the memory search tool everything here was found with. It takes labelled snapshots of PS2 RAM through PCSX2 and finds values that differ between situations, with extras for floats, speeds, live watching, text lookup and disassembly (`pip install pymem pefile numpy rabbitizer`). Run it and type `help` for the commands.
+[`tools/ps2scan.py`](tools/ps2scan.py) is the memory search tool everything here was found with. It takes labeled snapshots of PS2 RAM through PCSX2 and finds values that differ between situations, with extras for floats, speeds, live watching, text lookup and disassembly (`pip install pymem pefile numpy rabbitizer`). Run it and type `help` for the commands.
 
 ## Credits and disclaimer
 
