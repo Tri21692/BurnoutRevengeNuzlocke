@@ -31,6 +31,10 @@ MARKER = 0x000FE110
 # the .pnach: the main loop's call to 00185E60 at 001044E0 goes through a small writer routine.
 WRITER_ADDR = 0x00479B00
 FRAME_CALL, FRAME_CALL_TARGET = 0x001044E0, 0x00185E60
+# The Aggressive AI settings are loaded from the game's data at run time, so they are rewritten every
+# frame too, by a second writer on the main loop's call to 0034A688 at 0010454C.
+AGGR_WRITER = 0x00479E60
+AGGR_CALL, AGGR_CALL_TARGET = 0x0010454C, 0x0034A688
 FILE_RANGES = [(0x00100000, 0x004A34F8), (0x004A7500, 0x004EFBCC)]  # loaded from the file
 
 def in_file(a):
@@ -57,9 +61,34 @@ def option_patches(g, name):
     if runtime:
         for a, w in writer(runtime):
             direct[a] = w
-        assert WRITER_ADDR + 4 * len(writer(runtime)) <= 0x00479D00, "writer runs into the mod code"
+        assert WRITER_ADDR + 4 * len(writer(runtime)) <= 0x00479C00, "writer runs into the mod code"
         direct[FRAME_CALL] = 0x0C000000 | (WRITER_ADDR >> 2)  # jal writer (delay slot unchanged)
     return sorted(direct.items())
+
+def aggr_writer(words):
+    """Like writer(), sharing lui at between neighbouring addresses; ends with j 0034A688."""
+    code, hi_at = [], None
+    for a, v in sorted(words):
+        hi = ((a + 0x8000) >> 16) & 0xFFFF
+        if hi != hi_at:
+            code.append(0x3C010000 | hi); hi_at = hi              # lui at, hi
+        if v == 0:
+            code.append(0xAC200000 | (a & 0xFFFF))               # sw zero, lo(at)
+            continue
+        code.append(0x3C030000 | (v >> 16))                      # lui v1, value hi
+        if v & 0xFFFF:
+            code.append(0x34630000 | (v & 0xFFFF))               # ori v1, v1, value lo
+        code.append(0xAC230000 | (a & 0xFFFF))                   # sw v1, lo(at)
+    code.append(0x08000000 | (AGGR_CALL_TARGET >> 2))            # j 0034A688
+    code.append(0)
+    out = [(AGGR_WRITER + 4 * i, w) for i, w in enumerate(code)]
+    assert AGGR_WRITER + 4 * len(code) <= LEVEL_ADDR, "aggression writer runs into the level word"
+    return out
+
+def aggr_patches(g, level_name):
+    words = dict(aggr_writer(g["Nuzlocke\\Aggressive AI\\" + level_name]))
+    words[AGGR_CALL] = 0x0C000000 | (AGGR_WRITER >> 2)          # jal writer (delay slot is a nop)
+    return sorted(words.items())
 
 def reloc_addr(a):
     for lo, hi, new in BLOCKS:
@@ -103,7 +132,7 @@ def level_patches(g, level_name, level_num):
             words[na] = nw
     # blocks must not run into each other
     used = sorted(a for a in words if FREE_LO <= a < FREE_HI)
-    starts = sorted([b[2] for b in BLOCKS] + [WRITER_ADDR, LEVEL_ADDR])
+    starts = sorted([b[2] for b in BLOCKS] + [WRITER_ADDR, AGGR_WRITER, LEVEL_ADDR])
     for lo, hi, new in BLOCKS:
         nxt = min(a for a in starts if a > new)
         top = max([a for a in used if new <= a < nxt] or [new])
@@ -129,6 +158,13 @@ def main():
     for key, name in (("widescreen", "Widescreen 16:9"), ("fps60", "60 FPS menus and crash mode")):
         lines.append(f'\t{{"{key}", "{name}", []word{{')
         for a, w in option_patches(g, "Nuzlocke\\" + name):
+            lines.append(f"\t\t{{0x{a:08X}, 0x{w:08X}}},")
+        lines.append("\t}},")
+    lines.append("}")
+    lines += ["", "var aggression = []struct {", "\tname  string", "\twords []word", "}{"]
+    for name in ("Easy", "Medium", "Hard"):
+        lines.append(f'\t{{"{name}", []word{{')
+        for a, w in aggr_patches(g, name):
             lines.append(f"\t\t{{0x{a:08X}, 0x{w:08X}}},")
         lines.append("\t}},")
     lines.append("}")

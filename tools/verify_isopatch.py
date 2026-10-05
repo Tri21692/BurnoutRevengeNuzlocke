@@ -3,7 +3,7 @@
 Loads the patched SLUS_212.42 by its program headers, like the PS2 does, and compares the memory image
 with the original file's image plus the .pnach's changes (relocated). Needs: pip install pycdlib
 
-Run: python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard> [widescreen] [60fps]
+Run: python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard> [aggr-easy|aggr-medium|aggr-hard] [widescreen] [60fps]
 """
 import io, struct, sys, os
 import pycdlib
@@ -18,6 +18,22 @@ def load(elf):
         if t == 1:
             mem[va:va + fs] = elf[off:off + fs]
     return mem
+
+def run_writer(mem, addr, end_target):
+    """Interprets an aggression writer (lui/ori/sw/j only) and returns the stores it makes."""
+    regs, stores = {0: 0}, {}
+    for _ in range(400):
+        w, = struct.unpack_from("<I", mem, addr); op = w >> 26
+        rs, rt, imm = (w >> 21) & 31, (w >> 16) & 31, w & 0xFFFF
+        if op == 0xF: regs[rt] = imm << 16
+        elif op == 0xD: regs[rt] = regs[rs] | imm
+        elif op == 0x2B: stores[(regs[rs] + (imm - 0x10000 if imm & 0x8000 else imm)) & 0xFFFFFFFF] = regs[rt]
+        elif op == 2:
+            assert (w & 0x3FFFFFF) << 2 == end_target, "writer doesn't return to the game"
+            return stores
+        else: raise AssertionError(f"unexpected instruction {w:08X} at {addr:08X}")
+        addr += 4
+    raise AssertionError("writer doesn't end")
 
 def main(orig_path, iso_path, name, *extras):
     orig = open(orig_path, "rb").read()
@@ -46,6 +62,16 @@ def main(orig_path, iso_path, name, *extras):
                     struct.pack_into("<I", exp, a, w)
                 struct.pack_into("<I", exp, B.FRAME_CALL, 0x0C000000 | (B.WRITER_ADDR >> 2))
     mem = load(elf)
+    aggr = [e[5:].capitalize() for e in extras if e.startswith("aggr-")]
+    if aggr:  # the writer must store exactly the .pnach group's values
+        want = dict(g["Nuzlocke\\Aggressive AI\\" + aggr[0]])
+        call, = struct.unpack_from("<I", mem, B.AGGR_CALL)
+        assert call == 0x0C000000 | (B.AGGR_WRITER >> 2), "aggression writer isn't called"
+        got = run_writer(mem, B.AGGR_WRITER, B.AGGR_CALL_TARGET)
+        assert got == want, f"aggression writer stores {got}, the .pnach has {want}"
+        print(f"aggression writer: {len(got)} values match the .pnach")
+        for a, w in B.aggr_patches(g, aggr[0]):
+            struct.pack_into("<I", exp, a, w)
     bad = [i for i in range(0, len(mem), 4) if mem[i:i + 4] != exp[i:i + 4]]
     label = " + ".join([name, *extras])
     print(f"{label}: {len(bad)} mismatching words" + ("" if bad else " - OK"))

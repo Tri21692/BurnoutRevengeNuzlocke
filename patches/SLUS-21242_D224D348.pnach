@@ -217,6 +217,135 @@ patch=1,EE,001125EC,word,00108002
 // 60 FPS crashes and Crash mode
 patch=1,EE,00104B9C,word,90850608
 
+[Nuzlocke\Aggressive AI\Easy]
+author=Nuzlocke mod
+description=Opponents go for takedowns more, Easy level. Enable only one Aggressive AI level; works with or without Harder AI. Opponents attack more often, from further away and sooner after the start, and slam 15% harder. See docs/research/ai-aggression.md.
+// The game's own AI attack settings (AI/Aggressive Driving in its tuning data), written every frame.
+// Min. aggression before attacking: 0.2 -> 0.1
+patch=1,EE,01C914AC,word,3DCCCCCD
+// Min. time between attacks (s): 0.38 -> 0.3
+patch=1,EE,01C914B0,word,3E99999A
+// Max. time between attacks (s): 3 -> 2.25
+patch=1,EE,01C914B4,word,40100000
+// Max. distance to start an attack when ahead (m): 40 -> 50
+patch=1,EE,01C914B8,word,42480000
+// Max. distance to start an attack when behind (m): 70 -> 85
+patch=1,EE,01C914BC,word,42AA0000
+// Min. speed to consider attacking (mph): 70 -> 60
+patch=1,EE,01C914C0,word,42700000
+// Wait at the start before attacking (s): 3 -> 2
+patch=1,EE,01C914D0,word,40000000
+// Min. time to block you (s): 3 -> 3.5
+patch=1,EE,01C914D8,word,40600000
+// Max. time to block you (s): 8 -> 9
+patch=1,EE,01C914DC,word,41100000
+// Max. distance ahead to start blocking you (m): 15 -> 20
+patch=1,EE,01C914E0,word,41A00000
+// Max. time to get into slamming position (s): 15 -> 18
+patch=1,EE,01C914E8,word,41900000
+// Slam time (s): 1.5 -> 1.75
+patch=1,EE,01C914FC,word,3FE00000
+// Time a rubbed opponent goes blind (s): 1 -> 0.75
+patch=1,EE,01C91508,word,3F400000
+// AI neutral slam force: 30 -> 34.5
+patch=1,EE,0045F108,word,420A0000
+// AI level 1 slam force: 35 -> 40.25
+patch=1,EE,0045F10C,word,42210000
+// AI level 2 slam force: 40 -> 46
+patch=1,EE,0045F110,word,42380000
+// AI neutral shunt force: 30 -> 34.5
+patch=1,EE,0045F114,word,420A0000
+// AI level 1 shunt force: 32 -> 36.8
+patch=1,EE,0045F118,word,42133333
+// AI level 2 shunt force: 35 -> 40.25
+patch=1,EE,0045F11C,word,42210000
+
+[Nuzlocke\Aggressive AI\Medium]
+author=Nuzlocke mod
+description=Opponents go for takedowns more, Medium level. Enable only one Aggressive AI level; works with or without Harder AI. Opponents attack much more often and from further away, block you for longer, and slam 30% harder. See docs/research/ai-aggression.md.
+// The game's own AI attack settings (AI/Aggressive Driving in its tuning data), written every frame.
+// Min. aggression before attacking: 0.2 -> 0.05
+patch=1,EE,01C914AC,word,3D4CCCCD
+// Min. time between attacks (s): 0.38 -> 0.25
+patch=1,EE,01C914B0,word,3E800000
+// Max. time between attacks (s): 3 -> 1.5
+patch=1,EE,01C914B4,word,3FC00000
+// Max. distance to start an attack when ahead (m): 40 -> 60
+patch=1,EE,01C914B8,word,42700000
+// Max. distance to start an attack when behind (m): 70 -> 100
+patch=1,EE,01C914BC,word,42C80000
+// Min. speed to consider attacking (mph): 70 -> 50
+patch=1,EE,01C914C0,word,42480000
+// Wait at the start before attacking (s): 3 -> 1.5
+patch=1,EE,01C914D0,word,3FC00000
+// Min. time to block you (s): 3 -> 4
+patch=1,EE,01C914D8,word,40800000
+// Max. time to block you (s): 8 -> 10
+patch=1,EE,01C914DC,word,41200000
+// Max. distance ahead to start blocking you (m): 15 -> 25
+patch=1,EE,01C914E0,word,41C80000
+// Max. time to get into slamming position (s): 15 -> 20
+patch=1,EE,01C914E8,word,41A00000
+// Slam time (s): 1.5 -> 2
+patch=1,EE,01C914FC,word,40000000
+// Time a rubbed opponent goes blind (s): 1 -> 0.5
+patch=1,EE,01C91508,word,3F000000
+// AI neutral slam force: 30 -> 39
+patch=1,EE,0045F108,word,421C0000
+// AI level 1 slam force: 35 -> 45.5
+patch=1,EE,0045F10C,word,42360000
+// AI level 2 slam force: 40 -> 52
+patch=1,EE,0045F110,word,42500000
+// AI neutral shunt force: 30 -> 39
+patch=1,EE,0045F114,word,421C0000
+// AI level 1 shunt force: 32 -> 41.6
+patch=1,EE,0045F118,word,42266666
+// AI level 2 shunt force: 35 -> 45.5
+patch=1,EE,0045F11C,word,42360000
+
+[Nuzlocke\Aggressive AI\Hard]
+author=Nuzlocke mod
+description=Opponents go for takedowns more, Hard level. Enable only one Aggressive AI level; works with or without Harder AI. Every opponent attacks, from far away and almost right after the start, blocks you for longer, and slams 50% harder. See docs/research/ai-aggression.md.
+// The game's own AI attack settings (AI/Aggressive Driving in its tuning data), written every frame.
+// Min. aggression before attacking: 0.2 -> 0
+patch=1,EE,01C914AC,word,00000000
+// Min. time between attacks (s): 0.38 -> 0.2
+patch=1,EE,01C914B0,word,3E4CCCCD
+// Max. time between attacks (s): 3 -> 1
+patch=1,EE,01C914B4,word,3F800000
+// Max. distance to start an attack when ahead (m): 40 -> 75
+patch=1,EE,01C914B8,word,42960000
+// Max. distance to start an attack when behind (m): 70 -> 120
+patch=1,EE,01C914BC,word,42F00000
+// Min. speed to consider attacking (mph): 70 -> 40
+patch=1,EE,01C914C0,word,42200000
+// Wait at the start before attacking (s): 3 -> 1
+patch=1,EE,01C914D0,word,3F800000
+// Min. time to block you (s): 3 -> 5
+patch=1,EE,01C914D8,word,40A00000
+// Max. time to block you (s): 8 -> 12
+patch=1,EE,01C914DC,word,41400000
+// Max. distance ahead to start blocking you (m): 15 -> 30
+patch=1,EE,01C914E0,word,41F00000
+// Max. time to get into slamming position (s): 15 -> 25
+patch=1,EE,01C914E8,word,41C80000
+// Slam time (s): 1.5 -> 2.25
+patch=1,EE,01C914FC,word,40100000
+// Time a rubbed opponent goes blind (s): 1 -> 0.3
+patch=1,EE,01C91508,word,3E99999A
+// AI neutral slam force: 30 -> 45
+patch=1,EE,0045F108,word,42340000
+// AI level 1 slam force: 35 -> 52.5
+patch=1,EE,0045F10C,word,42520000
+// AI level 2 slam force: 40 -> 60
+patch=1,EE,0045F110,word,42700000
+// AI neutral shunt force: 30 -> 45
+patch=1,EE,0045F114,word,42340000
+// AI level 1 shunt force: 32 -> 48
+patch=1,EE,0045F118,word,42400000
+// AI level 2 shunt force: 35 -> 52.5
+patch=1,EE,0045F11C,word,42520000
+
 [Nuzlocke\Harder AI\Easy]
 author=Nuzlocke mod
 description=Harder opponents, Easy level. Enable only one Harder AI level. Corners at 0.875 of the racing line's limit (0.925 when aggressive); far from the player, 2-5 s per section quicker than their pace schedule; catch-up from 40 m behind the player (up to +20 m/s); ease-off from 40 m ahead of the player (to 0.9 x the player's speed); speed cap 100 m/s. See docs/research/ai-catchup.md.
