@@ -182,6 +182,10 @@ mismatches; ELF headers and section table unchanged).
 - Dead-car tables: `000FF400` (Race pool, garage block) and `000FF700` (Crash pool, crash junction
   block; `ori t4,t4,0xF700` at `000FF180`, `00479E10` in a patched ISO). Patches older than V1.1 read
   `000FF400` in both places, so with those the tracker puts cars wrecked in either pool in it.
-- Results-screen Retry: race results handler `0019AD98` command 8 (`0019ADBC` → always exit), and item 1
-  in the end-of-event handlers `00191B58` (`00191C08`) and `00191FA8` (`00192054`). All three called the
-  restart method (vtable +0x44 at `[[004F3300+0x585E8]+4]+0x8000+0x315C`).
+- Results-screen Retry: race results handler `0019AD98` command 8, and item 1 in the end-of-event handlers
+  `00191B58` and `00191FA8`, all call the restart method (vtable +0x44 at
+  `[[004F3300+0x585E8]+4]+0x8000+0x315C`). Simply skipping them (V1.1) froze the screen: the handlers'
+  exit sets a busy flag (screen +0x50, `01C0F909`) that only a real action clears. Since V1.1.1 Retry is
+  redirected to Continue's code instead: `0019ADC4` b `0019AED8` (command 7) with `daddu s0,a0` in the
+  delay slot; `00191CC0` b `00191C38` (item 0) with `lui v0,0x1F6`; `0019206C` b `001921A0` (item 0/-2)
+  with `lui v1,0x4F`.

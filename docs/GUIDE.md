@@ -82,7 +82,7 @@ Every car has two separate pools. **Crash junctions** use the Crash pool; **ever
 
 A Perfect is the game's way of rewarding Gold with Awesome-level driving: it raises your rating one step when you take Gold.
 
-**No bailing out.** With the pause-menu block on, Retry, Restart and Quit don't respond, and neither does Retry on the results screens. Every event you start has to be finished, and the next attempt starts from the garage.
+**No bailing out.** With the pause-menu block on, Retry, Restart and Quit don't respond, and Retry on the results screens acts like Continue. Every event you start has to be finished, and the next attempt starts from the garage.
 
 **Wrecked cars.** A car out of **Race** lives is renamed `[RACE X]` and can't be selected in the garage, but can still be picked in crash junctions. A car out of **Crash** lives is renamed `[CRASH X]` and can't be picked in crash junctions, but can still race. A car out of both is `[WRECKED]`. (Short names get `[R X]`, `[C X]`, `[WRECK]` or `[X]`.) This is reapplied every time the game starts.
 

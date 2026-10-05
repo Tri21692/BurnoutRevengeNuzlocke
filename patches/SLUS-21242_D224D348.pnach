@@ -1,4 +1,4 @@
-gametitle=Burnout Revenge (PS2) - Nuzlocke v1.1
+gametitle=Burnout Revenge (PS2) - Nuzlocke v1.1.1
 
 [Nuzlocke\Block dead cars in garage]
 author=Nuzlocke mod
@@ -109,7 +109,7 @@ patch=1,EE,0018F50C,word,00000000
 
 [Nuzlocke\Block pause-menu Retry and Quit]
 author=Nuzlocke mod
-description=Retry, Restart and Quit in the pause menu do nothing, so an event can't be abandoned to save a life, and Retry on the results screens does nothing, so a just-wrecked car can't be raced again. Resume and Continue still work.
+description=Retry, Restart and Quit in the pause menu do nothing, so an event can't be abandoned to save a life, and Retry on the results screens acts as Continue, so a just-wrecked car can't be raced again. Resume and Continue still work.
 // Pause handler 1 (around 00190800): selected item -1 = Retry (confirm "$PRRetryRace"), -2 = Quit
 // ("$QUIT"). The two branches to those confirm dialogs become nops, so both fall through to the exit.
 patch=1,EE,0019088C,word,00000000
@@ -120,13 +120,21 @@ patch=1,EE,004B7D70,word,00191580
 patch=1,EE,004B7D78,word,00191580
 patch=1,EE,004B7D84,word,00191580
 patch=1,EE,004B7D88,word,00191580
-// Results screens. The race results handler (0019AD98, near "finalizeRaceResults") restarts the
-// event on command 8 (Retry) with no confirm; its check now always takes the exit at 0019B000.
-patch=1,EE,0019ADBC,word,10000090
-// Two more end-of-event screens (handlers 00191B58 and 00191FA8) restart the event on item 1. Those
-// branches become nops, so item 1 falls through to the same exit as an unknown item.
-patch=1,EE,00191C08,word,00000000
-patch=1,EE,00192054,word,00000000
+// Results screens: Retry now does what Continue does, so a just-wrecked car can't be raced again.
+// (V1.1 made Retry do nothing instead, which left the screen locked: its exit path sets a busy flag
+// that only a real action clears, so Continue then froze.)
+// Race results handler (0019AD98, near "finalizeRaceResults"): command 8 (Retry) runs command 7's code
+// (0019AED8, which advances the results). s0 is set back to the screen object in the delay slot.
+patch=1,EE,0019ADC4,word,10000044
+patch=1,EE,0019ADC8,word,0080802D
+// End-of-event handler 00191B58: item 1 (Retry) goes to item 0's path at 00191C38, with v0 = 01F60000
+// as that path expects.
+patch=1,EE,00191CC0,word,1000FFDD
+patch=1,EE,00191CC4,word,3C0201F6
+// End-of-event handler 00191FA8: item 1 (Retry) goes to the item 0 / -2 path at 001921A0, with
+// v1 = 004F0000 as that path expects.
+patch=1,EE,0019206C,word,1000004C
+patch=1,EE,00192070,word,3C03004F
 
 [Nuzlocke\Widescreen 16:9]
 author=SuperType1/remco

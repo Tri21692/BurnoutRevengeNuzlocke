@@ -1,5 +1,15 @@
 # Changelog
 
+## V1.1.1
+
+Emergency patch. **Upgrading:** replace the `.pnach` (and `nuzlocke_isopatch.exe`, then remake any patched
+ISOs). `nuzlocke.exe` only changed its version number. Your current run carries over.
+
+- **Fixed:** pressing Retry on a results screen, then Continue, froze the game (seen after a failed Crash
+  junction). V1.1 made Retry do nothing, which left the screen waiting for an action that never came.
+  Retry on the results screens now does the same as Continue, so it still can't restart the event with a
+  just-wrecked car, but the screen always moves on.
+
 ## V1.1
 
 Emergency patch + QOL. **Upgrading from V1.0:** replace all three files (`nuzlocke.exe`, the `.pnach`
