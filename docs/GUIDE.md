@@ -60,15 +60,15 @@ Setup takes about ten minutes and only needs doing once.
 
 ## Playing a run
 
-Every event must end in a first-time Gold + Perfect; anything else costs the car you drove a life.
+Every event must reach the difficulty's result (from Silver + Great on Easy up to a first-time Gold + Perfect on Hard); anything less costs the car you drove a life.
 
 **Starting.** On the control page, pick a difficulty. It's locked for the whole run.
 
-| Difficulty | Race lives per car | Crash lives per car |
-| --- | --- | --- |
-| Easy | 3 | 3 |
-| Medium | 2 | 2 |
-| Hard | 1 | 1 |
+| Difficulty | Race lives per car | Crash lives per car | Each event needs at least |
+| --- | --- | --- | --- |
+| Easy | 3 | 3 | Silver + Great |
+| Medium | 2 | 2 | Silver + Awesome |
+| Hard | 1 | 1 | Gold + Perfect (first time) |
 
 Every car has two separate pools. **Crash junctions** use the Crash pool; **every other event** (races, Grand Prix, Eliminator, Burning Lap, Road Rage, Traffic Attack, Preview) uses the Race pool. Each car gets its pools in full the first time it appears. Cars only get the pools they can use: the tracker notes whether a car shows up in the garage (it can race) and in a crash junction's car select (it can crash). Crash cars, which only appear in crash junctions, have no Race pool, and the overlay only shows the hearts a car actually has. The opponents' AI level is separate: it comes from the patch or ISO you chose, and the control page and overlay show it.
 
@@ -76,11 +76,11 @@ Every car has two separate pools. **Crash junctions** use the Crash pool; **ever
 
 | Result | What happens |
 | --- | --- |
-| Gold + Perfect, first time on that event | Win. Your win streak goes up. |
-| Anything else (Silver, Bronze, no medal, or Gold + Awesome or lower) | The car you drove loses a life. |
-| Replaying an event you've already Gold + Perfected | The car loses a life. The game never awards Perfect twice, so a replay can't be won. |
+| The difficulty's result or better (both the medal and the rating) | Win. Your win streak goes up. |
+| Anything less, for example Bronze, or Silver + Good on Easy | The car you drove loses a life. |
+| On Hard: replaying an event you've already Gold + Perfected | The car loses a life. The game never awards Perfect twice, so a replay can't be won on Hard. On Easy and Medium a replay can win. |
 
-A Perfect is the game's way of rewarding Gold with Awesome-level driving: it raises your rating one step when you take Gold.
+The medal and the rating are checked separately: on Medium, Gold + Awesome and Silver + Awesome both pass, but Silver + Great doesn't. Taking Gold raises your rating one step (that's how a Perfect happens: Gold with Awesome-level driving), so Gold + Good shows as Gold + Great and passes Easy.
 
 **No bailing out.** With the pause-menu block on, Retry, Restart and Quit don't respond, and Retry on the results screens acts like Continue. Every event you start has to be finished, and the next attempt starts from the garage.
 

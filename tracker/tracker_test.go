@@ -476,3 +476,34 @@ func TestCrashOnlyCars(t *testing.T) {
 		t.Fatalf("a crash car with no Crash lives has nothing left: %q", got)
 	}
 }
+
+// Each difficulty's least result: Easy Silver + Great, Medium Silver + Awesome, Hard first Gold + Perfect.
+func TestRequirements(t *testing.T) {
+	const gold, silver, bronze = 3, 2, 1
+	const good, great, awesome, perfect = 1, 2, 3, 4
+	cases := []struct {
+		diff       string
+		medal      uint32
+		shown      int
+		perfectNow bool
+		want       bool
+	}{
+		{"Easy", silver, great, false, true},
+		{"Easy", silver, good, false, false},
+		{"Easy", bronze, awesome, false, false},
+		{"Easy", gold, great, false, true}, // replays can pass below Hard
+		{"Medium", silver, awesome, false, true},
+		{"Medium", silver, great, false, false},
+		{"Medium", gold, awesome, false, true},
+		{"Medium", bronze, awesome, false, false},
+		{"Hard", gold, perfect, true, true},
+		{"Hard", gold, perfect, false, false}, // already perfected
+		{"Hard", gold, awesome, false, false},
+		{"Hard", silver, awesome, false, false},
+	}
+	for _, c := range cases {
+		if got := passes(c.diff, c.medal, c.shown, c.perfectNow); got != c.want {
+			t.Errorf("%s medal %d rating %d first %v: got %v, want %v", c.diff, c.medal, c.shown, c.perfectNow, got, c.want)
+		}
+	}
+}

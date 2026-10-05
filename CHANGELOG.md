@@ -1,5 +1,11 @@
 # Changelog
 
+## V1.1.2
+
+- **Medal requirements per difficulty.** Each event needs at least Silver + Great on Easy, Silver +
+  Awesome on Medium, and Gold + Perfect (first time) on Hard, as before. The medal and the rating are
+  checked separately, and on Easy and Medium a replay can win. The control page shows the requirement.
+
 ## V1.1.1
 
 Emergency patch. **Upgrading:** replace the `.pnach` (and `nuzlocke_isopatch.exe`, then remake any patched

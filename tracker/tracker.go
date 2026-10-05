@@ -58,6 +58,31 @@ var patchHooks = map[uint32]uint32{0x002ACE00: 0x0C03FC00, 0x002A69DC: 0x0C03FC0
 var isoHooks = map[uint32]uint32{0x002ACE00: 0x0C11E740, 0x002A69DC: 0x0C11E740, finishHook: finishHookISO,
 	0x0018F508: 0x0811E774}
 var difficulties = map[string]int{"Easy": 3, "Medium": 2, "Hard": 1}
+
+// requirements: the least an event needs on each difficulty (medal, rating shown on the results screen).
+// Hard is Gold + Perfect, which the game only awards the first time.
+var requirements = map[string]struct {
+	medal, rating int
+	text          string
+}{
+	"Easy":   {2, 2, "Silver + Great"},
+	"Medium": {2, 3, "Silver + Awesome"},
+	"Hard":   {3, 4, "Gold + Perfect"},
+}
+
+// passes reports whether a result meets the difficulty's requirement. shown is the rating as shown
+// (Gold raises it one step); perfectNow is true when the event got its first Perfect just now.
+func passes(difficulty string, medal uint32, shown int, perfectNow bool) bool {
+	req, ok := requirements[difficulty]
+	if !ok {
+		req = requirements["Hard"]
+	}
+	if req.rating >= 4 {
+		return medal == 3 && shown == 4 && perfectNow
+	}
+	return int(medal) >= req.medal && medal <= 3 && shown >= req.rating
+}
+
 var medals = map[uint32]string{3: "Gold", 2: "Silver", 1: "Bronze", 0: "No medal"}
 var ratings = []string{"-", "Good", "Great", "Awesome", "Perfect"}
 var aiLevels = []string{"Off", "Easy", "Medium", "Hard"}
@@ -461,7 +486,6 @@ func (t *Tracker) finishEvent(before []byte) {
 			}
 		}
 	}
-	won := medal == 3 && rating == 3 && perfectNow
 	region, base := t.currentText()
 	eventLabel := t.pendingEvent // the game's current event: also known for replays
 	if firstDiff >= 0 {
@@ -477,14 +501,20 @@ func (t *Tracker) finishEvent(before []byte) {
 		eventName = t.nameOf(region, base, eventLabel)
 	}
 	carName := t.carName(region, base, car)
-	shown := "?"
+	shown, shownIdx := "?", -1
 	if rating <= 3 {
 		bump := uint32(0)
 		if medal == 3 {
 			bump = 1
 		}
-		shown = ratings[min(4, int(rating+bump))]
+		shownIdx = min(4, int(rating+bump))
+		shown = ratings[shownIdx]
 	}
+	difficulty := "Hard"
+	if r != nil {
+		difficulty = r.Difficulty
+	}
+	won := passes(difficulty, medal, shownIdx, perfectNow)
 	medalName, ok := medals[medal]
 	if !ok {
 		medalName = "?"
@@ -512,7 +542,7 @@ func (t *Tracker) finishEvent(before []byte) {
 		if r.Streak > r.BestStreak {
 			r.BestStreak = r.Streak
 		}
-		t.say(eventName+": Gold + Perfect", 15, "win")
+		t.say(eventName+": "+resultText, 15, "win")
 	} else {
 		r.Streak = 0
 		c := r.Cars[car]
@@ -528,8 +558,10 @@ func (t *Tracker) finishEvent(before []byte) {
 			*lives--
 		}
 		reason := resultText
-		if medal == 3 && rating == 3 && !perfectNow {
+		if difficulty == "Hard" && medal == 3 && rating == 3 && !perfectNow {
 			reason = "already perfected"
+		} else if req, ok := requirements[difficulty]; ok {
+			reason += ", needs " + req.text
 		}
 		if *lives == 0 {
 			*lost++
@@ -909,7 +941,7 @@ func (t *Tracker) Snapshot() map[string]any {
 		}
 	}
 	snap["run"] = map[string]any{
-		"difficulty": r.Difficulty, "lives_start": r.LivesStart, "grace": r.Grace, "dead": r.Dead,
+		"difficulty": r.Difficulty, "requirement": requirements[r.Difficulty].text, "lives_start": r.LivesStart, "grace": r.Grace, "dead": r.Dead,
 		"won": r.EventsWon, "played": r.EventsPlayed, "cars_total": len(r.Cars), "cars_lost": r.CarsLost,
 		"crash_cars_lost": r.CrashLost, "race_cars_total": raceCars, "crash_cars_total": crashCars,
 		"time": fmtTime(r.PlaySeconds), "best_streak": r.BestStreak, "streak": r.Streak, "started": r.Started,

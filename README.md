@@ -2,7 +2,7 @@
 
 <p align="center">
   <b>A Nuzlocke challenge mod for Burnout Revenge on PS2 (PCSX2).</b><br>
-  Limited lives per car. Gold + Perfect or it costs you. Opponents that don't let up.
+  Limited lives per car. Hit the mark or it costs you. Opponents that don't let up.
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 | | |
 |---|---|
 | **Lives** | Every car has two pools of lives, one for **Race** events (everything except Crash junctions) and one for **Crash** junctions: **3 + 3** on Easy, **2 + 2** on Medium, **1 + 1** on Hard. Crash cars only have the Crash pool, since they can't race. |
-| **Winning** | Every event must end in **Gold with a Perfect rating**. Anything else costs the car you drove a life. Crash junctions and Preview events count too. |
+| **Winning** | Every event must reach the difficulty's mark: at least **Silver + Great** on Easy, **Silver + Awesome** on Medium, **Gold + Perfect** on Hard. Anything less costs the car you drove a life. Crash junctions and Preview events count too. |
 | **Wrecked** | A car out of Race lives can't be selected in the garage (`[RACE X]`); out of Crash lives, it can't be picked in crash junctions (`[CRASH X]`); out of both, it's `[WRECKED]`. |
 | **No escape** | Retry and Quit in the pause menu don't work, so you can't bail out of an event to save a life, and Retry on the results screen just continues. |
 | **Harder AI** | Opponents corner faster, keep their pace, and come back hard when they fall behind. |
