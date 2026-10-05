@@ -217,6 +217,13 @@ patch=1,EE,001125EC,word,00108002
 // 60 FPS crashes and Crash mode
 patch=1,EE,00104B9C,word,90850608
 
+[Nuzlocke\Aggressive opponents]
+author=Nuzlocke mod
+description=Opponents drive the whole track in the game's aggressive mode, normally only switched on for some stretches of the racing line: they corner at the Harder AI level's aggressive factor, may go up to 1.45 x their usual target speed and look further ahead. Works with or without a Harder AI level. See docs/research/ai-catchup.md.
+// The racing line lookup (0029B878) returns each stretch's aggressive flag, which 0029FA84 stores in
+// brain+0x201. Load 1 instead of the returned flag.
+patch=1,EE,0029FA6C,word,24030001
+
 [Nuzlocke\Harder AI\Easy]
 author=Nuzlocke mod
 description=Harder opponents, Easy level. Enable only one Harder AI level. Corners at 0.875 of the racing line's limit (0.925 when aggressive); far from the player, 2-5 s per section quicker than their pace schedule; catch-up from 40 m behind the player (up to +20 m/s); ease-off from 40 m ahead of the player (to 0.9 x the player's speed); speed cap 100 m/s. See docs/research/ai-catchup.md.

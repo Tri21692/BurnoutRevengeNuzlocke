@@ -80,6 +80,19 @@ The reference racer is only kept while the two cars are within 10 mph of each ot
 "duel with the player", not a whole-race rubberband. A live log showed modes 4/5 switching on and
 off for all five opponents, mostly in the pack at the start, then for whoever is near.
 
+## The aggressive flag (brain+0x201)
+
+Not a personality setting: the racing line lookup `0029B878` returns it per stretch of the line
+(result byte +0x30), and `0029FA84` stores it every frame (cleared at `0029E644`). Where it is set:
+
+- corner factor 0.85 instead of 0.8 (`0029EE18`);
+- the target speed ceiling in `0029A378` is 1.45 x (`3FB9999A`) the computed speed instead of 1 x;
+- the line look-ahead in `002A0C48` adds `[01C9149C]`.
+
+`[Nuzlocke\Aggressive opponents]` loads 1 instead of the returned byte (`0029FA6C` `lbu v1,0x30(sp)`
+becomes `addiu v1,zero,1`), so every stretch counts as aggressive. Nothing found so far decides
+ramming or takedown attempts; that would be elsewhere in the AI.
+
 ## Tuning block `01C913E8` (read live)
 
 +0x00 10 (far-mode max decel/frame), +0x08 90, +0x0C 88 (speed cap ceiling, m/s), +0x10 20 (min

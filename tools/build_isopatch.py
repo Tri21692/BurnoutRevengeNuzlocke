@@ -126,7 +126,8 @@ def main():
         lines.append("\t}},")
     lines.append("}")
     lines += ["", "var options = []struct {", "\tkey, name string", "\twords     []word", "}{"]
-    for key, name in (("widescreen", "Widescreen 16:9"), ("fps60", "60 FPS menus and crash mode")):
+    for key, name in (("widescreen", "Widescreen 16:9"), ("fps60", "60 FPS menus and crash mode"),
+                      ("aggressive", "Aggressive opponents")):
         lines.append(f'\t{{"{key}", "{name}", []word{{')
         for a, w in option_patches(g, "Nuzlocke\\" + name):
             lines.append(f"\t\t{{0x{a:08X}, 0x{w:08X}}},")

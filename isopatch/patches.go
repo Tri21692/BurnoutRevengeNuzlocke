@@ -883,4 +883,7 @@ var options = []struct {
 		{0x001125EC, 0x00108002},
 		{0x001125F4, 0x24040001},
 	}},
+	{"aggressive", "Aggressive opponents", []word{
+		{0x0029FA6C, 0x24030001},
+	}},
 }
