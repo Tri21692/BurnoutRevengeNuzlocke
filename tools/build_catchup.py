@@ -52,7 +52,9 @@ class Asm:
             else: out.append(x)
         return out
 
-def build(d0,k,bmax):
+def build(d0,k,bmax, ahead=None, factor=None, minspeed=None):
+    """Catch-up from d0 m behind (boost k m/s per m, up to bmax). If ahead is given, an opponent more
+    than ahead m in front of the player is held to max(player speed x factor, minspeed)."""
     a=Asm(BASE)
     a.addiu(SP,SP,-0x40); a.sd(RA,0,SP); a.sq(S0,0x10,SP); a.sq(S1,0x20,SP)
     a.swc1(20,0x30,SP); a.swc1(21,0x34,SP)
@@ -71,7 +73,22 @@ def build(d0,k,bmax):
     a.lif(1,d0); a.sub_s(21,21,1)                 # d = gap - start distance
     a.mtc1(R0,1); a.nop(); a.clt(1,21); a.nop()   # 0 < d ?
     a.bc1(1,"behind"); a.nop()
-    a.mov_s(21,1)                                 # not far enough behind: boost = 0
+    if ahead is not None:
+        # far enough ahead of the player: ease off to a share of the player's speed
+        a.lif(1,-(ahead+d0)); a.clt(21,1); a.nop()   # gap - d0 < -(ahead + d0), i.e. gap < -ahead
+        a.bc1(0,"no_boost"); a.nop()
+        a.lui(T0,0x01EE); a.lw(T1,-0x4810,T0)     # player car = [01EDB7F0]
+        a.lwc1(2,0xAC,T1)                         # player speed
+        a.lif(1,factor); a.mul_s(2,2,1)           # x factor
+        a.lif(1,minspeed); a.clt(2,1); a.nop()    # below the minimum?
+        a.bc1(0,"cap_set"); a.nop()
+        a.mov_s(2,1)
+        a.L("cap_set")
+        a.lwc1(3,0xA04,S0); a.clt(2,3); a.nop()   # cap < target ?
+        a.bc1(0,"no_boost"); a.nop()
+        a.swc1(2,0xA04,S0)                        # lower the target
+        a.L("no_boost")
+    a.mtc1(R0,21); a.nop()                        # not far enough behind: boost = 0
     a.br("beq",R0,R0,"top"); a.nop()
     a.L("behind")
     a.lif(1,k); a.mul_s(21,21,1)                  # boost = k * d

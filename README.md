@@ -62,11 +62,11 @@ You need the **US version of Burnout Revenge (SLUS-21242)**, **PCSX2 2.x** on Wi
 
 There are two separate settings: lives are chosen in the tracker when you start a run, and the AI level comes from the patch. Mix them however you like.
 
-| Lives (tracker) | | Harder AI (patch) | Cornering | Pace when out of sight | Speed limit | Catch-up |
-|---|---|---|---|---|---|---|
-| **Easy** | 3 + 3 per car | **Easy** | 87.5% of the line's limit | 2–5 s per section quicker | 224 mph | from 40 m behind, up to +45 mph |
-| **Medium** | 2 + 2 per car | **Medium** | 92.5% | 4–7 s quicker | 246 mph | from 25 m behind, up to +67 mph |
-| **Hard** | 1 + 1 per car | **Hard** | 97.5% | 6–9 s quicker | 257 mph | from 10 m behind, up to +89 mph |
+| Lives (tracker) | | Harder AI (patch) | Cornering | Pace when out of sight | Speed limit | Catch-up | Eases off |
+|---|---|---|---|---|---|---|---|
+| **Easy** | 3 + 3 per car | **Easy** | 87.5% of the line's limit | 2–5 s per section quicker | 224 mph | from 40 m behind, up to +45 mph | 40 m ahead: 90% of your speed |
+| **Medium** | 2 + 2 per car | **Medium** | 92.5% | 4–7 s quicker | 246 mph | from 25 m behind, up to +67 mph | 70 m ahead: 94% |
+| **Hard** | 1 + 1 per car | **Hard** | 97.5% | 6–9 s quicker | 257 mph | from 10 m behind, up to +89 mph | 100 m ahead: 97% |
 
 The stock game corners at 80%, eases off when an opponent gets ahead of its pace, caps opponents at 197 mph, and has no catch-up towards you beyond short duels. How it all works is in the [AI research notes](docs/research/ai-catchup.md).
 

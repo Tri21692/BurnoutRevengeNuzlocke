@@ -324,6 +324,11 @@ func TestAILevel(t *testing.T) {
 	if got := tr.Snapshot()["ai_level"]; got != "Medium" {
 		t.Errorf("patched ISO: ai_level = %v, want Medium", got)
 	}
+	f.w32(aiHook, aiHookISOOld) // ISOs made by V1.1 / V1.1.1
+	tr.readAILevel()
+	if got := tr.Snapshot()["ai_level"]; got != "Medium" {
+		t.Errorf("older patched ISO: ai_level = %v, want Medium", got)
+	}
 }
 
 // The patch counts as active with either the .pnach's hooks or the patched ISO's.

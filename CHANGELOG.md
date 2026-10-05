@@ -5,6 +5,9 @@
 - **Medal requirements per difficulty.** Each event needs at least Silver + Great on Easy, Silver +
   Awesome on Medium, and Gold + Perfect (first time) on Hard, as before. The medal and the rating are
   checked separately, and on Easy and Medium a replay can win. The control page shows the requirement.
+- **Harder AI leaders ease off.** An opponent far enough ahead of you is held to a share of your speed
+  (Easy: from 40 m ahead, 90%; Medium: 70 m, 94%; Hard: 100 m, 97%; never below 90 / 100 / 112 mph),
+  so a leader can be caught. Remake patched ISOs to get it; the tracker recognises old and new ones.
 
 ## V1.1.1
 

@@ -20,9 +20,9 @@ BLOCKS = [
     (0x000FF000, 0x000FF100, 0x00479D00),  # dead-car garage block (0x8C bytes)
     (0x000FF100, 0x000FF140, 0x00479DA0),  # finished-event signal (0x24)
     (0x000FF140, 0x000FF200, 0x00479DD0),  # crash junction block (0x88)
-    (0x000FFA00, 0x000FFC00, 0x00479E80),  # AI catch-up wrapper (about 0x140)
+    (0x000FFA00, 0x000FFC00, 0x00479800),  # AI catch-up wrapper (about 0x1B8; before V1.1.2 at 00479E80)
 ]
-FREE_LO, FREE_HI = 0x00479B00, 0x0047A000  # the space used; checked to be zero by the patcher
+FREE_LO, FREE_HI = 0x00479800, 0x0047A000  # the space used; checked to be zero by the patcher
 LEVEL_ADDR = 0x00479FF0
 MARKER = 0x000FE110
 
@@ -102,9 +102,11 @@ def level_patches(g, level_name, level_num):
             words[na] = nw
     # blocks must not run into each other
     used = sorted(a for a in words if FREE_LO <= a < FREE_HI)
-    for (lo, hi, new), nxt in zip(BLOCKS, [b[2] for b in BLOCKS[1:]] + [LEVEL_ADDR]):
+    starts = sorted([b[2] for b in BLOCKS] + [WRITER_ADDR, LEVEL_ADDR])
+    for lo, hi, new in BLOCKS:
+        nxt = min(a for a in starts if a > new)
         top = max([a for a in used if new <= a < nxt] or [new])
-        assert top + 4 <= nxt, f"block at {new:08X} overlaps the next one"
+        assert top + 4 <= nxt, f"block at {new:08X} runs into {nxt:08X}"
     words[LEVEL_ADDR] = level_num
     return sorted(words.items())
 

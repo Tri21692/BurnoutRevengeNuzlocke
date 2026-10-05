@@ -34,7 +34,7 @@ The most important rule: back up your memory card and give each run its own card
 4. **Keep the game's autosave on.** The tracker reads your saved results, and autosave stops a result from being undone.
 5. **Start the tracker before your first event** and keep it open for the whole session. If you close it, do so in a menu, not during an event.
 6. **Only play World Tour during a run.** The tracker judges every finished event it sees, so other modes may be counted too.
-7. **Leave other cheats and patches off.** Widescreen and 60 FPS are included in the mod, so you don't need a separate widescreen patch. Anything that writes to `000FE000`–`000FFFFF` or `00479B00`–`00479FFF` will clash with the mod.
+7. **Leave other cheats and patches off.** Widescreen and 60 FPS are included in the mod, so you don't need a separate widescreen patch. Anything that writes to `000FE000`–`000FFFFF` or `00479800`–`00479FFF` will clash with the mod.
 8. **Don't edit `nuzlocke_state.json` while the tracker is running.** Copy it if you want to keep a finished run's history.
 
 ## Setup, step by step

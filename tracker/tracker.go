@@ -44,7 +44,8 @@ const (
 	// The patched ISOs (isopatch/) carry the same code in unused space in the game's .data section
 	// (00479D00-00479FFF) instead, so their hooks jump there, and the level is a word in that space.
 	finishHookISO = 0x0C11E768
-	aiHookISO     = 0x0C11E7A0
+	aiHookISO     = 0x0C11E600 // jal 00479800 (V1.1.2 and later)
+	aiHookISOOld  = 0x0C11E7A0 // jal 00479E80 (V1.1 and V1.1.1)
 	aiLevelISO    = 0x00479FF0
 
 	// The crash junction block reads its own table (crashTable) since V1.1; older patches read deadTable.
@@ -860,7 +861,7 @@ func (t *Tracker) readAILevel() {
 	switch t.u32(aiHook) {
 	case aiHookOn:
 		m = t.u32(aiMarker)
-	case aiHookISO:
+	case aiHookISO, aiHookISOOld:
 		m = t.u32(aiLevelISO)
 	}
 	if m >= 1 && int(m) < len(aiLevels) {
