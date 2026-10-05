@@ -84,7 +84,7 @@ The medal and the rating are checked separately: on Medium, Gold + Awesome and S
 
 **No bailing out.** With the pause-menu block on, Retry, Restart and Quit don't respond, and Retry on the results screens acts like Continue. Every event you start has to be finished, and the next attempt starts from the garage.
 
-**Loaned cars.** Burning Laps and Preview events lend you a car you haven't unlocked yet. If you fail one, the loaned car loses the life, and the control page and overlay show it as "(loaned)". It doesn't count towards your cars until you really unlock it, so it can never keep a dead run going; once it's yours it joins with whatever lives it has left, and if it was wrecked it stays wrecked.
+**Loaned cars.** Burning Laps and Preview events lend you a car you haven't unlocked yet. If you fail one, the loaned car loses the life, and the control page and overlay show it as "(loaned)". A loaned car is never blocked, so you can always retry the event, but once it's wrecked each retry you fail costs a Race life from the last car of your own you drove in a Race event (or, if that one is wrecked, the car with the most Race lives left). It doesn't count towards your cars until you really unlock it, so it can never keep a dead run going; once it's yours it joins with whatever lives it has left, and if it was wrecked it stays wrecked.
 
 **Wrecked cars.** A car out of **Race** lives is renamed `[RACE X]` and can't be selected in the garage, but can still be picked in crash junctions. A car out of **Crash** lives is renamed `[CRASH X]` and can't be picked in crash junctions, but can still race. A car out of both is `[WRECKED]`. (Short names get `[R X]`, `[C X]`, `[WRECK]` or `[X]`.) This is reapplied every time the game starts.
 

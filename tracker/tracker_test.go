@@ -647,7 +647,8 @@ func TestHistoryAndLocation(t *testing.T) {
 }
 
 // A car loaned for a Burning Lap or Preview takes its losses, but only counts towards the run (and
-// its wrecked total) once it shows up in the garage, so it can't keep a dead run alive.
+// its wrecked total) once it shows up in the garage, so it can't keep a dead run alive. It's never
+// blocked while loaned; a retry once it's wrecked costs one of your own cars a life.
 func TestLoanedCar(t *testing.T) {
 	f := &fakeMem{ram: make([]byte, 0x2000000)}
 	f.w32(eventCount, 169)
@@ -699,15 +700,12 @@ func TestLoanedCar(t *testing.T) {
 	if r.CarsLost != 0 || run["race_cars_total"] != 2 || r.Dead {
 		t.Fatalf("a loaned car mustn't count yet: lost %d, total %v", r.CarsLost, run["race_cars_total"])
 	}
-	garage("HIGHUSCAR1A", "MEDIUSCAR4A") // back in the garage
-	clock += 3
-	tr.Poll()
-	if race, _ := tr.deadLabels(); len(race) != 1 || race[0] != "HIGHEUCAR2S1" {
-		t.Fatalf("the wrecked loaned car should be on the dead list for when it's unlocked: %v", race)
+	if race, _ := tr.deadLabels(); len(race) != 0 {
+		t.Fatalf("a loaned car is never blocked, so the event can be retried: %v", race)
 	}
-	finish("HIGHUSCAR1A")
-	if r.Dead {
-		t.Fatal("one owned car left: the run isn't dead")
+	finish("HIGHEUCAR2S1") // retry with the wrecked loaned car: your own car with the most lives pays
+	if a := r.Cars["HIGHUSCAR1A"]; a.Lives != 0 || r.CarsLost != 1 || r.Dead || c.Lives != 0 {
+		t.Fatalf("the retry should wreck HIGHUSCAR1A (most lives, then first by name): %+v, lost %d", a, r.CarsLost)
 	}
 	garage("HIGHUSCAR1A", "MEDIUSCAR4A", "HIGHEUCAR2S1") // the loaned car is unlocked for real
 	clock += 3
@@ -715,6 +713,9 @@ func TestLoanedCar(t *testing.T) {
 	run = tr.Snapshot()["run"].(map[string]any)
 	if !c.Owned || r.CarsLost != 2 || run["race_cars_total"] != 3 || c.Lives != 0 {
 		t.Fatalf("unlocked car should arrive wrecked and count: lost %d, total %v, %+v", r.CarsLost, run["race_cars_total"], c)
+	}
+	if race, _ := tr.deadLabels(); len(race) != 2 {
+		t.Fatalf("once owned, the wrecked car is blocked like the others: %v", race)
 	}
 	finish("MEDIUSCAR4A")
 	if !r.Dead {
@@ -751,5 +752,28 @@ func TestLoanedCarWithOneCar(t *testing.T) {
 	garage("HIGHUSCAR1A", "HIGHEUCAR2S1")
 	if !tr.run().Cars["HIGHEUCAR2S1"].Owned {
 		t.Fatal("unlocked car should be owned once it's in the garage with the others")
+	}
+}
+
+// A retry with a wrecked loaned car costs the last car of your own you drove in a Race event.
+func TestLoanRetryLastCarPays(t *testing.T) {
+	f := &fakeMem{ram: make([]byte, 0x2000000)}
+	tr := NewTracker(f, filepath.Join(t.TempDir(), "s.json"), func() float64 { return 0 })
+	tr.StartRun("Easy")
+	r := tr.run()
+	tr.registerCar("HIGHUSCAR1A", "A", false)
+	tr.registerCar("MEDIUSCAR4A", "B", false)
+	r.Cars["MEDIUSCAR4A"].Lives = 1
+	r.LastRaceCar = "MEDIUSCAR4A"
+	if got := tr.loanPayer(false); got != "MEDIUSCAR4A" {
+		t.Fatalf("payer = %s, want the last car driven", got)
+	}
+	r.Cars["MEDIUSCAR4A"].Lives = 0 // wrecked: fall back to the most lives
+	if got := tr.loanPayer(false); got != "HIGHUSCAR1A" {
+		t.Fatalf("payer = %s, want the car with the most lives", got)
+	}
+	r.Cars["HIGHUSCAR1A"].Lives = 0
+	if got := tr.loanPayer(false); got != "" {
+		t.Fatalf("payer = %s, want none", got)
 	}
 }

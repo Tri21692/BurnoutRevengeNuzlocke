@@ -162,10 +162,11 @@ type Run struct {
 	Cars         map[string]*Car `json:"cars"`
 	EventsPlayed int             `json:"events_played"`
 	EventsWon    int             `json:"events_won"`
-	CarsLost     int             `json:"cars_lost"`       // wrecked in the Race pool
-	CrashLost    int             `json:"crash_cars_lost"` // wrecked in the Crash pool
-	Pools        bool            `json:"pools"`           // false for runs saved before the two pools
-	Ownership    bool            `json:"ownership"`       // false for runs saved before loaned cars were told apart
+	CarsLost     int             `json:"cars_lost"`               // wrecked in the Race pool
+	CrashLost    int             `json:"crash_cars_lost"`         // wrecked in the Crash pool
+	Pools        bool            `json:"pools"`                   // false for runs saved before the two pools
+	Ownership    bool            `json:"ownership"`               // false for runs saved before loaned cars were told apart
+	LastRaceCar  string          `json:"last_race_car,omitempty"` // the last car of your own driven in a Race event
 	Streak       int             `json:"streak"`
 	BestStreak   int             `json:"best_streak"`
 	History      []HistoryEntry  `json:"history"`
@@ -607,6 +608,9 @@ func (t *Tracker) finishEvent(before []byte) {
 		return
 	}
 	t.addCar(car, carName, crash, false) // owned only once it shows up in a car select
+	if c := r.Cars[car]; c != nil && c.Owned && !crash {
+		r.LastRaceCar = car
+	}
 	r.EventsPlayed++
 	if won {
 		r.EventsWon++
@@ -636,8 +640,25 @@ func (t *Tracker) finishEvent(before []byte) {
 		} else if req, ok := requirements[difficulty]; ok {
 			reason += ", needs " + req.text
 		}
-		if *lives == 0 && !c.Owned {
-			// a loaned car: wrecked now, but it only counts (and blocks) once you unlock it
+		if !wasAlive && !c.Owned {
+			// a retry with a loaned car that's already wrecked: one of your own cars pays
+			if payer := t.loanPayer(crash); payer != "" {
+				pc := r.Cars[payer]
+				plives, plost := &pc.Lives, &r.CarsLost
+				if crash {
+					plives, plost = &pc.CrashLives, &r.CrashLost
+				}
+				*plives--
+				name := pc.Name
+				if *plives == 0 {
+					*plost++
+					t.say(fmt.Sprintf("%s (loaned) is already wrecked, so %s pays: wrecked for %s events (%s: %s)", carName, name, pool, where, reason), 25, "loss")
+				} else {
+					t.say(fmt.Sprintf("%s (loaned) is already wrecked, so %s pays a %s life, %d left (%s: %s)", carName, name, pool, *plives, where, reason), 20, "loss")
+				}
+			}
+		} else if *lives == 0 && !c.Owned {
+			// a loaned car: wrecked now, but it only counts once you unlock it
 			t.say(fmt.Sprintf("%s (loaned) is wrecked for %s events and will be when you unlock it (%s: %s)", carName, pool, where, reason), 25, "loss")
 		} else if *lives == 0 {
 			if wasAlive {
@@ -821,6 +842,33 @@ func (t *Tracker) allDeadAmong(among map[string]bool) bool {
 	return (raceCars > 0 && race) || (crashCars > 0 && crash)
 }
 
+// loanPayer picks the car of your own that pays for a retry with a wrecked loaned car: the last one
+// you drove in a Race event, or else the one with the most lives left in that pool ("" if none has any).
+func (t *Tracker) loanPayer(crash bool) string {
+	r := t.run()
+	lives := func(c *Car) int {
+		if crash {
+			return c.CrashLives
+		}
+		return c.Lives
+	}
+	if !crash {
+		if c := r.Cars[r.LastRaceCar]; c != nil && c.Owned && c.CanRace() && c.Lives > 0 {
+			return r.LastRaceCar
+		}
+	}
+	best, most := "", 0
+	for l, c := range r.Cars {
+		if !c.Owned || (crash && !c.CanCrash()) || (!crash && !c.CanRace()) {
+			continue
+		}
+		if n := lives(c); n > most || (n == most && n > 0 && l < best) {
+			best, most = l, n
+		}
+	}
+	return best
+}
+
 // deadLabels returns the cars wrecked in the Race pool and in the Crash pool.
 func (t *Tracker) deadLabels() (race, crash []string) {
 	r := t.run()
@@ -828,6 +876,9 @@ func (t *Tracker) deadLabels() (race, crash []string) {
 		return nil, nil
 	}
 	for l, c := range r.Cars {
+		if !c.Owned { // a loaned car is never blocked, so its event can always be retried
+			continue
+		}
 		if c.CanRace() && c.Lives == 0 {
 			race = append(race, l)
 		}

@@ -24,7 +24,9 @@
 - **Loaned cars.** A car lent to you by a Burning Lap or Preview event (the garage then holds only that
   car) no longer joins the run straight away. A failed event still costs the loaned car its life, but it
   only counts towards your cars, and your wrecked total, once you unlock it, so it can't leave you stuck
-  with a run that should be dead. The control page and overlay mark it "(loaned)".
+  with a run that should be dead. A loaned car is never blocked, so the event can always be retried; once
+  it's wrecked, each failed retry costs a Race life from the last car of your own you drove (or the one
+  with the most lives left). The control page and overlay mark it "(loaned)".
 - **Medal strip.** The control page and the overlay show the current car's events in order as medals
   (gold, silver, bronze or none; red ribbon and slash for a loss, "C" for a Crash junction). Click a
   medal on the control page to see the event, its result, location and time. It replaces the recent
