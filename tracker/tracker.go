@@ -112,6 +112,10 @@ type Car struct {
 	CrashLives int    `json:"crash_lives"` // Crash pool: Crash junctions
 	InGarage   bool   `json:"in_garage"`   // seen in the garage (or used in a Race event): can race
 	InCrash    bool   `json:"in_crash"`    // seen in a crash junction's car select (or used there)
+	// Owned: seen in the garage or a crash junction's car select. A car only driven so far (a Burning
+	// Lap or Preview loans you one you haven't unlocked) takes its losses, but doesn't count towards
+	// the run's cars until you own it.
+	Owned bool `json:"owned"`
 }
 
 // CanRace and CanCrash: which pools a car has. A car not seen anywhere yet (from an older save) has both.
@@ -161,6 +165,7 @@ type Run struct {
 	CarsLost     int             `json:"cars_lost"`       // wrecked in the Race pool
 	CrashLost    int             `json:"crash_cars_lost"` // wrecked in the Crash pool
 	Pools        bool            `json:"pools"`           // false for runs saved before the two pools
+	Ownership    bool            `json:"ownership"`       // false for runs saved before loaned cars were told apart
 	Streak       int             `json:"streak"`
 	BestStreak   int             `json:"best_streak"`
 	History      []HistoryEntry  `json:"history"`
@@ -228,6 +233,13 @@ func NewTracker(mem Mem, statePath string, now func() float64) *Tracker {
 		}
 		r.CrashLost = r.CarsLost
 		r.Pools = true
+	}
+	if r := t.state.Run; r != nil && !r.Ownership {
+		// runs from before loaned cars were told apart: every car so far counts as owned
+		for _, c := range r.Cars {
+			c.Owned = true
+		}
+		r.Ownership = true
 	}
 	return t
 }
@@ -365,7 +377,7 @@ func (t *Tracker) StartRun(difficulty string) {
 	if t.run() != nil {
 		t.restoreNames(nil, 0, true)
 	}
-	t.state.Run = &Run{Active: true, Difficulty: difficulty, LivesStart: lives, Pools: true,
+	t.state.Run = &Run{Active: true, Difficulty: difficulty, LivesStart: lives, Pools: true, Ownership: true,
 		Started: time.Now().Format("2006-01-02 15:04:05"), Cars: map[string]*Car{}}
 	t.originals = map[string]string{}
 	t.save()
@@ -594,7 +606,7 @@ func (t *Tracker) finishEvent(before []byte) {
 		t.save()
 		return
 	}
-	t.registerCar(car, carName, crash)
+	t.addCar(car, carName, crash, false) // owned only once it shows up in a car select
 	r.EventsPlayed++
 	if won {
 		r.EventsWon++
@@ -614,7 +626,8 @@ func (t *Tracker) finishEvent(before []byte) {
 		if crash {
 			pool, lives, lost = "Crash", &c.CrashLives, &r.CrashLost
 		}
-		if *lives > 0 {
+		wasAlive := *lives > 0
+		if wasAlive {
 			*lives--
 		}
 		reason := resultText
@@ -623,8 +636,13 @@ func (t *Tracker) finishEvent(before []byte) {
 		} else if req, ok := requirements[difficulty]; ok {
 			reason += ", needs " + req.text
 		}
-		if *lives == 0 {
-			*lost++
+		if *lives == 0 && !c.Owned {
+			// a loaned car: wrecked now, but it only counts (and blocks) once you unlock it
+			t.say(fmt.Sprintf("%s (loaned) is wrecked for %s events and will be when you unlock it (%s: %s)", carName, pool, where, reason), 25, "loss")
+		} else if *lives == 0 {
+			if wasAlive {
+				*lost++
+			}
 			t.say(fmt.Sprintf("%s is wrecked for %s events (%s: %s)", carName, pool, where, reason), 25, "loss")
 		} else {
 			t.say(fmt.Sprintf("%s lost a %s life, %d left (%s: %s)", carName, pool, *lives, where, reason), 20, "loss")
@@ -725,6 +743,25 @@ func (t *Tracker) repairNames(region []byte, base uint32) {
 // registerCar adds a car the first time it's seen and records where it can be used: crash is true for a
 // crash junction (car select or event), false for the garage or a Race event.
 func (t *Tracker) registerCar(label, name string, crash bool) {
+	t.addCar(label, name, crash, true)
+}
+
+// ownedCars is how many cars the run owns.
+func (t *Tracker) ownedCars() int {
+	n := 0
+	if r := t.run(); r != nil {
+		for _, c := range r.Cars {
+			if c.Owned {
+				n++
+			}
+		}
+	}
+	return n
+}
+
+// addCar registers a car seen in a car select (owned) or only driven in an event (owned false: a
+// loaned car, until it shows up in a car select).
+func (t *Tracker) addCar(label, name string, crash, owned bool) {
 	r := t.run()
 	if r == nil || !strings.Contains(label, "CAR") {
 		return
@@ -743,6 +780,17 @@ func (t *Tracker) registerCar(label, name string, crash bool) {
 		c.InGarage = true
 		t.dirty = true
 	}
+	if owned && !c.Owned {
+		// a car wrecked while it was loaned now counts as a wrecked car of the run
+		c.Owned = true
+		t.dirty = true
+		if c.CanRace() && c.Lives == 0 {
+			r.CarsLost++
+		}
+		if c.CanCrash() && c.CrashLives == 0 {
+			r.CrashLost++
+		}
+	}
 }
 
 // allDead: the run is over when every car is wrecked in the Race pool, or every car in the Crash pool.
@@ -758,7 +806,7 @@ func (t *Tracker) allDeadAmong(among map[string]bool) bool {
 	race, crash := true, true
 	raceCars, crashCars := 0, 0
 	for l, c := range r.Cars {
-		if among != nil && !among[l] {
+		if (among != nil && !among[l]) || !c.Owned { // loaned cars don't count until you own them
 			continue
 		}
 		if c.CanRace() {
@@ -874,8 +922,12 @@ func (t *Tracker) slowChecks() {
 				}
 			}
 			if allCars {
+				// A Burning Lap or Preview loads only its loaned car into the garage. A garage holding one
+				// car you don't own, while you already own one, is that: a real unlock shows up next to
+				// your other cars.
+				loanSelect := li == 0 && n == 1 && t.ownedCars() >= 1
 				for _, l := range labels {
-					t.registerCar(l, t.carName(region, base, l), li > 0)
+					t.addCar(l, t.carName(region, base, l), li > 0, !loanSelect)
 				}
 			}
 		}
@@ -1039,6 +1091,9 @@ func (t *Tracker) Snapshot() map[string]any {
 	}
 	raceCars, crashCars := 0, 0
 	for _, c := range r.Cars {
+		if !c.Owned {
+			continue
+		}
 		if c.CanRace() {
 			raceCars++
 		}
@@ -1059,7 +1114,7 @@ func (t *Tracker) Snapshot() map[string]any {
 			label := decodeLabel(t.u64(selectedCar))
 			if c := r.Cars[label]; c != nil {
 				snap["car"] = map[string]any{"name": c.Name, "lives": c.Lives, "crash_lives": c.CrashLives,
-					"can_race": c.CanRace(), "can_crash": c.CanCrash(), "history": carHistory(r, label, c.Name)}
+					"can_race": c.CanRace(), "can_crash": c.CanCrash(), "loaned": !c.Owned, "history": carHistory(r, label, c.Name)}
 			}
 		}()
 	}

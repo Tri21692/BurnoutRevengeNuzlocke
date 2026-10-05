@@ -645,3 +645,111 @@ func TestHistoryAndLocation(t *testing.T) {
 		t.Fatalf("old entry should read as silver: %+v", hist)
 	}
 }
+
+// A car loaned for a Burning Lap or Preview takes its losses, but only counts towards the run (and
+// its wrecked total) once it shows up in the garage, so it can't keep a dead run alive.
+func TestLoanedCar(t *testing.T) {
+	f := &fakeMem{ram: make([]byte, 0x2000000)}
+	f.w32(eventCount, 169)
+	for i := 0; i < 169; i++ {
+		f.ram[eventResults+i] = 0xFF
+	}
+	f.w64(eventIDs+3*8, encodeLabel("K_01BFLR"))
+	for a, v := range patchHooks {
+		f.w32(a, v)
+	}
+	f.w32(crashTableRef, crashTableRefOn)
+	f.w32(deadLockHook, deadLockHookOn)
+	const obj = 0x01D00000
+	f.w32(currentEvent, obj)
+	garage := func(labels ...string) {
+		f.w32(carouselList+0xBA4, uint32(len(labels)))
+		for i, l := range labels {
+			f.w64(carouselList+uint32(8*i), encodeLabel(l))
+		}
+	}
+	clock := 100.0
+	tr := NewTracker(f, filepath.Join(t.TempDir(), "s.json"), func() float64 { return clock })
+	tr.StartRun("Hard")
+	r := tr.run()
+	garage("HIGHUSCAR1A", "MEDIUSCAR4A")
+	clock += 3
+	tr.Poll()
+	finish := func(car string) {
+		f.w64(selectedCar, encodeLabel(car))
+		f.w64(obj, encodeLabel(car))
+		f.w64(obj+0x18, encodeLabel("K_01BFLR"))
+		f.w32(lastMedal, 2) // Silver: a loss on Hard
+		f.w32(lastRating, 3)
+		f.w32(finishCounter, binary.LittleEndian.Uint32(f.ram[finishCounter:])+1)
+		clock += 0.25
+		tr.Poll()
+		clock += 1.5
+		tr.Poll()
+	}
+	garage("HIGHEUCAR2S1") // the Burning Lap's car select: only the loaned car
+	clock += 3
+	tr.Poll()
+	finish("HIGHEUCAR2S1")
+	c := r.Cars["HIGHEUCAR2S1"]
+	if c == nil || c.Owned || c.Lives != 0 {
+		t.Fatalf("loaned car should be registered, not owned, and wrecked: %+v", c)
+	}
+	run := tr.Snapshot()["run"].(map[string]any)
+	if r.CarsLost != 0 || run["race_cars_total"] != 2 || r.Dead {
+		t.Fatalf("a loaned car mustn't count yet: lost %d, total %v", r.CarsLost, run["race_cars_total"])
+	}
+	garage("HIGHUSCAR1A", "MEDIUSCAR4A") // back in the garage
+	clock += 3
+	tr.Poll()
+	if race, _ := tr.deadLabels(); len(race) != 1 || race[0] != "HIGHEUCAR2S1" {
+		t.Fatalf("the wrecked loaned car should be on the dead list for when it's unlocked: %v", race)
+	}
+	finish("HIGHUSCAR1A")
+	if r.Dead {
+		t.Fatal("one owned car left: the run isn't dead")
+	}
+	garage("HIGHUSCAR1A", "MEDIUSCAR4A", "HIGHEUCAR2S1") // the loaned car is unlocked for real
+	clock += 3
+	tr.Poll()
+	run = tr.Snapshot()["run"].(map[string]any)
+	if !c.Owned || r.CarsLost != 2 || run["race_cars_total"] != 3 || c.Lives != 0 {
+		t.Fatalf("unlocked car should arrive wrecked and count: lost %d, total %v, %+v", r.CarsLost, run["race_cars_total"], c)
+	}
+	finish("MEDIUSCAR4A")
+	if !r.Dead {
+		t.Fatal("every owned car wrecked: the run should be dead")
+	}
+}
+
+// With one car of your own, a loaned car alone in the garage is still a loaner.
+func TestLoanedCarWithOneCar(t *testing.T) {
+	f := &fakeMem{ram: make([]byte, 0x2000000)}
+	f.w32(eventCount, 169)
+	for i := 0; i < 169; i++ {
+		f.ram[eventResults+i] = 0xFF
+	}
+	for a, v := range patchHooks {
+		f.w32(a, v)
+	}
+	clock := 100.0
+	tr := NewTracker(f, filepath.Join(t.TempDir(), "s.json"), func() float64 { return clock })
+	tr.StartRun("Easy")
+	garage := func(labels ...string) {
+		f.w32(carouselList+0xBA4, uint32(len(labels)))
+		for i, l := range labels {
+			f.w64(carouselList+uint32(8*i), encodeLabel(l))
+		}
+		clock += 3
+		tr.Poll()
+	}
+	garage("HIGHUSCAR1A")
+	garage("HIGHEUCAR2S1")
+	if c := tr.run().Cars["HIGHEUCAR2S1"]; c == nil || c.Owned {
+		t.Fatalf("loaned car counted as owned: %+v", c)
+	}
+	garage("HIGHUSCAR1A", "HIGHEUCAR2S1")
+	if !tr.run().Cars["HIGHEUCAR2S1"].Owned {
+		t.Fatal("unlocked car should be owned once it's in the garage with the others")
+	}
+}

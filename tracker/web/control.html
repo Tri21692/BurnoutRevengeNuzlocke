@@ -170,7 +170,7 @@ function render(s) {
   const car = s.car;
   $('car').classList.toggle('hidden', !car);
   if (car) {
-    $('carname').textContent = car.name;
+    $('carname').textContent = car.loaned ? `${car.name} (loaned)` : car.name;
     const crashLives = car.crash_lives ?? car.lives;
     const canRace = car.can_race ?? true, canCrash = car.can_crash ?? true;
     $('car').classList.toggle('wrecked', (!canRace || car.lives === 0) && (!canCrash || crashLives === 0) && !r.grace);
