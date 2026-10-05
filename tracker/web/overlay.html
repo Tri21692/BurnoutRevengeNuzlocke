@@ -51,6 +51,11 @@
   .pool > i { font-style: normal; font-weight: 800; font-size: 13px; letter-spacing: 1px; color: var(--smoke); }
   .pool.out > i { color: var(--wreck); }
 
+  /* The current car's events in order, one medal each */
+  .medals { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 7px; max-width: 520px; }
+  .medals svg { width: 17px; height: 21px; }
+  .medals .uncounted { opacity: 0.4; }
+
   /* Result ticker: the one animated moment */
   .ticker {
     display: block; width: max-content; max-width: 640px; margin-top: 10px;
@@ -98,6 +103,7 @@
           <div class="pool" id="racepool"><i>RACE</i><div class="hearts" id="hearts"></div></div>
           <div class="pool" id="crashpool"><i>CRASH</i><div class="hearts" id="crashhearts"></div></div>
         </div>
+        <div class="medals hidden" id="medals"></div>
       </div>
     </div>
     <div class="ticker hidden" id="ticker"><span id="tickertext"></span></div>
@@ -127,6 +133,17 @@ function hearts(full, total) {
     html += `<svg viewBox="0 0 20 20" aria-hidden="true"><path class="${i < full ? 'full' : 'empty'}" d="${HEART}"/></svg>`;
   }
   return html;
+}
+
+const MEDAL = { gold: '#E8B83A', silver: '#C9CED6', bronze: '#C27C48' };
+function medal(h) {
+  const fill = MEDAL[h.medal] || 'none';
+  return `<svg viewBox="0 0 24 30" class="${h.counted ? '' : 'uncounted'}" aria-hidden="true">` +
+    `<path d="M6 0h5l2 8h-4zM13 0h5l-3 8h-4z" fill="${h.won ? 'var(--hazard)' : 'var(--wreck)'}"/>` +
+    `<circle cx="12" cy="19" r="9" fill="${fill}" stroke="${fill === 'none' ? 'var(--smoke)' : 'rgba(0,0,0,.35)'}" stroke-width="2"/>` +
+    (h.crash ? `<text x="12" y="23" text-anchor="middle" font-size="10" font-weight="800" font-style="normal" fill="#1a1714">C</text>` : '') +
+    (h.won ? '' : `<path d="M5 26L19 12" stroke="var(--wreck)" stroke-width="3" stroke-linecap="round"/>`) +
+    `</svg>`;
 }
 
 function aiText(level) {
@@ -165,6 +182,9 @@ function render(s) {
     $('hearts').innerHTML = hearts(car.lives, r.lives_start);
     $('crashhearts').innerHTML = hearts(crashLives, r.lives_start);
   }
+  const hist = (car && car.history) || [];
+  $('medals').classList.toggle('hidden', !hist.length);
+  $('medals').innerHTML = hist.slice(-24).map(medal).join('');
 
   // Result ticker
   const m = s.message;

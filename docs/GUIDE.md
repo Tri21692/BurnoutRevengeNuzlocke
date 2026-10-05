@@ -92,6 +92,8 @@ The medal and the rating are checked separately: on Medium, Gold + Awesome and S
 - **Grace continue:** keep playing with all cars usable again, but nothing counts any more.
 - **Start a new run:** begin again with a new difficulty. Use a fresh memory card or profile too.
 
+**Medals.** Under the current car, the control page and overlay show every event that car has driven, in order, as a medal: gold, silver, bronze or an empty ring for no medal. A red ribbon and slash mark a loss, a "C" marks a Crash junction, and faded medals weren't counted (Grace mode). Click a medal on the control page to see the event, its location, the result and when it was. Each result on the overlay also says where it was, for example "Crash - Dock Fight · Motor City".
+
 The stats are events won out of events played, cars wrecked in each pool, run time (time with the game running), your best win streak, and the difficulty and AI level.
 
 ## FAQ

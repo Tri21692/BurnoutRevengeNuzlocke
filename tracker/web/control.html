@@ -41,6 +41,18 @@
   li .tag { font-family: var(--display); font-style: italic; font-weight: 800; }
   li .tag.win { color: var(--hazard); } li .tag.loss { color: var(--wreck); }
   li small { color: var(--smoke); }
+  .medals { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .medals:empty::before { content: "No events with this car yet."; color: var(--smoke); }
+  .medal { background: none; padding: 2px; border: 2px solid transparent; line-height: 0; cursor: pointer; }
+  .medal:hover { background: rgba(243,234,211,.08); }
+  .medal.sel { border-color: var(--hazard); }
+  .medal svg { width: 26px; height: 32px; }
+  .medal.uncounted { opacity: .45; }
+  .detail { margin-top: 10px; padding: 10px 14px; background: var(--plate); border-left: 4px solid var(--smoke); }
+  .detail.win { border-left-color: var(--hazard); } .detail.loss { border-left-color: var(--wreck); }
+  .detail b { font-family: var(--display); font-style: italic; font-weight: 800; margin-right: 8px; }
+  .detail.win b { color: var(--hazard); } .detail.loss b { color: var(--wreck); }
+  .detail small { display: block; color: var(--smoke); margin-top: 2px; }
   .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
   button { font: 600 16px var(--text); color: #1a1714; background: var(--chalk); border: 0; padding: 12px 18px; cursor: pointer; }
   button:hover { background: #fff; }
@@ -99,7 +111,8 @@
       <div class="pool" id="racepool"><i>RACE</i><div class="hearts" id="hearts"></div></div>
       <div class="pool" id="crashpool"><i>CRASH</i><div class="hearts" id="crashhearts"></div></div></div>
     <div class="msg hidden" id="msg"></div>
-    <ol id="recent"></ol>
+    <div class="medals" id="medals" aria-label="Events with this car"></div>
+    <div class="detail hidden" id="detail"></div>
   </section>
 
   <footer>
@@ -174,9 +187,41 @@ function render(s) {
   const m = s.message;
   $('msg').classList.toggle('hidden', !m);
   if (m) { $('msg').textContent = m.text; $('msg').className = `msg ${m.kind}`; }
-  $('recent').innerHTML = (s.recent || []).map((h) =>
-    `<li><span class="tag ${h.won ? 'win' : 'loss'}">${h.won ? 'Win' : 'Loss'}</span>` +
-    `<span>${esc(h.event)}<br><small>${esc(h.car)}, ${esc(h.result)}</small></span></li>`).join('');
+  renderMedals(car ? car.history || [] : [], car ? car.name : '');
+}
+
+// The current car's events as medals, oldest first; click one to see the event.
+const MEDAL = { gold: '#E8B83A', silver: '#C9CED6', bronze: '#C27C48', none: 'none' };
+let medalCar = '', medalSel = -1;
+function medalSVG(h) {
+  const fill = MEDAL[h.medal] || 'none';
+  const ribbon = h.won ? 'var(--hazard)' : 'var(--wreck)';
+  return `<svg viewBox="0 0 24 30" aria-hidden="true">` +
+    `<path d="M6 0h5l2 8h-4zM13 0h5l-3 8h-4z" fill="${ribbon}"/>` +
+    `<circle cx="12" cy="19" r="9" fill="${fill}" stroke="${fill === 'none' ? 'var(--smoke)' : 'rgba(0,0,0,.35)'}" stroke-width="2"/>` +
+    (h.crash ? `<text x="12" y="23" text-anchor="middle" font-size="10" font-weight="800" fill="#1a1714">C</text>` : '') +
+    (h.won ? '' : `<path d="M5 26L19 12" stroke="var(--wreck)" stroke-width="3" stroke-linecap="round"/>`) +
+    `</svg>`;
+}
+function renderMedals(list, name) {
+  if (name !== medalCar) { medalCar = name; medalSel = -1; }
+  if (medalSel >= list.length) medalSel = -1;
+  $('medals').innerHTML = list.map((h, i) =>
+    `<button class="medal${i === medalSel ? ' sel' : ''}${h.counted ? '' : ' uncounted'}" data-i="${i}" ` +
+    `title="${esc(h.event)}: ${esc(h.result)}" aria-label="${esc(h.event)}, ${esc(h.result)}, ${h.won ? 'win' : 'loss'}">${medalSVG(h)}</button>`).join('');
+  $('medals').querySelectorAll('.medal').forEach((b) => b.onclick = () => {
+    const i = Number(b.dataset.i);
+    medalSel = medalSel === i ? -1 : i;
+    renderMedals(list, name);
+  });
+  const h = list[medalSel];
+  $('detail').classList.toggle('hidden', !h);
+  if (h) {
+    $('detail').className = `detail ${h.won ? 'win' : 'loss'}`;
+    const at = h.location && !h.event.toUpperCase().includes(h.location.toUpperCase()) ? ` · ${esc(h.location)}` : '';
+    $('detail').innerHTML = `<b>${h.won ? 'Win' : 'Loss'}</b>${esc(h.event)}${at}` +
+      `<small>${esc(h.result)} · ${h.crash ? 'Crash' : 'Race'} event · ${esc(h.time)}${h.counted ? '' : ' · not counted'}</small>`;
+  }
 }
 function esc(t) { return String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); }
 

@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/overlay.png" alt="The stream overlay: difficulty, events won, cars wrecked, run time and the current car's lives" width="560">
+  <img src="docs/images/overlay.png" alt="The stream overlay: difficulty, events won, cars wrecked, run time and the current car's lives and medals" width="560">
 </p>
 
 ---
@@ -40,7 +40,7 @@ Inspired by the [Need for Speed Underground Nuzlocke mod](https://github.com/xan
 | 💿 **ISO patcher** ([`bin/nuzlocke_isopatch.exe`](bin/nuzlocke_isopatch.exe)) | Builds the whole patch into your own copy of the game (one ISO per AI level, widescreen and 60 FPS optional), so no `.pnach` is needed. |
 
 <p align="center">
-  <img src="docs/images/control.png" alt="The tracker's control page: the run's difficulty, stats, the current car's lives and recent results" width="560">
+  <img src="docs/images/control.png" alt="The tracker's control page: the run's difficulty, stats, the current car's lives and its events as medals, one opened" width="560">
 </p>
 
 ## Download

@@ -569,3 +569,79 @@ func TestRewardCarCantSaveRun(t *testing.T) {
 		t.Fatal("Grace should release the results screen")
 	}
 }
+
+// Each car's history keeps its medals in order, and events get their location: from the track in
+// the current event object, or from the name for race events.
+func TestHistoryAndLocation(t *testing.T) {
+	f := &fakeMem{ram: make([]byte, 0x2000000)}
+	f.w32(eventCount, 169)
+	for i := 0; i < 169; i++ {
+		f.ram[eventResults+i] = 0xFF
+	}
+	for a, v := range patchHooks {
+		f.w32(a, v)
+	}
+	f.w32(crashTableRef, crashTableRefOn)
+	pos := uint32(0x01234560)
+	add := func(label, text string) {
+		f.w32(pos, textID(label))
+		d := append(utf16le(text), 0, 0)
+		copy(f.ram[pos+4:], d)
+		pos = (pos + 4 + uint32(len(d)) + 3) &^ 3
+	}
+	add("HIGHUSCAR1A", "FACTORY R160 ST")
+	add("MEDIUSCAR4A", "MODIFIED M-TYPE ST")
+	add("HIGHEUCAR2S1", "EA RACER GT")
+	add("K_01DH1E", "CRASH - DOCK FIGHT")
+	add("K_01CDSR", "RACE - MOTOR CITY")
+	add("US_K1_V1", "MOTOR CITY")
+	const obj = 0x01D00000
+	f.w32(currentEvent, obj)
+	clock := 100.0
+	tr := NewTracker(f, filepath.Join(t.TempDir(), "s.json"), func() float64 { return clock })
+	tr.StartRun("Easy")
+	r := tr.run()
+	tr.registerCar("HIGHUSCAR1A", "FACTORY R160 ST", false)
+	tr.registerCar("HIGHUSCAR1A", "FACTORY R160 ST", true)
+	tr.registerCar("HIGHEUCAR2S1", "EA RACER GT", false)
+	finish := func(car, event, track string, medal uint32) {
+		f.w64(selectedCar, encodeLabel(car))
+		f.w64(obj, encodeLabel(car))
+		f.w64(obj+0x18, encodeLabel(event))
+		f.w64(obj+0x40, encodeLabel(track))
+		f.w32(lastMedal, medal)
+		f.w32(lastRating, 2)
+		f.w32(finishCounter, binary.LittleEndian.Uint32(f.ram[finishCounter:])+1)
+		clock += 0.25
+		tr.Poll()
+		clock += 1.5
+		tr.Poll()
+	}
+	clock += 0.25
+	tr.Poll()
+	finish("HIGHUSCAR1A", "K_01DH1E", "US_K1_V1", 3) // crash: the location comes from the track
+	if h := r.History[len(r.History)-1]; h.Where != "MOTOR CITY" || h.Medal != "gold" || !h.Won {
+		t.Fatalf("crash junction should be at Motor City with gold: %+v", h)
+	}
+	if m := tr.message; m != "CRASH - DOCK FIGHT · MOTOR CITY: Gold + Awesome" {
+		t.Fatalf("ticker should show the location: %+v", m)
+	}
+	finish("HIGHEUCAR2S1", "K_01CDSR", "", 3) // another car
+	finish("HIGHUSCAR1A", "K_01CDSR", "", 1)  // race: the location comes from the name
+	if h := r.History[len(r.History)-1]; h.Where != "MOTOR CITY" || h.Medal != "bronze" || h.Won {
+		t.Fatalf("race should be at Motor City with bronze: %+v", h)
+	}
+	if m := tr.message; !strings.Contains(m, "MOTOR CITY") || strings.Contains(m, "·") {
+		t.Fatalf("a race named after its location shouldn't repeat it: %+v", m)
+	}
+	hist := carHistory(r, "HIGHUSCAR1A", "FACTORY R160 ST")
+	if len(hist) != 2 || hist[0]["medal"] != "gold" || hist[1]["medal"] != "bronze" ||
+		hist[0]["crash"] != true || hist[1]["won"] != false || hist[0]["location"] != "MOTOR CITY" {
+		t.Fatalf("car history should be the car's two events in order: %+v", hist)
+	}
+	// older saves have no medal or label: matched by name, medal from the result
+	r.History = append(r.History, HistoryEntry{Event: "X", Car: "FACTORY R160 ST", Result: "Silver + Great"})
+	if hist := carHistory(r, "HIGHUSCAR1A", "FACTORY R160 ST"); len(hist) != 3 || hist[2]["medal"] != "silver" {
+		t.Fatalf("old entry should read as silver: %+v", hist)
+	}
+}

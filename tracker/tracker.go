@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -125,7 +126,25 @@ type HistoryEntry struct {
 	Won     bool   `json:"won"`
 	Counted bool   `json:"counted"`
 	Crash   bool   `json:"crash,omitempty"` // a Crash junction (Crash pool)
+	Label   string `json:"car_label,omitempty"`
+	Medal   string `json:"medal,omitempty"` // gold, silver, bronze or none (empty in older saves)
+	Where   string `json:"location,omitempty"`
 }
+
+// medalOf returns gold, silver, bronze or none for a history entry, from its result for older saves.
+func medalOf(h HistoryEntry) string {
+	if h.Medal != "" {
+		return h.Medal
+	}
+	for _, m := range []string{"Gold", "Silver", "Bronze"} {
+		if strings.HasPrefix(h.Result, m) {
+			return strings.ToLower(m)
+		}
+	}
+	return "none"
+}
+
+var medalKeys = map[uint32]string{3: "gold", 2: "silver", 1: "bronze"}
 
 type Run struct {
 	Active       bool            `json:"active"`
@@ -181,6 +200,7 @@ type Tracker struct {
 	nameCache         map[string]string // label -> display name, once found
 	pendingEvent      string            // event label read when the event started or its result came in
 	pendingCar        string            // car label read at the same time
+	pendingTrack      string            // track label read at the same time, e.g. US_K1_V1
 	patchOld          bool              // the crash junction block still uses the shared table
 	dirty             bool              // a car's garage / crash junction flags changed
 	carsBefore        map[string]bool   // cars the run had when the current event's result came in
@@ -524,10 +544,20 @@ func (t *Tracker) finishEvent(before []byte) {
 	if crash && strings.Contains(t.pendingCar, "CAR") {
 		car = t.pendingCar // the car loaded for the junction
 	}
-	t.pendingEvent, t.pendingCar = "", ""
+	location := t.trackName(region, base, t.pendingTrack)
+	t.pendingEvent, t.pendingCar, t.pendingTrack = "", "", ""
 	eventName := "Unknown event"
 	if eventLabel != "" {
 		eventName = t.nameOf(region, base, eventLabel)
+	}
+	if location == "" && !crash { // race events are named after their location: "Race - Motor City"
+		if i := strings.LastIndex(eventName, " - "); i >= 0 {
+			location = strings.TrimSpace(eventName[i+3:])
+		}
+	}
+	where := eventName // the event and its location, for the messages
+	if location != "" && !strings.Contains(strings.ToUpper(eventName), strings.ToUpper(location)) {
+		where += " · " + location
 	}
 	carName := t.carName(region, base, car)
 	shown, shownIdx := "?", -1
@@ -554,12 +584,13 @@ func (t *Tracker) finishEvent(before []byte) {
 		return
 	}
 	r.History = append(r.History, HistoryEntry{Time: time.Now().Format("2006-01-02 15:04:05"),
-		Event: eventName, Car: carName, Result: resultText, Won: won, Counted: t.counting(), Crash: crash})
+		Event: eventName, Car: carName, Result: resultText, Won: won, Counted: t.counting(), Crash: crash,
+		Label: car, Medal: medalKeyOf(medal), Where: location})
 	if len(r.History) > 200 {
 		r.History = r.History[len(r.History)-200:]
 	}
 	if !t.counting() {
-		t.say(fmt.Sprintf("%s: %s (not counted)", eventName, resultText), 15, "info")
+		t.say(fmt.Sprintf("%s: %s (not counted)", where, resultText), 15, "info")
 		t.save()
 		return
 	}
@@ -571,7 +602,7 @@ func (t *Tracker) finishEvent(before []byte) {
 		if r.Streak > r.BestStreak {
 			r.BestStreak = r.Streak
 		}
-		t.say(eventName+": "+resultText, 15, "win")
+		t.say(where+": "+resultText, 15, "win")
 	} else {
 		r.Streak = 0
 		c := r.Cars[car]
@@ -594,9 +625,9 @@ func (t *Tracker) finishEvent(before []byte) {
 		}
 		if *lives == 0 {
 			*lost++
-			t.say(fmt.Sprintf("%s is wrecked for %s events (%s: %s)", carName, pool, eventName, reason), 25, "loss")
+			t.say(fmt.Sprintf("%s is wrecked for %s events (%s: %s)", carName, pool, where, reason), 25, "loss")
 		} else {
-			t.say(fmt.Sprintf("%s lost a %s life, %d left (%s: %s)", carName, pool, *lives, eventName, reason), 20, "loss")
+			t.say(fmt.Sprintf("%s lost a %s life, %d left (%s: %s)", carName, pool, *lives, where, reason), 20, "loss")
 		}
 	}
 	// Only the cars the run had before this event (and the one just driven) count: a car this event
@@ -781,6 +812,29 @@ func (t *Tracker) captureEvent() {
 	if l := decodeLabel(t.u64(ptr)); strings.Contains(l, "CAR") {
 		t.pendingCar = l
 	}
+	// the track sits among the event object's other labels
+	for off := uint32(0x08); off < 0x100; off += 8 {
+		if l := decodeLabel(t.u64(ptr + off)); trackLabel.MatchString(l) {
+			t.pendingTrack = l
+			break
+		}
+	}
+}
+
+// trackLabel matches the game's track labels, US_K1_V1 to AS_S3_V2 (region, route, variant).
+var trackLabel = regexp.MustCompile(`^(US|EU|AS)_[A-Z][0-9]_V[0-9]$`)
+
+// trackName is a track's name from the game's text, or "" when the game has none for it.
+func (t *Tracker) trackName(region []byte, base uint32, label string) string {
+	if label == "" {
+		return ""
+	}
+	for _, l := range []string{label, label[:5]} { // the variant, then the route
+		if name := t.nameOf(region, base, l); name != l && name != "?" && !looksLikeLabel(name) {
+			return name
+		}
+	}
+	return ""
 }
 
 // isCrashEvent: Crash junction labels have DH after the number, e.g. K_01DH1E (Crash - Dock Fight).
@@ -1005,7 +1059,7 @@ func (t *Tracker) Snapshot() map[string]any {
 			label := decodeLabel(t.u64(selectedCar))
 			if c := r.Cars[label]; c != nil {
 				snap["car"] = map[string]any{"name": c.Name, "lives": c.Lives, "crash_lives": c.CrashLives,
-					"can_race": c.CanRace(), "can_crash": c.CanCrash()}
+					"can_race": c.CanRace(), "can_crash": c.CanCrash(), "history": carHistory(r, label, c.Name)}
 			}
 		}()
 	}
@@ -1032,5 +1086,28 @@ func union(a, b []string) []string {
 		}
 	}
 	sort.Strings(out)
+	return out
+}
+
+func medalKeyOf(medal uint32) string {
+	if m, ok := medalKeys[medal]; ok {
+		return m
+	}
+	return "none"
+}
+
+// carHistory: the events one car has played this run, oldest first (the last 40).
+func carHistory(r *Run, label, name string) []map[string]any {
+	var out []map[string]any
+	for _, h := range r.History {
+		if h.Label != label && (h.Label != "" || !strings.EqualFold(h.Car, name)) {
+			continue
+		}
+		out = append(out, map[string]any{"event": h.Event, "result": h.Result, "won": h.Won,
+			"medal": medalOf(h), "location": h.Where, "crash": h.Crash, "time": h.Time, "counted": h.Counted})
+	}
+	if len(out) > 40 {
+		out = out[len(out)-40:]
+	}
 	return out
 }

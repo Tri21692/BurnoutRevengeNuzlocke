@@ -7,11 +7,17 @@
   checked separately, and on Easy and Medium a replay can win. The control page shows the requirement.
 - **Harder AI leaders ease off.** An opponent far enough ahead of you is held to a share of your speed
   (Easy: from 40 m ahead, 90%; Medium: 70 m, 94%; Hard: 100 m, 97%; never below 90 / 100 / 112 mph),
-  so a leader can be caught. Remake patched ISOs to get it; the tracker recognises old and new ones.
+  so a leader can be caught. Remake patched ISOs to get it; the tracker recognizes old and new ones.
 - **Run's dead is final.** Only the cars you had before an event count towards whether it ended the run,
   so a car unlocked by that same event can't save it. While the run is dead, the results screens refuse
   Continue and Retry until you choose Grace, a new run or shut down on the control page (new part 4 of the
   main `.pnach` group; remake patched ISOs).
+- **Medal strip.** The control page and the overlay show the current car's events in order as medals
+  (gold, silver, bronze or none; red ribbon and slash for a loss, "C" for a Crash junction). Click a
+  medal on the control page to see the event, its result, location and time. It replaces the recent
+  results list.
+- **Locations.** Results show where the event was, e.g. "Crash - Dock Fight · Motor City". Race events
+  are already named after their location; for Crash junctions the tracker reads the track the game loaded.
 
 ## V1.1.1
 
@@ -31,7 +37,7 @@ and `nuzlocke_isopatch.exe`), and remake any patched ISOs. Your current run carr
 - **Fixed:** ISOs made with the ISO patcher crashed on boot ("Jump to unmapped recLUT page"). The patcher
   no longer changes the game file's layout; the mod's code now goes into unused space inside the game's
   own data. Make your patched ISOs again with the new patcher.
-- The tracker recognises ISOs made with the new patcher.
+- The tracker recognizes ISOs made with the new patcher.
 - **Race and Crash life pools.** Every car has separate lives for Race events (everything except Crash
   junctions) and for Crash junctions, each with the difficulty's full count. A car out of Race lives is
   blocked in the garage (`[RACE X]`), out of Crash lives it's blocked in crash junctions (`[CRASH X]`).
