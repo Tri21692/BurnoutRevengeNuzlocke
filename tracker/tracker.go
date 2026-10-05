@@ -28,6 +28,7 @@ const (
 	crashTable    = 0x000FF700 // cars wrecked in the Crash pool: blocked in crash junctions
 	deadMax       = 79
 	currentEvent  = 0x01C10C18 // pointer to the loaded car (+0x00) and event (+0x18) labels
+	deadFlag      = 0x000FE120 // 1 while the run is dead: the patch holds the game on the results screen
 	textLo        = 0x00670000 // where the text table usually is; it can move, so it's searched for
 	textWindow    = 0x80000    // bytes read around the place the text table was found
 
@@ -52,6 +53,11 @@ const (
 	crashTableRef    = 0x000FF180 // ori t4,t4,<table> in the .pnach's crash junction block
 	crashTableRefISO = 0x00479E10 // the same instruction in a patched ISO
 	crashTableRefOn  = 0x358CF700
+
+	// The results screens' run's-dead lock (V1.1.2): the race results handler starts with a jump to it.
+	deadLockHook    = 0x0019AD98
+	deadLockHookOn  = 0x0803FC80 // j 000FF200 (.pnach)
+	deadLockHookISO = 0x0811E700 // j 00479C00 (patched ISO)
 )
 
 var patchHooks = map[uint32]uint32{0x002ACE00: 0x0C03FC00, 0x002A69DC: 0x0C03FC00, finishHook: finishHookOn,
@@ -177,6 +183,8 @@ type Tracker struct {
 	pendingCar        string            // car label read at the same time
 	patchOld          bool              // the crash junction block still uses the shared table
 	dirty             bool              // a car's garage / crash junction flags changed
+	carsBefore        map[string]bool   // cars the run had when the current event's result came in
+	deadLockOn        bool              // the patch has the run's-dead results-screen lock
 }
 
 // Names that are always in the text table, used to find it.
@@ -341,13 +349,33 @@ func (t *Tracker) StartRun(difficulty string) {
 		Started: time.Now().Format("2006-01-02 15:04:05"), Cars: map[string]*Car{}}
 	t.originals = map[string]string{}
 	t.save()
+	t.syncDeadFlag()
 	t.say(fmt.Sprintf("New %s run: %d Race and %d Crash %s per car.", difficulty, lives, lives, plural(lives, "life", "lives")), 15, "info")
+}
+
+// syncDeadFlag tells the patch whether the run is dead, so it holds the game on the results screen.
+func (t *Tracker) syncDeadFlag() {
+	if !t.mem.Connected() {
+		return
+	}
+	defer func() { _ = recover() }() // also called from the web page's buttons, outside Poll
+	r := t.run()
+	want := uint32(0)
+	if r != nil && r.Active && r.Dead && !r.Grace {
+		want = 1
+	}
+	if t.u32(deadFlag) != want {
+		b := make([]byte, 4)
+		binary.LittleEndian.PutUint32(b, want)
+		_ = t.mem.Write(deadFlag, b)
+	}
 }
 
 func (t *Tracker) Grace() {
 	if r := t.run(); r != nil {
 		r.Grace = true
 		t.save()
+		t.syncDeadFlag() // let the game leave the results screen
 		t.restoreNames(nil, 0, true)
 		t.say("Grace mode: nothing counts any more. All cars are usable again.", 15, "info")
 	}
@@ -571,11 +599,19 @@ func (t *Tracker) finishEvent(before []byte) {
 			t.say(fmt.Sprintf("%s lost a %s life, %d left (%s: %s)", carName, pool, *lives, eventName, reason), 20, "loss")
 		}
 	}
+	// Only the cars the run had before this event (and the one just driven) count: a car this event
+	// unlocks can't save the run.
+	among := t.carsBefore
+	if among != nil {
+		among[car] = true
+	}
+	t.carsBefore = nil
 	t.save()
 	t.slowChecks()
-	if t.allDead() {
+	if t.allDeadAmong(among) {
 		r.Dead = true
 		t.save()
+		t.syncDeadFlag()
 		if t.OnRunDead != nil {
 			t.OnRunDead()
 		}
@@ -679,7 +715,10 @@ func (t *Tracker) registerCar(label, name string, crash bool) {
 }
 
 // allDead: the run is over when every car is wrecked in the Race pool, or every car in the Crash pool.
-func (t *Tracker) allDead() bool {
+func (t *Tracker) allDead() bool { return t.allDeadAmong(nil) }
+
+// allDeadAmong is allDead counting only the cars in among (all cars when among is nil).
+func (t *Tracker) allDeadAmong(among map[string]bool) bool {
 	r := t.run()
 	if r == nil || len(r.Cars) == 0 {
 		return false
@@ -687,7 +726,10 @@ func (t *Tracker) allDead() bool {
 	// only cars that have a pool count towards it: crash-only cars can't race, garage-only cars can't crash
 	race, crash := true, true
 	raceCars, crashCars := 0, 0
-	for _, c := range r.Cars {
+	for l, c := range r.Cars {
+		if among != nil && !among[l] {
+			continue
+		}
 		if c.CanRace() {
 			raceCars++
 			race = race && c.Lives == 0
@@ -722,6 +764,13 @@ func (t *Tracker) deadLabels() (race, crash []string) {
 // captureEvent remembers the game's current event and car, so replays (which don't change the saved
 // results) still get a name and the right pool.
 func (t *Tracker) captureEvent() {
+	// cars a reward from this event could add don't count towards whether it killed the run
+	t.carsBefore = map[string]bool{}
+	if r := t.run(); r != nil {
+		for l := range r.Cars {
+			t.carsBefore[l] = true
+		}
+	}
 	ptr := t.u32(currentEvent)
 	if ptr < 0x00100000 || ptr >= 0x01FFFFE0 {
 		return
@@ -784,6 +833,8 @@ func (t *Tracker) slowChecks() {
 
 	raceDead, crashDead := t.deadLabels()
 	t.patchOld = t.u32(crashTableRef) != crashTableRefOn && t.u32(crashTableRefISO) != crashTableRefOn
+	t.deadLockOn = t.u32(deadLockHook) == deadLockHookOn || t.u32(deadLockHook) == deadLockHookISO
+	t.syncDeadFlag()
 	garage := raceDead
 	if t.patchOld {
 		garage = union(raceDead, crashDead) // old patch: one table for both, so block either kind
@@ -921,7 +972,7 @@ func (t *Tracker) Snapshot() map[string]any {
 		"connected":  t.mem.Connected(),
 		"wrong_game": t.wrongGame,
 		"patch_ok":   t.patchOK,
-		"patch_old":  t.patchOK == 1 && t.patchOld,
+		"patch_old":  t.patchOK == 1 && (t.patchOld || !t.deadLockOn),
 		"pine":       t.mem.HasPine(),
 		"ai_level":   "",
 		"run":        nil,

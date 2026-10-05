@@ -8,6 +8,10 @@
 - **Harder AI leaders ease off.** An opponent far enough ahead of you is held to a share of your speed
   (Easy: from 40 m ahead, 90%; Medium: 70 m, 94%; Hard: 100 m, 97%; never below 90 / 100 / 112 mph),
   so a leader can be caught. Remake patched ISOs to get it; the tracker recognises old and new ones.
+- **Run's dead is final.** Only the cars you had before an event count towards whether it ended the run,
+  so a car unlocked by that same event can't save it. While the run is dead, the results screens refuse
+  Continue and Retry until you choose Grace, a new run or shut down on the control page (new part 4 of the
+  main `.pnach` group; remake patched ISOs).
 
 ## V1.1.1
 

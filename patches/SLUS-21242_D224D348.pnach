@@ -106,6 +106,59 @@ patch=1,EE,000FF1C0,word,08063D44
 patch=1,EE,000FF1C4,word,24020C90
 patch=1,EE,0018F508,word,0803FC50
 patch=1,EE,0018F50C,word,00000000
+// --- Part 4: run's dead lock (V1.1.2) ---
+// When the tracker marks the run dead (000FE120 = 1), the results screens refuse Continue/Retry, so the
+// game can't move on until Grace (or a new run) is chosen. Each results handler's first two
+// instructions jump to a stub at 000FF200/240/280 that returns at once for those messages (as if the
+// button wasn't pressed), or runs the two instructions and jumps back. See tools/build_deadlock.py.
+patch=1,EE,000FF200,word,3C010010
+patch=1,EE,000FF204,word,8C21E120
+patch=1,EE,000FF208,word,10200007
+patch=1,EE,000FF20C,word,00000000
+patch=1,EE,000FF210,word,24010007
+patch=1,EE,000FF214,word,10A10008
+patch=1,EE,000FF218,word,00000000
+patch=1,EE,000FF21C,word,24010008
+patch=1,EE,000FF220,word,10A10005
+patch=1,EE,000FF224,word,00000000
+patch=1,EE,000FF228,word,27BDFFC0
+patch=1,EE,000FF22C,word,24020007
+patch=1,EE,000FF230,word,08066B68
+patch=1,EE,000FF234,word,00000000
+patch=1,EE,000FF238,word,03E00008
+patch=1,EE,000FF23C,word,00000000
+patch=1,EE,0019AD98,word,0803FC80
+patch=1,EE,0019AD9C,word,00000000
+patch=1,EE,000FF240,word,3C010010
+patch=1,EE,000FF244,word,8C21E120
+patch=1,EE,000FF248,word,10200004
+patch=1,EE,000FF24C,word,00000000
+patch=1,EE,000FF250,word,24010005
+patch=1,EE,000FF254,word,10A10005
+patch=1,EE,000FF258,word,00000000
+patch=1,EE,000FF25C,word,27BDFF80
+patch=1,EE,000FF260,word,24030003
+patch=1,EE,000FF264,word,080646D8
+patch=1,EE,000FF268,word,00000000
+patch=1,EE,000FF26C,word,03E00008
+patch=1,EE,000FF270,word,00000000
+patch=1,EE,00191B58,word,0803FC90
+patch=1,EE,00191B5C,word,00000000
+patch=1,EE,000FF280,word,3C010010
+patch=1,EE,000FF284,word,8C21E120
+patch=1,EE,000FF288,word,10200004
+patch=1,EE,000FF28C,word,00000000
+patch=1,EE,000FF290,word,24010005
+patch=1,EE,000FF294,word,10A10005
+patch=1,EE,000FF298,word,00000000
+patch=1,EE,000FF29C,word,27BDFFC0
+patch=1,EE,000FF2A0,word,24030003
+patch=1,EE,000FF2A4,word,080647EC
+patch=1,EE,000FF2A8,word,00000000
+patch=1,EE,000FF2AC,word,03E00008
+patch=1,EE,000FF2B0,word,00000000
+patch=1,EE,00191FA8,word,0803FCA0
+patch=1,EE,00191FAC,word,00000000
 
 [Nuzlocke\Block pause-menu Retry and Quit]
 author=Nuzlocke mod

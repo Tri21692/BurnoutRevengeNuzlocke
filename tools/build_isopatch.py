@@ -20,6 +20,7 @@ BLOCKS = [
     (0x000FF000, 0x000FF100, 0x00479D00),  # dead-car garage block (0x8C bytes)
     (0x000FF100, 0x000FF140, 0x00479DA0),  # finished-event signal (0x24)
     (0x000FF140, 0x000FF200, 0x00479DD0),  # crash junction block (0x88)
+    (0x000FF200, 0x000FF300, 0x00479C00),  # run's dead results-screen lock (3 stubs, 0x40 each)
     (0x000FFA00, 0x000FFC00, 0x00479800),  # AI catch-up wrapper (about 0x1B8; before V1.1.2 at 00479E80)
 ]
 FREE_LO, FREE_HI = 0x00479800, 0x0047A000  # the space used; checked to be zero by the patcher

@@ -193,3 +193,12 @@ mismatches; ELF headers and section table unchanged).
   redirected to Continue's code instead: `0019ADC4` b `0019AED8` (command 7) with `daddu s0,a0` in the
   delay slot; `00191CC0` b `00191C38` (item 0) with `lui v0,0x1F6`; `0019206C` b `001921A0` (item 0/-2)
   with `lui v1,0x4F`.
+
+## Run's dead lock (V1.1.2)
+
+The tracker writes 1 to `000FE120` while the run is dead. The three results handlers (`0019AD98`,
+`00191B58`, `00191FA8`) start with `j` to stubs at `000FF200`/`240`/`280` (`00479C00`/`40`/`80` in a
+patched ISO) that return straight away for message 7/8 (race results: Continue/Retry) or 5 (the other two:
+a selection) while the flag is set, before the handler sets its busy flag; otherwise they run the two
+replaced instructions and jump back. Source: `tools/build_deadlock.py`. (The front end's `01C0A2D0+0x5639`
+byte is a "go to the next screen" request, not an input lock, so it isn't usable for this.)

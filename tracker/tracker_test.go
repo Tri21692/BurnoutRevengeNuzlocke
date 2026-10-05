@@ -512,3 +512,60 @@ func TestRequirements(t *testing.T) {
 		}
 	}
 }
+
+// The event that wrecks the last car also unlocks a new one: the run is still dead, the patch is told
+// to hold the results screen, and Grace releases it.
+func TestRewardCarCantSaveRun(t *testing.T) {
+	f := &fakeMem{ram: make([]byte, 0x2000000)}
+	f.w32(eventCount, 169)
+	for i := 0; i < 169; i++ {
+		f.ram[eventResults+i] = 0xFF
+	}
+	f.w64(eventIDs+3*8, encodeLabel("K_01RDSF"))
+	for a, v := range patchHooks {
+		f.w32(a, v)
+	}
+	f.w32(crashTableRef, crashTableRefOn)
+	f.w32(deadLockHook, deadLockHookOn)
+	const obj = 0x01D00000
+	f.w32(currentEvent, obj)
+	f.w32(carouselList+0xBA4, 1) // the garage: one car
+	f.w64(carouselList, encodeLabel("HIGHASCAR1S1"))
+	clock := 100.0
+	tr := NewTracker(f, filepath.Join(t.TempDir(), "s.json"), func() float64 { return clock })
+	dead := false
+	tr.OnRunDead = func() { dead = true }
+	tr.StartRun("Hard")
+	clock += 3
+	tr.Poll()
+	if len(tr.run().Cars) != 1 {
+		t.Fatal("garage car not registered")
+	}
+	// a Silver on Hard wrecks the only car; the event also unlocks a second car
+	f.w64(selectedCar, encodeLabel("HIGHASCAR1S1"))
+	f.w64(obj, encodeLabel("HIGHASCAR1S1"))
+	f.w64(obj+0x18, encodeLabel("K_01RDSF"))
+	f.w32(lastMedal, 2)
+	f.w32(lastRating, 3)
+	f.ram[eventResults+3] = 2
+	f.w32(finishCounter, binary.LittleEndian.Uint32(f.ram[finishCounter:])+1)
+	clock += 0.25
+	tr.Poll()                    // the result is in
+	f.w32(carouselList+0xBA4, 2) // the reward car shows up in the garage
+	f.w64(carouselList+8, encodeLabel("HIGHEUCAR2S1"))
+	clock += 1.5
+	tr.Poll()
+	if !dead || !tr.run().Dead {
+		t.Fatal("a car unlocked by the failing event must not save the run")
+	}
+	if binary.LittleEndian.Uint32(f.ram[deadFlag:]) != 1 {
+		t.Fatal("the patch should be told to hold the results screen")
+	}
+	if tr.Snapshot()["patch_old"] != false {
+		t.Fatal("patch with the lock reported as old")
+	}
+	tr.Grace()
+	if binary.LittleEndian.Uint32(f.ram[deadFlag:]) != 0 {
+		t.Fatal("Grace should release the results screen")
+	}
+}
