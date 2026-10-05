@@ -64,6 +64,7 @@ func runScenario(t *testing.T, signal bool) {
 	if !signal {
 		f.w32(finishHook, 0x0C04CCF4) // the game's original call: no finished-event signal
 	}
+	f.w32(crashTableRef, crashTableRefOn) // patch with separate Race and Crash tables
 	pos := uint32(textLo + 0x100)
 	add := func(label, text string) uint32 {
 		f.w32(pos, textID(label))
@@ -94,8 +95,12 @@ func runScenario(t *testing.T, signal bool) {
 		t.Fatalf("cars not registered from the carousel: %+v", r.Cars)
 	}
 
+	const obj = 0x01D00000 // the game's current car/event object
+	f.w32(currentEvent, obj)
 	event := func(car string, idx int, medal, rating uint32, newByte int) {
 		f.w64(selectedCar, encodeLabel(car))
+		f.w64(obj, encodeLabel(car))
+		copy(f.ram[obj+0x18:obj+0x20], f.ram[eventIDs+uint32(idx)*8:eventIDs+uint32(idx)*8+8])
 		f.w32(resultPos, 0xFFFFFFFF)
 		clock += 0.25
 		tr.Poll()
@@ -115,33 +120,37 @@ func runScenario(t *testing.T, signal bool) {
 		t.Log("  ->", tr.message)
 	}
 
+	// events 6 and 7 are Crash junctions (K_01DH1E, K_01DH3E): they use the Crash pool
 	event("HIGHASCAR1S1", 6, 2, 3, 2) // Silver + Awesome, Hard = 1 life
-	if r.Cars["HIGHASCAR1S1"].Lives != 0 || r.CarsLost != 1 {
-		t.Fatal("Nixon should be wrecked")
+	if c := r.Cars["HIGHASCAR1S1"]; c.CrashLives != 0 || c.Lives != 1 || r.CrashLost != 1 || r.CarsLost != 0 {
+		t.Fatalf("Nixon should be wrecked for Crash only: %+v", c)
 	}
 	clock += 3
 	tr.Poll()
-	if binary.LittleEndian.Uint32(f.ram[deadTable:]) != 1 || decodeLabel(binary.LittleEndian.Uint64(f.ram[deadTable+8:])) != "HIGHASCAR1S1" {
-		t.Fatal("dead table not written")
+	if binary.LittleEndian.Uint32(f.ram[crashTable:]) != 1 || decodeLabel(binary.LittleEndian.Uint64(f.ram[crashTable+8:])) != "HIGHASCAR1S1" {
+		t.Fatal("crash table not written")
 	}
-	if got := f.text(nixon, 14); got != "[WRECKED]" {
+	if binary.LittleEndian.Uint32(f.ram[deadTable:]) != 0 {
+		t.Fatal("a Crash wreck must not block the car in the garage")
+	}
+	if got := f.text(nixon, 14); got != "[CRASH X]" {
 		t.Fatalf("name = %q", got)
 	}
 
 	event("HIGHEUCAR2S1", 7, 3, 3, 4) // first-time Gold + Perfect
-	if r.EventsWon != 1 || r.Cars["HIGHEUCAR2S1"].Lives != 1 {
+	if r.EventsWon != 1 || r.Cars["HIGHEUCAR2S1"].CrashLives != 1 {
 		t.Fatal("win not counted")
 	}
 	event("HIGHEUCAR2S1", 7, 3, 3, -1) // replay of a perfected event
-	if r.Cars["HIGHEUCAR2S1"].Lives != 0 || !strings.Contains(tr.message, "already perfected") {
+	if r.Cars["HIGHEUCAR2S1"].CrashLives != 0 || !strings.Contains(tr.message, "already perfected") {
 		t.Fatalf("replay should cost a life: %s", tr.message)
 	}
 	if !deadCalled || !r.Dead {
-		t.Fatal("run should be dead")
+		t.Fatal("run should be dead: every car is wrecked in the Crash pool")
 	}
 	clock += 3
 	tr.Poll()
-	if binary.LittleEndian.Uint32(f.ram[deadTable:]) != 2 {
+	if binary.LittleEndian.Uint32(f.ram[crashTable:]) != 2 {
 		t.Fatal("cars must stay locked until Grace")
 	}
 
@@ -158,7 +167,7 @@ func runScenario(t *testing.T, signal bool) {
 	tr.Grace()
 	clock += 3
 	tr.Poll()
-	if f.text(nixon, 14) != "NIXON SPECIAL" || f.text(ea, 12) != "EA RACER GT" || binary.LittleEndian.Uint32(f.ram[deadTable:]) != 0 {
+	if f.text(nixon, 14) != "NIXON SPECIAL" || f.text(ea, 12) != "EA RACER GT" || binary.LittleEndian.Uint32(f.ram[crashTable:]) != 0 {
 		t.Fatalf("grace should restore: %q %q", f.text(nixon, 14), f.text(ea, 12))
 	}
 	if binary.LittleEndian.Uint32(f.ram[nixon+28:]) != textID("FILLER") {
@@ -328,5 +337,103 @@ func TestPatchDetection(t *testing.T) {
 		if !tr.hooksMatch(hooks) {
 			t.Errorf("%s: hooks not recognised", name)
 		}
+	}
+}
+
+// Race events use the Race pool, replays are named from the game's current event, and the car names
+// show which pool a car is wrecked in.
+func TestPoolsAndReplayNames(t *testing.T) {
+	f := &fakeMem{ram: make([]byte, 0x2000000)}
+	f.w32(eventCount, 169)
+	for i := 0; i < 169; i++ {
+		f.ram[eventResults+i] = 0xFF
+	}
+	f.w64(eventIDs+3*8, encodeLabel("K_01RDSF")) // a race
+	for a, v := range patchHooks {
+		f.w32(a, v)
+	}
+	f.w32(crashTableRef, crashTableRefOn)
+	const obj = 0x01D00000 // the game's current car/event object
+	f.w32(currentEvent, obj)
+	clock := 100.0
+	tr := NewTracker(f, filepath.Join(t.TempDir(), "s.json"), func() float64 { return clock })
+	tr.StartRun("Medium")
+	r := tr.run()
+	tr.registerCar("HIGHASCAR1S1", "NIXON SPECIAL")
+	tr.registerCar("HIGHEUCAR2S1", "EA RACER GT")
+	finish := func(car, event string, idx, newByte int) {
+		f.w64(selectedCar, encodeLabel(car))
+		f.w64(obj, encodeLabel(car))
+		f.w64(obj+0x18, encodeLabel(event))
+		f.w32(lastMedal, 2)
+		f.w32(lastRating, 2)
+		if newByte >= 0 {
+			f.ram[eventResults+idx] = byte(newByte)
+		}
+		f.w32(finishCounter, binary.LittleEndian.Uint32(f.ram[finishCounter:])+1)
+		clock += 0.25
+		tr.Poll()
+		clock += 1.5
+		tr.Poll()
+	}
+	clock += 0.25
+	tr.Poll()                                // first look: sync the counter
+	finish("HIGHASCAR1S1", "K_01RDSF", 3, 2) // race, first time: result byte changes
+	if c := r.Cars["HIGHASCAR1S1"]; c.Lives != 1 || c.CrashLives != 2 {
+		t.Fatalf("race should cost a Race life: %+v", c)
+	}
+	finish("HIGHASCAR1S1", "K_01RDSF", 3, -1) // replay: no result change, named from the current event
+	h := r.History[len(r.History)-1]
+	if h.Event != "K_01RDSF" || h.Crash {
+		t.Fatalf("replay should be named and counted as a race: %+v", h)
+	}
+	if r.Cars["HIGHASCAR1S1"].Lives != 0 || r.CarsLost != 1 || r.Dead {
+		t.Fatalf("Nixon should be wrecked for races only, run still alive: %+v", r)
+	}
+	finish("HIGHEUCAR2S1", "K_02DH1E", 9, -1) // a crash junction replay
+	if c := r.Cars["HIGHEUCAR2S1"]; c.CrashLives != 1 || c.Lives != 2 || !r.History[len(r.History)-1].Crash {
+		t.Fatalf("crash replay should cost a Crash life: %+v", c)
+	}
+	clock += 3
+	tr.Poll()
+	if n := binary.LittleEndian.Uint32(f.ram[deadTable:]); n != 1 {
+		t.Fatalf("garage table should hold Nixon only, has %d", n)
+	}
+	if n := binary.LittleEndian.Uint32(f.ram[crashTable:]); n != 0 {
+		t.Fatalf("crash table should be empty, has %d", n)
+	}
+	finish("HIGHEUCAR2S1", "K_01RDSF", 3, -1)
+	finish("HIGHEUCAR2S1", "K_01RDSF", 3, -1)
+	if !r.Dead {
+		t.Fatal("every car wrecked in the Race pool: the run should be dead")
+	}
+}
+
+// With a patch from before V1.1 the crash junction block reads the garage table, so the garage table
+// must hold the cars wrecked in either pool.
+func TestOldPatchSharesTable(t *testing.T) {
+	f := &fakeMem{ram: make([]byte, 0x2000000)}
+	tr := NewTracker(f, filepath.Join(t.TempDir(), "s.json"), func() float64 { return 0 })
+	tr.StartRun("Hard")
+	tr.registerCar("HIGHASCAR1S1", "NIXON SPECIAL")
+	tr.run().Cars["HIGHASCAR1S1"].CrashLives = 0
+	tr.slowChecks()
+	if n := binary.LittleEndian.Uint32(f.ram[deadTable:]); n != 1 || !tr.patchOld {
+		t.Fatalf("old patch: garage table should include Crash wrecks (has %d)", n)
+	}
+}
+
+// Runs saved before the two pools keep each car's lives in both.
+func TestOldRunMigrates(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "s.json")
+	old := `{"run":{"active":true,"difficulty":"Easy","lives_start":3,"cars_lost":1,` +
+		`"cars":{"HIGHASCAR1S1":{"name":"NIXON SPECIAL","lives":2},"HIGHEUCAR2S1":{"name":"EA","lives":0}}}}`
+	if err := os.WriteFile(path, []byte(old), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	tr := NewTracker(&fakeMem{ram: make([]byte, 0x2000000)}, path, func() float64 { return 0 })
+	r := tr.run()
+	if r.Cars["HIGHASCAR1S1"].CrashLives != 2 || r.Cars["HIGHEUCAR2S1"].CrashLives != 0 || r.CrashLost != 1 || !r.Pools {
+		t.Fatalf("migration: %+v %+v", r.Cars["HIGHASCAR1S1"], r)
 	}
 }

@@ -64,13 +64,13 @@ Every event must end in a first-time Gold + Perfect; anything else costs the car
 
 **Starting.** On the control page, pick a difficulty. It's locked for the whole run.
 
-| Difficulty | Lives per car |
-| --- | --- |
-| Easy | 3 |
-| Medium | 2 |
-| Hard | 1 |
+| Difficulty | Race lives per car | Crash lives per car |
+| --- | --- | --- |
+| Easy | 3 | 3 |
+| Medium | 2 | 2 |
+| Hard | 1 | 1 |
 
-Each car gets its full lives the first time it appears in your garage. The opponents' AI level is separate: it comes from the patch or ISO you chose, and the control page and overlay show it.
+Every car has two separate pools. **Crash junctions** use the Crash pool; **every other event** (races, Grand Prix, Eliminator, Burning Lap, Road Rage, Traffic Attack, Preview) uses the Race pool. Each car gets both pools in full the first time it appears in your garage. The opponents' AI level is separate: it comes from the patch or ISO you chose, and the control page and overlay show it.
 
 **How each event is judged.** Every event type counts, including Crash junctions and Preview events.
 
@@ -82,17 +82,17 @@ Each car gets its full lives the first time it appears in your garage. The oppon
 
 A Perfect is the game's way of rewarding Gold with Awesome-level driving: it raises your rating one step when you take Gold.
 
-**No bailing out.** With the pause-menu block on, Retry, Restart and Quit don't respond. Every event you start has to be finished.
+**No bailing out.** With the pause-menu block on, Retry, Restart and Quit don't respond, and neither does Retry on the results screens. Every event you start has to be finished, and the next attempt starts from the garage.
 
-**Wrecked cars.** When a car runs out of lives, its name changes to `[WRECKED]` (or `[WRECK]` or `[X]` for short names) and pressing Select on it does nothing. This is reapplied every time the game starts.
+**Wrecked cars.** A car out of **Race** lives is renamed `[RACE X]` and can't be selected in the garage, but can still be picked in crash junctions. A car out of **Crash** lives is renamed `[CRASH X]` and can't be picked in crash junctions, but can still race. A car out of both is `[WRECKED]`. (Short names get `[R X]`, `[C X]`, `[WRECK]` or `[X]`.) This is reapplied every time the game starts.
 
-**Run's dead.** When every car you have is wrecked, the control page and stream overlay show your final stats. You then choose:
+**Run's dead.** When every car you have is wrecked in the Race pool, **or** every car is wrecked in the Crash pool, the control page and stream overlay show your final stats. You then choose:
 
 - **Shut down game:** closes PCSX2.
 - **Grace continue:** keep playing with all cars usable again, but nothing counts any more.
 - **Start a new run:** begin again with a new difficulty. Use a fresh memory card or profile too.
 
-The stats are events won out of events played, cars wrecked, run time (time with the game running), your best win streak, and the difficulty and AI level.
+The stats are events won out of events played, cars wrecked in each pool, run time (time with the game running), your best win streak, and the difficulty and AI level.
 
 ## FAQ
 
@@ -114,8 +114,8 @@ The mod only changes the game's memory while it runs. Wrecked names and the bloc
 **Why does the garage say [WRECKED] but the tracker shows the real name?**
 The tracker keeps each car's original name, so stats and history stay readable.
 
-**Why does a result say "Unknown / replayed event"?**
-Replaying an event doesn't change your saved results, so the tracker can't tell which event it was. The life is still counted correctly.
+**Are replayed events named?**
+Yes. The tracker reads the event the game has loaded, so replays show their real name and count towards the right pool. If a result ever says "Unknown event", the game didn't report one; the life still comes off the Race pool.
 
 **Can I share a patched ISO?**
 No: it contains the game. Share `nuzlocke_isopatch.exe` instead; it only contains the mod's changes and works on anyone's own clean copy.
@@ -145,7 +145,6 @@ Most problems show up as a warning on the control page; the fix for each is belo
 ## Known limitations
 
 - Only the US version (SLUS-21242) works, and only on Windows.
-- Replayed events show as "Unknown / replayed event" instead of their name.
 - There's no warning yet when you highlight an event you've already perfected.
 - The Harder AI levels are new: their numbers may be tuned after more play-testing.
 - Patched ISOs have been checked byte for byte against the `.pnach`, but not yet booted on every setup.

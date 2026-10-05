@@ -21,12 +21,12 @@
 
 | | |
 |---|---|
-| **Lives** | Every car has a limited number of lives: **3** on Easy, **2** on Medium, **1** on Hard. |
+| **Lives** | Every car has two pools of lives, one for **Race** events (everything except Crash junctions) and one for **Crash** junctions: **3 + 3** on Easy, **2 + 2** on Medium, **1 + 1** on Hard. |
 | **Winning** | Every event must end in **Gold with a Perfect rating**. Anything else costs the car you drove a life. Crash junctions and Preview events count too. |
-| **Wrecked** | A car with no lives left is renamed `[WRECKED]` and can't be selected, in the garage or in crash junctions. |
-| **No escape** | Retry and Quit in the pause menu don't work, so you can't bail out of an event to save a life. |
+| **Wrecked** | A car out of Race lives can't be selected in the garage (`[RACE X]`); out of Crash lives, it can't be picked in crash junctions (`[CRASH X]`); out of both, it's `[WRECKED]`. |
+| **No escape** | Retry and Quit in the pause menu don't work, so you can't bail out of an event to save a life, and Retry on the results screen doesn't work either. |
 | **Harder AI** | Opponents corner faster, keep their pace, and come back hard when they fall behind. |
-| **Run's dead** | When every car is wrecked, the run is over. Shut the game down, or carry on in **Grace mode**, where nothing counts. |
+| **Run's dead** | When every car is wrecked for Race events, **or** every car is wrecked for Crash junctions, the run is over. Shut the game down, or carry on in **Grace mode**, where nothing counts. |
 
 Inspired by the [Need for Speed Underground Nuzlocke mod](https://github.com/xan1242/NFSU-nuzlocke).
 
@@ -64,9 +64,9 @@ There are two separate settings: lives are chosen in the tracker when you start 
 
 | Lives (tracker) | | Harder AI (patch) | Cornering | Pace when out of sight | Speed limit | Catch-up |
 |---|---|---|---|---|---|---|
-| **Easy** | 3 per car | **Easy** | 87.5% of the line's limit | 2–5 s per section quicker | 224 mph | from 40 m behind, up to +45 mph |
-| **Medium** | 2 per car | **Medium** | 92.5% | 4–7 s quicker | 246 mph | from 25 m behind, up to +67 mph |
-| **Hard** | 1 per car | **Hard** | 97.5% | 6–9 s quicker | 257 mph | from 10 m behind, up to +89 mph |
+| **Easy** | 3 + 3 per car | **Easy** | 87.5% of the line's limit | 2–5 s per section quicker | 224 mph | from 40 m behind, up to +45 mph |
+| **Medium** | 2 + 2 per car | **Medium** | 92.5% | 4–7 s quicker | 246 mph | from 25 m behind, up to +67 mph |
+| **Hard** | 1 + 1 per car | **Hard** | 97.5% | 6–9 s quicker | 257 mph | from 10 m behind, up to +89 mph |
 
 The stock game corners at 80%, eases off when an opponent gets ahead of its pace, caps opponents at 197 mph, and has no catch-up towards you beyond short duels. How it all works is in the [AI research notes](docs/research/ai-catchup.md).
 

@@ -6,6 +6,14 @@
   no longer changes the game file's layout; the mod's code now goes into unused space inside the game's
   own data. Make your patched ISOs again with the new patcher.
 - The tracker recognises ISOs made with the new patcher.
+- **Race and Crash life pools.** Every car has separate lives for Race events (everything except Crash
+  junctions) and for Crash junctions, each with the difficulty's full count. A car out of Race lives is
+  blocked in the garage (`[RACE X]`), out of Crash lives it's blocked in crash junctions (`[CRASH X]`).
+  The run is dead when every car is wrecked in either pool. Runs saved by V1.0 carry over, with each
+  car's lives in both pools.
+- **Replayed events are named.** The tracker reads the event the game has loaded instead of guessing
+  from the saved results, so replays no longer show as "Unknown / replayed event".
+- **Retry on the results screens is blocked**, so a car that has just been wrecked can't be raced again.
 - **Widescreen 16:9** and **60 FPS menus and crash mode** ("16:9 HUD Scale & 60 FPS Fix" by SuperType1/remco)
   added as optional groups in the `.pnach` and as options in the ISO patcher.
 

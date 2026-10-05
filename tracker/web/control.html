@@ -52,6 +52,8 @@
   footer { margin-top: 22px; color: var(--smoke); display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
   code { color: var(--chalk); background: var(--plate); padding: 4px 8px; }
   .hidden { display: none !important; }
+  .car .pool { display: flex; align-items: center; gap: 6px; margin-left: 14px; }
+  .car .pool > i { font-style: normal; font-weight: 800; font-size: 12px; letter-spacing: 1px; color: var(--smoke, #9a948a); }
 </style>
 </head>
 <body>
@@ -88,11 +90,14 @@
     <p class="sub" id="started"></p>
     <div class="stats">
       <div><b id="won"></b><span>events won</span></div>
-      <div><b id="lost"></b><span>cars wrecked</span></div>
+      <div><b id="lost"></b><span>race wrecks</span></div>
+      <div><b id="crashlost"></b><span>crash wrecks</span></div>
       <div><b id="time"></b><span>run time</span></div>
       <div><b id="streak"></b><span>best win streak</span></div>
     </div>
-    <div class="car hidden" id="car"><div class="name" id="carname"></div><div class="hearts" id="hearts"></div></div>
+    <div class="car hidden" id="car"><div class="name" id="carname"></div>
+      <div class="pool"><i>RACE</i><div class="hearts" id="hearts"></div></div>
+      <div class="pool"><i>CRASH</i><div class="hearts" id="crashhearts"></div></div></div>
     <div class="msg hidden" id="msg"></div>
     <ol id="recent"></ol>
   </section>
@@ -130,6 +135,7 @@ function render(s) {
   $('conn').classList.toggle('ok', !!s.connected);
   const warns = [];
   if (s.connected && s.wrong_game) warns.push('This isn\'t Burnout Revenge (SLUS-21242). The tracker only works with that version.');
+  if (s.connected && s.patch_old) warns.push('Your Nuzlocke patch is from before V1.1, so crash junctions share the garage\'s wrecked list (a car wrecked in either pool is blocked in both). Update the .pnach, or remake your patched ISO, to get separate Race and Crash blocking.');
   if (s.connected && s.patch_ok === 0) warns.push('The Nuzlocke patch isn\'t active. Enable "Block dead cars in garage" in the game\'s Patches tab (or Cheats tab, if the .pnach is in the cheats folder) and restart the game, or play an ISO made with nuzlocke_isopatch.exe.');
   if (s.connected && !s.pine) warns.push('PINE isn\'t connected. Enable it in PCSX2 (Settings > Advanced) so wrecked cars can be blocked.');
   $('warnings').innerHTML = warns.map((w) => `<div class="warn">${w}</div>`).join('');
@@ -141,9 +147,10 @@ function render(s) {
   $('mode').textContent = r.grace ? 'Grace mode (not counting)' : (r.dead ? 'Final stats' : `${r.difficulty} Nuzlocke`);
   const ai = s.ai_level || r.ai_level;
   const aiNote = ai ? ` Opponents: ${ai === 'Off' ? 'normal AI' : ai + ' AI'}.` : '';
-  $('started').textContent = `${r.lives_start} ${r.lives_start === 1 ? 'life' : 'lives'} per car.${aiNote} Started ${r.started}.`;
+  $('started').textContent = `${r.lives_start} Race + ${r.lives_start} Crash ${r.lives_start === 1 ? 'life' : 'lives'} per car.${aiNote} Started ${r.started}.`;
   $('won').textContent = `${r.won}/${r.played}`;
   $('lost').textContent = `${r.cars_lost}/${r.cars_total}`;
+  $('crashlost').textContent = `${r.crash_cars_lost || 0}/${r.cars_total}`;
   $('time').textContent = r.time;
   $('streak').textContent = r.best_streak;
 
@@ -151,10 +158,15 @@ function render(s) {
   $('car').classList.toggle('hidden', !car);
   if (car) {
     $('carname').textContent = car.name;
-    $('car').classList.toggle('wrecked', car.lives === 0 && !r.grace);
-    let h = '';
-    for (let i = 0; i < r.lives_start; i++) h += `<svg viewBox="0 0 20 20" aria-hidden="true"><path class="${i < car.lives ? 'full' : 'empty'}" d="${HEART}"/></svg>`;
-    $('hearts').innerHTML = r.grace ? '' : h;
+    const crashLives = car.crash_lives ?? car.lives;
+    $('car').classList.toggle('wrecked', car.lives === 0 && crashLives === 0 && !r.grace);
+    const hearts = (n) => {
+      let h = '';
+      for (let i = 0; i < r.lives_start; i++) h += `<svg viewBox="0 0 20 20" aria-hidden="true"><path class="${i < n ? 'full' : 'empty'}" d="${HEART}"/></svg>`;
+      return h;
+    };
+    $('hearts').innerHTML = r.grace ? '' : hearts(car.lives);
+    $('crashhearts').innerHTML = r.grace ? '' : hearts(crashLives);
   }
   const m = s.message;
   $('msg').classList.toggle('hidden', !m);

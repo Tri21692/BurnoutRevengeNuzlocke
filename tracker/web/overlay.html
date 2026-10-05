@@ -47,6 +47,9 @@
   .hearts svg { width: 22px; height: 20px; }
   .hearts .full { fill: var(--wreck); }
   .hearts .empty { fill: none; stroke: var(--smoke); stroke-width: 2; }
+  .pool { display: flex; align-items: center; gap: 6px; }
+  .pool > i { font-style: normal; font-weight: 800; font-size: 13px; letter-spacing: 1px; color: var(--smoke); }
+  .pool.out > i { color: var(--wreck); }
 
   /* Result ticker: the one animated moment */
   .ticker {
@@ -86,12 +89,14 @@
         <div class="mode" id="mode"></div>
         <div class="stats">
           <div class="stat"><b id="won"></b><span>events won</span></div>
-          <div class="stat"><b id="lost"></b><span>cars wrecked</span></div>
+          <div class="stat"><b id="lost"></b><span>race wrecks</span></div>
+          <div class="stat"><b id="crashlost"></b><span>crash wrecks</span></div>
           <div class="stat"><b id="time"></b><span>run time</span></div>
         </div>
         <div class="car hidden" id="car">
           <div class="name" id="carname"></div>
-          <div class="hearts" id="hearts"></div>
+          <div class="pool" id="racepool"><i>RACE</i><div class="hearts" id="hearts"></div></div>
+          <div class="pool" id="crashpool"><i>CRASH</i><div class="hearts" id="crashhearts"></div></div>
         </div>
       </div>
     </div>
@@ -103,7 +108,7 @@
     <p id="deadsub"></p>
     <div class="grid">
       <div><b id="d-won"></b><span>events won</span></div>
-      <div><b id="d-lost"></b><span>cars wrecked</span></div>
+      <div><b id="d-lost"></b><span>race / crash wrecks</span></div>
       <div><b id="d-time"></b><span>run time</span></div>
       <div><b id="d-streak"></b><span>best win streak</span></div>
       <div><b id="d-rate"></b><span>win rate</span></div>
@@ -138,18 +143,25 @@ function render(s) {
   // HUD plate
   $('mode').innerHTML = r.grace
     ? `Grace mode <small>not counting</small>`
-    : `${r.difficulty} Nuzlocke <small>${r.lives_start} ${r.lives_start === 1 ? 'life' : 'lives'} per car${aiText(s.ai_level || r.ai_level) ? ' · ' + aiText(s.ai_level || r.ai_level) : ''}</small>`;
+    : `${r.difficulty} Nuzlocke <small>${r.lives_start} + ${r.lives_start} lives${aiText(s.ai_level || r.ai_level) ? ' · ' + aiText(s.ai_level || r.ai_level) : ''}</small>`;
   $('plate').classList.toggle('grace', r.grace);
   $('won').textContent = `${r.won}/${r.played}`;
   $('lost').textContent = `${r.cars_lost}/${r.cars_total}`;
+  $('crashlost').textContent = `${r.crash_cars_lost || 0}/${r.cars_total}`;
   $('time').textContent = r.time;
 
   const car = s.car;
   $('car').classList.toggle('hidden', !car);
   if (car) {
     $('carname').textContent = car.name;
-    $('car').classList.toggle('wrecked', car.lives === 0 && !r.grace);
-    $('hearts').innerHTML = r.grace ? '' : hearts(car.lives, r.lives_start);
+    const crashLives = car.crash_lives ?? car.lives;
+    $('car').classList.toggle('wrecked', car.lives === 0 && crashLives === 0 && !r.grace);
+    $('racepool').classList.toggle('hidden', r.grace);
+    $('crashpool').classList.toggle('hidden', r.grace);
+    $('racepool').classList.toggle('out', car.lives === 0);
+    $('crashpool').classList.toggle('out', crashLives === 0);
+    $('hearts').innerHTML = hearts(car.lives, r.lives_start);
+    $('crashhearts').innerHTML = hearts(crashLives, r.lives_start);
   }
 
   // Result ticker
@@ -167,9 +179,10 @@ function render(s) {
 
   // Run's dead card
   if (r.dead && !r.grace) {
-    $('deadsub').textContent = `Every car is wrecked. Started ${r.started}.`;
+    const pool = r.cars_lost >= r.cars_total ? 'Race' : 'Crash';
+    $('deadsub').textContent = `Every car is wrecked for ${pool} events. Started ${r.started}.`;
     $('d-won').textContent = `${r.won}/${r.played}`;
-    $('d-lost').textContent = `${r.cars_lost}/${r.cars_total}`;
+    $('d-lost').textContent = `${r.cars_lost} / ${r.crash_cars_lost || 0} of ${r.cars_total}`;
     $('d-time').textContent = r.time;
     $('d-streak').textContent = r.best_streak;
     $('d-rate').textContent = r.played ? `${Math.round(100 * r.won / r.played)}%` : '-';

@@ -24,8 +24,10 @@ const (
 	carouselList  = 0x01C94990 // garage carousel: labels, count at +0xBA4
 	crashCarousel = 0x01C958A8 // crash junction car select, player 1 (player 2 is +0xC90)
 	carouselSize  = 0xC90
-	deadTable     = 0x000FF400
+	deadTable     = 0x000FF400 // cars wrecked in the Race pool: blocked in the garage
+	crashTable    = 0x000FF700 // cars wrecked in the Crash pool: blocked in crash junctions
 	deadMax       = 79
+	currentEvent  = 0x01C10C18 // pointer to the loaded car (+0x00) and event (+0x18) labels
 	textLo        = 0x00670000 // where the text table usually is; it can move, so it's searched for
 	textWindow    = 0x80000    // bytes read around the place the text table was found
 
@@ -44,6 +46,11 @@ const (
 	finishHookISO = 0x0C11E768
 	aiHookISO     = 0x0C11E7A0
 	aiLevelISO    = 0x00479FF0
+
+	// The crash junction block reads its own table (crashTable) since V1.1; older patches read deadTable.
+	crashTableRef    = 0x000FF180 // ori t4,t4,<table> in the .pnach's crash junction block
+	crashTableRefISO = 0x00479E10 // the same instruction in a patched ISO
+	crashTableRefOn  = 0x358CF700
 )
 
 var patchHooks = map[uint32]uint32{0x002ACE00: 0x0C03FC00, 0x002A69DC: 0x0C03FC00, finishHook: finishHookOn,
@@ -67,8 +74,9 @@ type Mem interface {
 }
 
 type Car struct {
-	Name  string `json:"name"`
-	Lives int    `json:"lives"`
+	Name       string `json:"name"`
+	Lives      int    `json:"lives"`       // Race pool: every event type except Crash junctions
+	CrashLives int    `json:"crash_lives"` // Crash pool: Crash junctions
 }
 
 type HistoryEntry struct {
@@ -78,6 +86,7 @@ type HistoryEntry struct {
 	Result  string `json:"result"`
 	Won     bool   `json:"won"`
 	Counted bool   `json:"counted"`
+	Crash   bool   `json:"crash,omitempty"` // a Crash junction (Crash pool)
 }
 
 type Run struct {
@@ -92,7 +101,9 @@ type Run struct {
 	Cars         map[string]*Car `json:"cars"`
 	EventsPlayed int             `json:"events_played"`
 	EventsWon    int             `json:"events_won"`
-	CarsLost     int             `json:"cars_lost"`
+	CarsLost     int             `json:"cars_lost"`       // wrecked in the Race pool
+	CrashLost    int             `json:"crash_cars_lost"` // wrecked in the Crash pool
+	Pools        bool            `json:"pools"`           // false for runs saved before the two pools
 	Streak       int             `json:"streak"`
 	BestStreak   int             `json:"best_streak"`
 	History      []HistoryEntry  `json:"history"`
@@ -130,6 +141,9 @@ type Tracker struct {
 	textBase          uint32  // where the text table was found (0 = not found yet)
 	lastLocate        float64
 	nameCache         map[string]string // label -> display name, once found
+	pendingEvent      string            // event label read when the event started or its result came in
+	pendingCar        string            // car label read at the same time
+	patchOld          bool              // the crash junction block still uses the shared table
 }
 
 // Names that are always in the text table, used to find it.
@@ -145,6 +159,14 @@ func NewTracker(mem Mem, statePath string, now func() float64) *Tracker {
 	}
 	if r := t.state.Run; r != nil && r.Cars == nil {
 		r.Cars = map[string]*Car{}
+	}
+	if r := t.state.Run; r != nil && !r.Pools {
+		// runs from before the two pools: each car keeps its lives in both
+		for _, c := range r.Cars {
+			c.CrashLives = c.Lives
+		}
+		r.CrashLost = r.CarsLost
+		r.Pools = true
 	}
 	return t
 }
@@ -282,11 +304,11 @@ func (t *Tracker) StartRun(difficulty string) {
 	if t.run() != nil {
 		t.restoreNames(nil, 0, true)
 	}
-	t.state.Run = &Run{Active: true, Difficulty: difficulty, LivesStart: lives,
+	t.state.Run = &Run{Active: true, Difficulty: difficulty, LivesStart: lives, Pools: true,
 		Started: time.Now().Format("2006-01-02 15:04:05"), Cars: map[string]*Car{}}
 	t.originals = map[string]string{}
 	t.save()
-	t.say(fmt.Sprintf("New %s run: %d %s per car.", difficulty, lives, plural(lives, "life", "lives")), 15, "info")
+	t.say(fmt.Sprintf("New %s run: %d Race and %d Crash %s per car.", difficulty, lives, lives, plural(lives, "life", "lives")), 15, "info")
 }
 
 func (t *Tracker) Grace() {
@@ -362,6 +384,7 @@ func (t *Tracker) pollConnected(now, dt float64) {
 		case c != t.lastCounter:
 			t.lastCounter = c
 			if t.pendingFinishAt == 0 {
+				t.captureEvent()
 				t.eventStartResults = t.knownResults
 				if t.resultsBefore != nil && now-t.resultsChangedAt < 3 {
 					t.eventStartResults = t.resultsBefore // results moved a moment before the signal
@@ -374,6 +397,7 @@ func (t *Tracker) pollConnected(now, dt float64) {
 		inEvent := t.u32(resultPos) == 0xFFFFFFFF
 		if inEvent && !t.eventActive {
 			t.eventActive = true
+			t.captureEvent()
 			t.eventStartResults = t.knownResults
 		} else if !inEvent && t.eventActive {
 			t.eventActive = false
@@ -432,9 +456,18 @@ func (t *Tracker) finishEvent(before []byte) {
 	}
 	won := medal == 3 && rating == 3 && perfectNow
 	region, base := t.currentText()
-	eventName := "Unknown / replayed event"
+	eventLabel := t.pendingEvent // the game's current event: also known for replays
 	if firstDiff >= 0 {
-		eventName = t.nameOf(region, base, decodeLabel(t.u64(eventIDs+uint32(firstDiff)*8)))
+		eventLabel = decodeLabel(t.u64(eventIDs + uint32(firstDiff)*8))
+	}
+	crash := isCrashEvent(eventLabel)
+	if crash && strings.Contains(t.pendingCar, "CAR") {
+		car = t.pendingCar // the car loaded for the junction
+	}
+	t.pendingEvent, t.pendingCar = "", ""
+	eventName := "Unknown event"
+	if eventLabel != "" {
+		eventName = t.nameOf(region, base, eventLabel)
 	}
 	carName := t.carName(region, base, car)
 	shown := "?"
@@ -455,7 +488,7 @@ func (t *Tracker) finishEvent(before []byte) {
 		return
 	}
 	r.History = append(r.History, HistoryEntry{Time: time.Now().Format("2006-01-02 15:04:05"),
-		Event: eventName, Car: carName, Result: resultText, Won: won, Counted: t.counting()})
+		Event: eventName, Car: carName, Result: resultText, Won: won, Counted: t.counting(), Crash: crash})
 	if len(r.History) > 200 {
 		r.History = r.History[len(r.History)-200:]
 	}
@@ -480,18 +513,22 @@ func (t *Tracker) finishEvent(before []byte) {
 			t.save()
 			return
 		}
-		if c.Lives > 0 {
-			c.Lives--
+		pool, lives, lost := "Race", &c.Lives, &r.CarsLost
+		if crash {
+			pool, lives, lost = "Crash", &c.CrashLives, &r.CrashLost
+		}
+		if *lives > 0 {
+			*lives--
 		}
 		reason := resultText
 		if medal == 3 && rating == 3 && !perfectNow {
 			reason = "already perfected"
 		}
-		if c.Lives == 0 {
-			r.CarsLost++
-			t.say(fmt.Sprintf("%s is wrecked (%s: %s)", carName, eventName, reason), 25, "loss")
+		if *lives == 0 {
+			*lost++
+			t.say(fmt.Sprintf("%s is wrecked for %s events (%s: %s)", carName, pool, eventName, reason), 25, "loss")
 		} else {
-			t.say(fmt.Sprintf("%s lost a life, %d left (%s: %s)", carName, c.Lives, eventName, reason), 20, "loss")
+			t.say(fmt.Sprintf("%s lost a %s life, %d left (%s: %s)", carName, pool, *lives, eventName, reason), 20, "loss")
 		}
 	}
 	t.save()
@@ -585,38 +622,72 @@ func (t *Tracker) registerCar(label, name string) {
 	}
 	c := r.Cars[label]
 	if c == nil {
-		r.Cars[label] = &Car{Name: name, Lives: r.LivesStart}
+		r.Cars[label] = &Car{Name: name, Lives: r.LivesStart, CrashLives: r.LivesStart}
 	} else if (c.Name == "" || c.Name == "?" || c.Name == label) && !wreckedNames[name] {
 		c.Name = name
 	}
 }
 
+// allDead: the run is over when every car is wrecked in the Race pool, or every car in the Crash pool.
 func (t *Tracker) allDead() bool {
 	r := t.run()
 	if r == nil || len(r.Cars) == 0 {
 		return false
 	}
+	race, crash := true, true
 	for _, c := range r.Cars {
-		if c.Lives > 0 {
-			return false
-		}
+		race = race && c.Lives == 0
+		crash = crash && c.CrashLives == 0
 	}
-	return true
+	return race || crash
 }
 
-func (t *Tracker) deadLabels() []string {
+// deadLabels returns the cars wrecked in the Race pool and in the Crash pool.
+func (t *Tracker) deadLabels() (race, crash []string) {
 	r := t.run()
 	if r == nil || !r.Active || r.Grace {
-		return nil
+		return nil, nil
 	}
-	var out []string
 	for l, c := range r.Cars {
 		if c.Lives == 0 {
-			out = append(out, l)
+			race = append(race, l)
+		}
+		if c.CrashLives == 0 {
+			crash = append(crash, l)
 		}
 	}
-	sort.Strings(out)
-	return out
+	sort.Strings(race)
+	sort.Strings(crash)
+	return race, crash
+}
+
+// captureEvent remembers the game's current event and car, so replays (which don't change the saved
+// results) still get a name and the right pool.
+func (t *Tracker) captureEvent() {
+	ptr := t.u32(currentEvent)
+	if ptr < 0x00100000 || ptr >= 0x01FFFFE0 {
+		return
+	}
+	if l := decodeLabel(t.u64(ptr + 0x18)); strings.HasPrefix(l, "K_") && looksLikeLabel(l) {
+		t.pendingEvent = l
+	}
+	if l := decodeLabel(t.u64(ptr)); strings.Contains(l, "CAR") {
+		t.pendingCar = l
+	}
+}
+
+// isCrashEvent: Crash junction labels have DH after the number, e.g. K_01DH1E (Crash - Dock Fight).
+func isCrashEvent(label string) bool {
+	return len(label) >= 6 && strings.HasPrefix(label, "K_") && label[4:6] == "DH"
+}
+
+func deadTableBytes(labels []string) []byte {
+	b := make([]byte, 8+8*len(labels))
+	binary.LittleEndian.PutUint32(b, uint32(len(labels)))
+	for i, l := range labels {
+		binary.LittleEndian.PutUint64(b[8+8*i:], encodeLabel(l))
+	}
+	return b
 }
 
 // ---- every 2 seconds: register cars, enforce the dead list and names, check the patch ----
@@ -652,17 +723,31 @@ func (t *Tracker) slowChecks() {
 		}
 	}
 
-	dead := t.deadLabels()
-	want := make([]byte, 8+8*len(dead))
-	binary.LittleEndian.PutUint32(want, uint32(len(dead)))
-	for i, l := range dead {
-		binary.LittleEndian.PutUint64(want[8+8*i:], encodeLabel(l))
+	raceDead, crashDead := t.deadLabels()
+	t.patchOld = t.u32(crashTableRef) != crashTableRefOn && t.u32(crashTableRefISO) != crashTableRefOn
+	garage := raceDead
+	if t.patchOld {
+		garage = union(raceDead, crashDead) // old patch: one table for both, so block either kind
 	}
-	if string(t.read(deadTable, len(want))) != string(want) {
-		if err := t.mem.Write(deadTable, want); err != nil {
-			t.say("Couldn't update the dead-car list: "+err.Error(), 10, "info")
+	for _, tbl := range []struct {
+		addr   uint32
+		labels []string
+	}{{deadTable, garage}, {crashTable, crashDead}} {
+		want := deadTableBytes(tbl.labels)
+		if string(t.read(tbl.addr, len(want))) != string(want) {
+			if err := t.mem.Write(tbl.addr, want); err != nil {
+				t.say("Couldn't update the dead-car list: "+err.Error(), 10, "info")
+			}
 		}
 	}
+	inRace, inCrash := map[string]bool{}, map[string]bool{}
+	for _, l := range raceDead {
+		inRace[l] = true
+	}
+	for _, l := range crashDead {
+		inCrash[l] = true
+	}
+	dead := union(raceDead, crashDead)
 
 	for _, label := range dead {
 		if region == nil {
@@ -678,7 +763,7 @@ func (t *Tracker) slowChecks() {
 				c.Name = text
 			}
 		}
-		newName := wreckedName(room)
+		newName := wreckedName(room, inRace[label], inCrash[label])
 		if text != newName {
 			data := utf16le(newName)
 			data = append(data, make([]byte, room*2+2-len(data))...)
@@ -758,6 +843,7 @@ func (t *Tracker) restoreNames(region []byte, base uint32, clearTable bool) {
 	}
 	if clearTable {
 		_ = t.mem.Write(deadTable, make([]byte, 8))
+		_ = t.mem.Write(crashTable, make([]byte, 8))
 	}
 }
 
@@ -773,6 +859,7 @@ func (t *Tracker) Snapshot() map[string]any {
 		"connected":  t.mem.Connected(),
 		"wrong_game": t.wrongGame,
 		"patch_ok":   t.patchOK,
+		"patch_old":  t.patchOK == 1 && t.patchOld,
 		"pine":       t.mem.HasPine(),
 		"ai_level":   "",
 		"run":        nil,
@@ -786,7 +873,8 @@ func (t *Tracker) Snapshot() map[string]any {
 	snap["run"] = map[string]any{
 		"difficulty": r.Difficulty, "lives_start": r.LivesStart, "grace": r.Grace, "dead": r.Dead,
 		"won": r.EventsWon, "played": r.EventsPlayed, "cars_total": len(r.Cars), "cars_lost": r.CarsLost,
-		"time": fmtTime(r.PlaySeconds), "best_streak": r.BestStreak, "streak": r.Streak, "started": r.Started,
+		"crash_cars_lost": r.CrashLost,
+		"time":            fmtTime(r.PlaySeconds), "best_streak": r.BestStreak, "streak": r.Streak, "started": r.Started,
 		"ai_level": r.AILevel,
 	}
 	if t.mem.Connected() {
@@ -794,7 +882,7 @@ func (t *Tracker) Snapshot() map[string]any {
 			defer func() { _ = recover() }()
 			label := decodeLabel(t.u64(selectedCar))
 			if c := r.Cars[label]; c != nil {
-				snap["car"] = map[string]any{"name": c.Name, "lives": c.Lives}
+				snap["car"] = map[string]any{"name": c.Name, "lives": c.Lives, "crash_lives": c.CrashLives}
 			}
 		}()
 	}
@@ -809,4 +897,17 @@ func (t *Tracker) Snapshot() map[string]any {
 	}
 	snap["recent"] = recent
 	return snap
+}
+
+func union(a, b []string) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, l := range append(append([]string(nil), a...), b...) {
+		if !seen[l] {
+			seen[l] = true
+			out = append(out, l)
+		}
+	}
+	sort.Strings(out)
+	return out
 }

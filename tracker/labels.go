@@ -115,16 +115,37 @@ func textCapacity(region []byte, base, addr uint32) int {
 	return (end-pos)/2 - 1
 }
 
-var wreckedNames = map[string]bool{"[WRECKED]": true, "[WRECK]": true, "[X]": true, "X": true}
+// Names shown for wrecked cars: in both pools, only in the Race pool, or only in the Crash pool.
+var wreckedSets = [][]string{
+	{"[WRECKED]", "[WRECK]", "[X]", "X"},
+	{"[RACE X]", "[R X]", "[R]", "R"},
+	{"[CRASH X]", "[C X]", "[C]", "C"},
+}
 
-func wreckedName(room int) string {
-	for _, o := range []string{"[WRECKED]", "[WRECK]", "[X]"} {
+var wreckedNames = func() map[string]bool {
+	m := map[string]bool{}
+	for _, set := range wreckedSets {
+		for _, n := range set {
+			if len(n) > 1 {
+				m[n] = true
+			}
+		}
+	}
+	m["X"] = true
+	return m
+}()
+
+func wreckedName(room int, race, crash bool) string {
+	set := wreckedSets[0]
+	if race && !crash {
+		set = wreckedSets[1]
+	} else if crash && !race {
+		set = wreckedSets[2]
+	}
+	for _, o := range set {
 		if len(o) <= room {
 			return o
 		}
-	}
-	if room >= 1 {
-		return "X"
 	}
 	return ""
 }

@@ -171,3 +171,17 @@ PC 0x02000000"), most likely because the loader doesn't handle a moved program h
 `tools/build_isopatch.py` generates `isopatch/patches.go` from the .pnach; `tools/verify_isopatch.py`
 checks a patched ISO's loaded memory image against the original plus the .pnach (all three levels: 0
 mismatches; ELF headers and section table unchanged).
+
+## Tracker data used for the two life pools
+
+- Current car and event: `[01C10C18]` points to an object with the loaded car's label at +0x00 (the
+  crash junction Select handler uses it as "the car currently loaded") and the event's label at +0x18
+  (the career update `00133760` looks it up in the event list to pick the result slot). The tracker
+  reads it when an event starts or its result is stored, so replays get a name and the right pool.
+- Crash junctions are the events whose label has `DH` after the number (`K_01DH1E` = Crash - Dock Fight).
+- Dead-car tables: `000FF400` (Race pool, garage block) and `000FF700` (Crash pool, crash junction
+  block; `ori t4,t4,0xF700` at `000FF180`, `00479E10` in a patched ISO). Patches older than V1.1 read
+  `000FF400` in both places, so with those the tracker puts cars wrecked in either pool in it.
+- Results-screen Retry: race results handler `0019AD98` command 8 (`0019ADBC` → always exit), and item 1
+  in the end-of-event handlers `00191B58` (`00191C08`) and `00191FA8` (`00192054`). All three called the
+  restart method (vtable +0x44 at `[[004F3300+0x585E8]+4]+0x8000+0x315C`).
