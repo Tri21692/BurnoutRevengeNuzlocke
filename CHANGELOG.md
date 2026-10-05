@@ -12,10 +12,6 @@
   so a car unlocked by that same event can't save it. While the run is dead, the results screens refuse
   Continue and Retry until you choose Grace, a new run or shut down on the control page (new part 4 of the
   main `.pnach` group; remake patched ISOs).
-- **Aggressive opponents (optional).** A new patch group and ISO patcher option. The game marks some
-  stretches of the racing line as aggressive, where opponents corner harder, may go up to 1.45x their
-  usual target speed and look further ahead. With this on, the whole track counts as aggressive. Works
-  with any Harder AI level, or none.
 - **Medal strip.** The control page and the overlay show the current car's events in order as medals
   (gold, silver, bronze or none; red ribbon and slash for a loss, "C" for a Crash junction). Click a
   medal on the control page to see the event, its result, location and time. It replaces the recent

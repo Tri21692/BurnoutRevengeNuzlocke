@@ -47,11 +47,10 @@ Setup takes about ten minutes and only needs doing once.
      - **Nuzlocke\Block dead cars in garage** (required)
      - **Nuzlocke\Block pause-menu Retry and Quit** (recommended)
      - **one** of **Nuzlocke\Harder AI\Easy / Medium / Hard** (optional; never more than one)
-     - **Nuzlocke\Aggressive opponents** (optional; harder still, with or without a Harder AI level)
      - **Nuzlocke\Widescreen 16:9** and **Nuzlocke\60 FPS menus and crash mode** (optional, by SuperType1/remco)
 
      It also works from the `cheats` folder and the Cheats tab. Check Windows hasn't added a hidden `.txt` to the file name. Restart the game after changing anything.
-   - **Patched ISO.** Drag your clean Burnout Revenge ISO onto `nuzlocke_isopatch.exe` choose Easy, Medium or Hard, and answer whether you want widescreen, 60 FPS and aggressive opponents. It writes a new ISO next to the original, for example `Burnout Revenge (Nuzlocke Hard, 16-9).iso`, with everything above built in. Add that ISO to PCSX2 and play it, **without** the `.pnach` enabled. Your original ISO isn't changed.
+   - **Patched ISO.** Drag your clean Burnout Revenge ISO onto `nuzlocke_isopatch.exe` choose Easy, Medium or Hard, and answer whether you want widescreen and 60 FPS. It writes a new ISO next to the original, for example `Burnout Revenge (Nuzlocke Hard, 16-9).iso`, with everything above built in. Add that ISO to PCSX2 and play it, **without** the `.pnach` enabled. Your original ISO isn't changed.
 3. **Set up the tracker.** Put `nuzlocke.exe` in a folder of its own, since it saves your run next to itself. Double-click it.
    - If Windows SmartScreen warns you, click More info, then Run anyway. The program isn't signed.
    - A small console window opens. Keep it open while you play; closing it stops the tracker.

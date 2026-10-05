@@ -34,10 +34,10 @@ Inspired by the [Need for Speed Underground Nuzlocke mod](https://github.com/xan
 
 | | |
 |---|---|
-| 🛠️ **The patch** ([`patches/SLUS-21242_D224D348.pnach`](patches/SLUS-21242_D224D348.pnach)) | Native game code changes: blocks wrecked cars, blocks pause-menu Retry/Quit, signals every finished event to the tracker, three Harder AI levels, plus optional aggressive opponents, widescreen 16:9 and 60 FPS menus. |
+| 🛠️ **The patch** ([`patches/SLUS-21242_D224D348.pnach`](patches/SLUS-21242_D224D348.pnach)) | Native game code changes: blocks wrecked cars, blocks pause-menu Retry/Quit, signals every finished event to the tracker, three Harder AI levels, plus optional widescreen 16:9 and 60 FPS menus. |
 | 📊 **The tracker** ([`bin/nuzlocke.exe`](bin/nuzlocke.exe)) | Judges every result, counts lives, wrecks cars, and keeps your run's stats. No install, no Python. |
 | 🎥 **Stream overlay** | A Burnout-style HUD plate for OBS, served by the tracker. |
-| 💿 **ISO patcher** ([`bin/nuzlocke_isopatch.exe`](bin/nuzlocke_isopatch.exe)) | Builds the whole patch into your own copy of the game (one ISO per AI level; aggressive opponents, widescreen and 60 FPS optional), so no `.pnach` is needed. |
+| 💿 **ISO patcher** ([`bin/nuzlocke_isopatch.exe`](bin/nuzlocke_isopatch.exe)) | Builds the whole patch into your own copy of the game (one ISO per AI level, widescreen and 60 FPS optional), so no `.pnach` is needed. |
 
 <p align="center">
   <img src="docs/images/control.png" alt="The tracker's control page: the run's difficulty, stats, the current car's lives and its events as medals, one opened" width="560">
@@ -53,7 +53,7 @@ You need the **US version of Burnout Revenge (SLUS-21242)**, **PCSX2 2.x** on Wi
 
 1. **In PCSX2, turn on PINE** (Settings → Advanced, slot 28011).
 2. **Add the patch, either:**
-   - copy `patches/SLUS-21242_D224D348.pnach` into PCSX2's `patches` folder, then in the game's Properties → Patches tick **Block dead cars in garage**, **Block pause-menu Retry and Quit**, **one** Harder AI level, and if you like **Aggressive opponents**, **Widescreen 16:9** and **60 FPS menus and crash mode**; **or**
+   - copy `patches/SLUS-21242_D224D348.pnach` into PCSX2's `patches` folder, then in the game's Properties → Patches tick **Block dead cars in garage**, **Block pause-menu Retry and Quit**, **one** Harder AI level, and if you like **Widescreen 16:9** and **60 FPS menus and crash mode**; **or**
    - drag your ISO onto `bin/nuzlocke_isopatch.exe`, pick a level and the extras, and play the ISO it makes.
 3. **Run `bin/nuzlocke.exe`.** The control page opens at `http://localhost:8765`. Pick a difficulty to start a run.
 4. **For streaming,** add a Browser Source in OBS: `http://localhost:8765/overlay`, about 800 × 400.
@@ -67,8 +67,6 @@ There are two separate settings: lives are chosen in the tracker when you start 
 | **Easy** | 3 + 3 per car | **Easy** | 87.5% of the line's limit | 2–5 s per section quicker | 224 mph | from 40 m behind, up to +45 mph | 40 m ahead: 90% of your speed |
 | **Medium** | 2 + 2 per car | **Medium** | 92.5% | 4–7 s quicker | 246 mph | from 25 m behind, up to +67 mph | 70 m ahead: 94% |
 | **Hard** | 1 + 1 per car | **Hard** | 97.5% | 6–9 s quicker | 257 mph | from 10 m behind, up to +89 mph | 100 m ahead: 97% |
-
-**Aggressive opponents** (optional, with any level) puts opponents in the game's aggressive mode for the whole track instead of only some stretches: they corner at the level's higher figure (85% in the stock game, up to 100% on Hard), may go up to 1.45× their usual target speed and look further ahead.
 
 The stock game corners at 80%, eases off when an opponent gets ahead of its pace, caps opponents at 197 mph, and has no catch-up towards you beyond short duels. How it all works is in the [AI research notes](docs/research/ai-catchup.md).
 
