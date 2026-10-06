@@ -2,6 +2,10 @@
 
 ## V1.1.2
 
+Medals + Aggressive AI. **Upgrading:** replace all three files (`nuzlocke.exe`, the `.pnach` and
+`nuzlocke_isopatch.exe`), and remake any patched ISOs: the Harder AI levels changed. Your current run
+carries over.
+
 - **Medal requirements per difficulty.** Each event needs at least Silver + Great on Easy, Silver +
   Awesome on Medium, and Gold + Perfect (first time) on Hard, as before. The medal and the rating are
   checked separately, and on Easy and Medium a replay can win. The control page shows the requirement.
@@ -11,8 +15,7 @@
 - **Run's dead is final.** Only the cars you had before an event count towards whether it ended the run,
   so a car unlocked by that same event can't save it. While the run is dead, every car is blocked in the
   garage and in crash junctions (the new car too) until you choose Grace, a new run or shut down on the
-  control page. (A test version held the game on the results screen instead, which could leave the screen
-  stuck with its buttons gone; that's been dropped.)
+  control page.
 - **Harder AI goes for takedowns.** Each level now also changes the game's own attack settings:
   opponents attack more often, from further away and sooner after the start, block you for longer and
   slam harder (+15 / 30 / 50%). On Hard every opponent attacks. To keep that fair, their speed is a

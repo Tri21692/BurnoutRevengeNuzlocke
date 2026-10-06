@@ -156,5 +156,5 @@ Most problems show up as a warning on the control page; the fix for each is belo
 
 - Only the US version (SLUS-21242) works, and only on Windows.
 - There's no warning yet when you highlight an event you've already perfected.
-- The Harder AI levels are new: their numbers may be tuned after more play-testing.
+- The Harder AI levels may still be tuned after more play-testing (the numbers are all in `tools/build_harder_ai.py`).
 - Patched ISOs have been checked byte for byte against the `.pnach`, but not yet booted on every setup.
