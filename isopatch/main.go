@@ -1,9 +1,10 @@
 // nuzlocke_isopatch builds a patched copy of a Burnout Revenge (USA, SLUS-21242) ISO with the Nuzlocke
 // mod built in: the dead-car block, the finished-event signal, the pause-menu Retry/Quit block and one
 // Harder AI level (faster and more aggressive opponents), optionally with widescreen 16:9 and 60 FPS
-// menus (by SuperType1/remco). The original ISO is never modified.
+// menus (by SuperType1/remco) and the Limited Selection and Revive tokens modes. The original ISO is
+// never modified.
 //
-// Usage: nuzlocke_isopatch.exe [game.iso] [easy|medium|hard|insane] [widescreen] [60fps]
+// Usage: nuzlocke_isopatch.exe [game.iso] [easy|medium|hard|insane] [widescreen] [60fps] [limited] [revive]
 // (or drag the ISO onto the .exe and answer the questions)
 package main
 
@@ -92,7 +93,11 @@ func run(args []string, in *bufio.Reader) error {
 
 	// Extras: given on the command line, or asked for when the level was chosen interactively.
 	var extras []int
-	tags := map[string]string{"widescreen": "16-9", "fps60": "60 FPS"}
+	tags := map[string]string{"widescreen": "16-9", "fps60": "60 FPS", "limited": "Limited", "revive": "Revive"}
+	about := map[string]string{
+		"limited": " (each event you get 2 random cars; the rest are benched)",
+		"revive":  " (win streaks earn tokens that bring a wrecked car back)",
+	}
 	for i, o := range options {
 		want := false
 		if len(args) > 1 {
@@ -101,7 +106,7 @@ func run(args []string, in *bufio.Reader) error {
 				want = want || a == o.key || (o.key == "fps60" && a == "60fps") || (o.key == "widescreen" && a == "ws")
 			}
 		} else {
-			fmt.Printf("Add %s? (y/n): ", o.name)
+			fmt.Printf("Add %s%s? (y/n): ", o.name, about[o.key])
 			line, _ := in.ReadString('\n')
 			want = strings.HasPrefix(strings.ToLower(strings.TrimSpace(line)), "y")
 		}

@@ -1,4 +1,4 @@
-gametitle=Burnout Revenge (PS2) - Nuzlocke v1.1.2
+gametitle=Burnout Revenge (PS2) - Nuzlocke v2.0
 
 [Nuzlocke\Block dead cars in garage]
 author=Nuzlocke mod
@@ -163,6 +163,18 @@ patch=1,EE,001125F4,word,24040001
 patch=1,EE,001125EC,word,00108002
 // 60 FPS crashes and Crash mode
 patch=1,EE,00104B9C,word,90850608
+
+[Nuzlocke\Mode\Limited Selection]
+author=Nuzlocke mod
+description=Before every event the tracker picks 2 of your usable cars for Race events and 2 for Crash junctions; every other healthy car is [BENCHED] until the next event. No car is picked twice in a row. Needs nuzlocke.exe V2.
+// Tells the tracker the mode is on.
+patch=1,EE,000FE130,word,00000001
+
+[Nuzlocke\Mode\Revive tokens]
+author=Nuzlocke mod
+description=Win streaks earn revive tokens that give a wrecked car one life back: every 3 wins in a row on Easy (hold up to 3), 5 on Medium (hold 2), 8 on Hard (hold 1). A held token also saves a run that would otherwise end. Needs nuzlocke.exe V2.
+// Tells the tracker the mode is on.
+patch=1,EE,000FE134,word,00000001
 
 [Nuzlocke\Harder AI\Easy]
 author=Nuzlocke mod

@@ -37,7 +37,7 @@
 
   .stats { display: flex; gap: 22px; margin-top: 6px; }
   .stat b { display: block; font-weight: 800; font-size: 30px; line-height: 1; }
-  .stat span { font-weight: 600; font-size: 15px; color: var(--smoke); }
+  .stat span { font-weight: 600; font-size: 15px; color: var(--smoke); white-space: nowrap; }
 
   .car { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding-top: 8px;
          border-top: 1px solid rgba(243, 234, 211, 0.18); }
@@ -66,6 +66,12 @@
   .ticker.win  { background: var(--hazard); color: #1a1714; }
   .ticker.loss { background: var(--wreck); color: var(--chalk); }
   .ticker.info { background: var(--steel); color: var(--chalk); }
+  .ticker.achievement { background: #1a1714; color: var(--hazard); border: 2px solid var(--hazard); }
+  .picks { margin-top: 6px; font-weight: 600; font-size: 17px; color: var(--chalk); }
+  .picks i { font-style: normal; font-weight: 800; font-size: 13px; letter-spacing: 1px; color: var(--smoke); margin-right: 4px; }
+  .picks div { white-space: nowrap; }
+  .tok { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--hazard); margin-right: 3px; vertical-align: -1px; }
+  .tok.full { background: var(--hazard); }
   .ticker.enter { animation: slam 420ms cubic-bezier(.2, .9, .25, 1.15); }
   @keyframes slam {
     from { opacity: 0; transform: skewX(-12deg) translateX(-60px); }
@@ -79,8 +85,10 @@
   .dead h1 { margin: 0; font-weight: 800; font-size: 92px; line-height: 0.9; color: var(--wreck);
              transform: skewX(-6deg); }
   .dead p { margin: 4px 0 16px; font-weight: 600; font-size: 20px; color: var(--smoke); }
+  .dead .ended { margin: -10px 0 16px; color: var(--chalk); font-size: 18px; }
   .grid { display: grid; grid-template-columns: repeat(3, auto); gap: 14px 40px; }
   .grid b { display: block; font-weight: 800; font-size: 40px; line-height: 1; color: var(--chalk); }
+  #d-best, #d-diff { font-size: 26px; line-height: 1.5; }
   .grid span { font-weight: 600; font-size: 16px; color: var(--smoke); }
 
   @media (prefers-reduced-motion: reduce) { .ticker.enter { animation: none; } }
@@ -97,6 +105,7 @@
           <div class="stat"><b id="lost"></b><span>race wrecks</span></div>
           <div class="stat"><b id="crashlost"></b><span>crash wrecks</span></div>
           <div class="stat"><b id="time"></b><span>run time</span></div>
+          <div class="stat hidden" id="tokstat"><b id="toks"></b><span>revive tokens</span></div>
         </div>
         <div class="car hidden" id="car">
           <div class="name" id="carname"></div>
@@ -104,6 +113,7 @@
           <div class="pool" id="crashpool"><i>CRASH</i><div class="hearts" id="crashhearts"></div></div>
         </div>
         <div class="medals hidden" id="medals"></div>
+        <div class="picks hidden" id="picks"></div>
       </div>
     </div>
     <div class="ticker hidden" id="ticker"><span id="tickertext"></span></div>
@@ -112,6 +122,7 @@
   <div id="deadcard" class="dead hidden">
     <h1>Run's dead</h1>
     <p id="deadsub"></p>
+    <p class="ended" id="ended"></p>
     <div class="grid">
       <div><b id="d-won"></b><span>events won</span></div>
       <div><b id="d-lost"></b><span>race / crash wrecks</span></div>
@@ -119,6 +130,9 @@
       <div><b id="d-streak"></b><span>best win streak</span></div>
       <div><b id="d-rate"></b><span>win rate</span></div>
       <div><b id="d-diff"></b><span>difficulty</span></div>
+      <div><b id="d-ach"></b><span>achievements</span></div>
+      <div><b id="d-best"></b><span>best car</span></div>
+      <div><b id="d-perf"></b><span>gold + perfects</span></div>
     </div>
   </div>
 
@@ -145,6 +159,8 @@ function medal(h) {
     (h.won ? '' : `<path d="M5 26L19 12" stroke="var(--wreck)" stroke-width="3" stroke-linecap="round"/>`) +
     `</svg>`;
 }
+
+function esc(t) { return String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); }
 
 function aiText(level) {
   return level && level !== 'Off' ? `AI ${level}` : '';
@@ -182,6 +198,19 @@ function render(s) {
     $('hearts').innerHTML = hearts(car.lives, r.lives_start);
     $('crashhearts').innerHTML = hearts(crashLives, r.lives_start);
   }
+  const p = r.dead ? null : r.picks;
+  $('picks').classList.toggle('hidden', !p);
+  if (p) {
+    const list = (x) => x && x.length ? x.map(esc).join(' / ') : '-';
+    $('picks').innerHTML = `<div><i>NEXT RACE</i>${list(p.race)}</div><div><i>NEXT CRASH</i>${list(p.crash)}</div>`;
+  }
+  const rule = r.token_rule;
+  $('tokstat').classList.toggle('hidden', !rule || r.grace);
+  if (rule) {
+    let t = '';
+    for (let i = 0; i < rule.hold; i++) t += `<span class="tok${i < r.tokens ? ' full' : ''}"></span>`;
+    $('toks').innerHTML = t;
+  }
   const hist = (car && car.history) || [];
   $('medals').classList.toggle('hidden', !hist.length);
   $('medals').innerHTML = hist.slice(-24).map(medal).join('');
@@ -209,6 +238,12 @@ function render(s) {
     $('d-streak').textContent = r.best_streak;
     $('d-rate').textContent = r.played ? `${Math.round(100 * r.won / r.played)}%` : '-';
     $('d-diff').textContent = aiText(r.ai_level) ? `${r.difficulty} · ${aiText(r.ai_level)}` : r.difficulty;
+    const sm = r.summary || {};
+    $('ended').textContent = sm.ended_by ? `Ended by ${sm.ended_by}` : '';
+    $('d-ach').textContent = `${(sm.achievements || []).length}/${r.achievements_total || 10}`;
+    const best = (sm.cars || []).slice().sort((a, b) => b.wins - a.wins)[0];
+    $('d-best').textContent = best && best.wins ? `${best.name} (${best.wins})` : '-';
+    $('d-perf').textContent = sm.perfects ?? 0;
   }
 }
 

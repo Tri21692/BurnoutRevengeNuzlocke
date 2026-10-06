@@ -1,5 +1,26 @@
 # Changelog
 
+## V2.0
+
+**Upgrading:** replace all three files (`nuzlocke.exe`, the `.pnach` and `nuzlocke_isopatch.exe`), and remake
+any patched ISOs to use the new modes. Your current run carries over.
+
+- **Limited Selection mode (optional).** Before every event you get 2 random cars of your own for Race events
+  and 2 for Crash junctions; every other healthy car is `[BENCHED]` in the garage and in crash junctions until
+  the next event. No car is picked twice in a row (unless nothing else is left), wrecked cars are never
+  picked, and the picks don't reroll by leaving the garage or restarting the tracker. A new `.pnach` option
+  (`Mode\Limited Selection`) and ISO patcher question.
+- **Revive tokens mode (optional).** Win streaks earn tokens: every 3 wins in a row on Easy (hold up to 3),
+  5 on Medium (hold 2), 8 on Hard (hold 1). Spend one on the control page to give a wrecked car one life
+  back; a held token also saves a run that would otherwise end. A new `.pnach` option (`Mode\Revive tokens`)
+  and ISO patcher question.
+- **Achievements.** Ten per run, from Hot Streak (5 wins in a row) to Certified Insane (10 wins against
+  Insane AI), shown on the control page and announced on the overlay after the event's result.
+- **End-of-run summary.** How the run ended, every car's events, wins and medals, and your achievements, on
+  the control page and the overlay's end card, and saved as a text file next to `nuzlocke.exe`.
+- The overlay shows the Limited Selection picks and your revive tokens; messages now queue, so an
+  achievement never covers an event's result.
+
 ## V1.1.2
 
 Medals + Aggressive AI. **Upgrading:** replace all three files (`nuzlocke.exe`, the `.pnach` and

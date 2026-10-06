@@ -56,9 +56,15 @@ def writer(words):
     code.append(0)                                          # nop
     return [(WRITER_ADDR + 4 * i, w) for i, w in enumerate(code)]
 
+# The .pnach's mode markers (below the game) and where a patched ISO keeps them instead.
+MODE_MARKERS = {0x000FE130: 0x00479FF4, 0x000FE134: 0x00479FF8}
+
 def option_patches(g, name):
     direct, runtime = {}, []
     for a, w in g[name]:
+        if a in MODE_MARKERS:
+            direct[MODE_MARKERS[a]] = w
+            continue
         (direct.__setitem__(a, w) if in_file(a) else runtime.append((a, w)))
     if runtime:
         for a, w in writer(runtime):
@@ -164,8 +170,9 @@ def main():
         lines.append("\t}},")
     lines.append("}")
     lines += ["", "var options = []struct {", "\tkey, name string", "\twords     []word", "}{"]
-    for key, name in (("widescreen", "Widescreen 16:9"), ("fps60", "60 FPS menus and crash mode")):
-        lines.append(f'\t{{"{key}", "{name}", []word{{')
+    for key, name in (("widescreen", "Widescreen 16:9"), ("fps60", "60 FPS menus and crash mode"),
+                      ("limited", "Mode\\Limited Selection"), ("revive", "Mode\\Revive tokens")):
+        lines.append(f'\t{{"{key}", "{name.split(chr(92))[-1]}", []word{{')
         for a, w in option_patches(g, "Nuzlocke\\" + name):
             lines.append(f"\t\t{{0x{a:08X}, 0x{w:08X}}},")
         lines.append("\t}},")

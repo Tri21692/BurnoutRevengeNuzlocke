@@ -1148,4 +1148,10 @@ var options = []struct {
 		{0x001125EC, 0x00108002},
 		{0x001125F4, 0x24040001},
 	}},
+	{"limited", "Limited Selection", []word{
+		{0x00479FF4, 0x00000001},
+	}},
+	{"revive", "Revive tokens", []word{
+		{0x00479FF8, 0x00000001},
+	}},
 }

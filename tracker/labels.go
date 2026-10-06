@@ -122,9 +122,21 @@ var wreckedSets = [][]string{
 	{"[CRASH X]", "[C X]", "[C]", "C"},
 }
 
+// benchedSet: Limited Selection's healthy cars left out of the pair.
+var benchedSet = []string{"[BENCHED]", "[BENCH]", "[B]", "B"}
+
+func pickName(set []string, room int) string {
+	for _, o := range set {
+		if len(o) <= room {
+			return o
+		}
+	}
+	return ""
+}
+
 var wreckedNames = func() map[string]bool {
 	m := map[string]bool{}
-	for _, set := range wreckedSets {
+	for _, set := range append(wreckedSets, benchedSet) {
 		for _, n := range set {
 			if len(n) > 1 {
 				m[n] = true

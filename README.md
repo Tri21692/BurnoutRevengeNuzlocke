@@ -26,6 +26,10 @@
 | **Wrecked** | A car out of Race lives can't be selected in the garage (`[RACE X]`); out of Crash lives, it can't be picked in crash junctions (`[CRASH X]`); out of both, it's `[WRECKED]`. |
 | **No escape** | Retry and Quit in the pause menu don't work, so you can't bail out of an event to save a life, and Retry on the results screen just continues. |
 | **Harder AI** | Opponents corner faster, keep their pace, come back hard when they fall behind, and go for takedowns more often and harder. |
+| **Limited Selection** (optional) | Before every event you get 2 random cars for Race events and 2 for Crash junctions; every other healthy car is `[BENCHED]` until the next event. Never the same car twice in a row. |
+| **Revive tokens** (optional) | Win streaks earn tokens that give a wrecked car one life back: every 3 wins in a row on Easy, 5 on Medium, 8 on Hard. A held token also saves a run that would otherwise end. |
+| **Achievements** | Ten to unlock in every run, from a 5-win streak to surviving Insane, shown on the control page and announced on the overlay. |
+| **Run summary** | When the run ends you get a summary of every car's events and medals, how it ended and your achievements, on the control page, the overlay and in a text file. |
 | **Run's dead** | When every car that can race is wrecked for Race events, **or** every crash car is wrecked for Crash junctions, the run is over: every car is blocked in the garage and in crash junctions until you shut the game down, choose **Grace mode** (where nothing counts) or start a new run. A car unlocked by the event that ended the run doesn't save it, and a car only loaned to you (Burning Lap, Preview) doesn't count until you unlock it. Retrying a loaned-car event after the loaner is wrecked costs one of your own cars a life. |
 
 Inspired by the [Need for Speed Underground Nuzlocke mod](https://github.com/xan1242/NFSU-nuzlocke).
@@ -34,7 +38,7 @@ Inspired by the [Need for Speed Underground Nuzlocke mod](https://github.com/xan
 
 | | |
 |---|---|
-| 🛠️ **The patch** ([`patches/SLUS-21242_D224D348.pnach`](patches/SLUS-21242_D224D348.pnach)) | Native game code changes: blocks wrecked cars, blocks pause-menu Retry/Quit, signals every finished event to the tracker, three Harder AI levels (speed and aggression), plus optional widescreen 16:9 and 60 FPS menus. |
+| 🛠️ **The patch** ([`patches/SLUS-21242_D224D348.pnach`](patches/SLUS-21242_D224D348.pnach)) | Native game code changes: blocks wrecked cars, blocks pause-menu Retry/Quit, signals every finished event to the tracker, four Harder AI levels (speed and aggression), the Limited Selection and Revive tokens modes, plus optional widescreen 16:9 and 60 FPS menus. |
 | 📊 **The tracker** ([`bin/nuzlocke.exe`](bin/nuzlocke.exe)) | Judges every result, counts lives, wrecks cars, and keeps your run's stats. No install, no Python. |
 | 🎥 **Stream overlay** | A Burnout-style HUD plate for OBS, served by the tracker. |
 | 💿 **ISO patcher** ([`bin/nuzlocke_isopatch.exe`](bin/nuzlocke_isopatch.exe)) | Builds the whole patch into your own copy of the game (one ISO per AI level, widescreen and 60 FPS optional), so no `.pnach` is needed. |
@@ -45,7 +49,7 @@ Inspired by the [Need for Speed Underground Nuzlocke mod](https://github.com/xan
 
 ## Download
 
-Get **BurnoutRevengeNuzlocke-V1.1.2.zip** from the [latest release](../../releases/latest), or from [`releases/`](releases/BurnoutRevengeNuzlocke-V1.1.2.zip) in this repository. It contains both programs, the `.pnach`, a quick-start `README.txt` and the start-up guide. See the [changelog](CHANGELOG.md) for what's in each version.
+Get **BurnoutRevengeNuzlocke-V2.0.zip** from the [latest release](../../releases/latest), or from [`releases/`](releases/BurnoutRevengeNuzlocke-V2.0.zip) in this repository. It contains both programs, the `.pnach`, a quick-start `README.txt` and the start-up guide. See the [changelog](CHANGELOG.md) for what's in each version.
 
 ## Quick start
 
@@ -53,7 +57,7 @@ You need the **US version of Burnout Revenge (SLUS-21242)**, **PCSX2 2.x** on Wi
 
 1. **In PCSX2, turn on PINE** (Settings → Advanced, slot 28011).
 2. **Add the patch, either:**
-   - copy `patches/SLUS-21242_D224D348.pnach` into PCSX2's `patches` folder, then in the game's Properties → Patches tick **Block dead cars in garage**, **Block pause-menu Retry and Quit**, **one** Harder AI level, and if you like **Widescreen 16:9** and **60 FPS menus and crash mode**; **or**
+   - copy `patches/SLUS-21242_D224D348.pnach` into PCSX2's `patches` folder, then in the game's Properties → Patches tick **Block dead cars in garage**, **Block pause-menu Retry and Quit**, **one** Harder AI level, and if you like **Mode\Limited Selection**, **Mode\Revive tokens**, **Widescreen 16:9** and **60 FPS menus and crash mode**; **or**
    - drag your ISO onto `bin/nuzlocke_isopatch.exe`, pick a level and the extras, and play the ISO it makes.
 3. **Run `bin/nuzlocke.exe`.** The control page opens at `http://localhost:8765`. Pick a difficulty to start a run.
 4. **For streaming,** add a Browser Source in OBS: `http://localhost:8765/overlay`, about 800 × 400.
