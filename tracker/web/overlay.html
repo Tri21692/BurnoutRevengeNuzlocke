@@ -67,10 +67,9 @@
   .ticker.loss { background: var(--wreck); color: var(--chalk); }
   .ticker.info { background: var(--steel); color: var(--chalk); }
   .ticker.achievement { background: #1a1714; color: var(--hazard); border: 2px solid var(--hazard); }
-  .picks { margin-top: 6px; font-weight: 600; font-size: 17px; color: var(--chalk); }
-  .picks i { font-style: normal; font-weight: 800; font-size: 13px; letter-spacing: 1px; color: var(--smoke); margin-right: 4px; }
-  .picks div { white-space: nowrap; }
-  .tok { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--hazard); margin-right: 3px; vertical-align: -1px; }
+  .picks { margin-top: 5px; font-weight: 600; font-size: 14px; color: var(--smoke); white-space: nowrap; max-width: 560px; overflow: hidden; text-overflow: ellipsis; }
+  .picks b { color: var(--chalk); font-weight: 600; }
+  .tok { display: inline-block; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--hazard); margin-left: 3px; vertical-align: 1px; }
   .tok.full { background: var(--hazard); }
   .ticker.enter { animation: slam 420ms cubic-bezier(.2, .9, .25, 1.15); }
   @keyframes slam {
@@ -105,7 +104,6 @@
           <div class="stat"><b id="lost"></b><span>race wrecks</span></div>
           <div class="stat"><b id="crashlost"></b><span>crash wrecks</span></div>
           <div class="stat"><b id="time"></b><span>run time</span></div>
-          <div class="stat hidden" id="tokstat"><b id="toks"></b><span>revive tokens</span></div>
         </div>
         <div class="car hidden" id="car">
           <div class="name" id="carname"></div>
@@ -202,14 +200,14 @@ function render(s) {
   $('picks').classList.toggle('hidden', !p);
   if (p) {
     const list = (x) => x && x.length ? x.map(esc).join(' / ') : '-';
-    $('picks').innerHTML = `<div><i>NEXT RACE</i>${list(p.race)}</div><div><i>NEXT CRASH</i>${list(p.crash)}</div>`;
+    $('picks').innerHTML = `Next: <b>${list(p.race)}</b> · Crash: <b>${list(p.crash)}</b>`;
   }
   const rule = r.token_rule;
-  $('tokstat').classList.toggle('hidden', !rule || r.grace);
-  if (rule) {
-    let t = '';
+  if (rule && !r.grace) {
+    let t = ' · tokens';
     for (let i = 0; i < rule.hold; i++) t += `<span class="tok${i < r.tokens ? ' full' : ''}"></span>`;
-    $('toks').innerHTML = t;
+    const sm = $('mode').querySelector('small');
+    if (sm) sm.innerHTML += t;
   }
   const hist = (car && car.history) || [];
   $('medals').classList.toggle('hidden', !hist.length);

@@ -97,13 +97,13 @@ The medal and the rating are checked separately: on Medium, Gold + Awesome and S
 
 **Medals.** Under the current car, the control page and overlay show every event that car has driven, in order, as a medal: gold, silver, bronze or an empty ring for no medal. A red ribbon and slash mark a loss, a "C" marks a Crash junction, and faded medals weren't counted (Grace mode). Click a medal on the control page to see the event, its location, the result and when it was. Each result on the overlay also says where it was, for example "Crash - Dock Fight · Motor City".
 
-**Achievements.** Every run has ten to unlock: Hot Streak, Unstoppable and Legend (5, 10 and 25 wins in a row), Perfectionist (5 Gold + Perfects), Junction King (5 Crash junctions won), Collector (15 cars of your own), Survivor (50 events in one run), Certified Insane (10 wins against Insane AI), Last One Standing (a win with only one usable car left, out of at least three) and Back From the Dead (a car revived with a token). The control page shows them all, and the overlay announces each one after the event's result.
+**Achievements.** Every run has ten to unlock: Hot Streak, Unstoppable and Legend (5, 10 and 25 wins in a row), Perfectionist (5 Gold + Perfects), Junction King (5 Crash junctions won), Collector (15 cars of your own), Survivor (50 events in one run), Certified Insane (10 wins against Insane AI), Last One Standing (a win with only one usable car left, out of at least three) and Back From the Dead (a car revived with a token). On the control page, click **Achievements** under the current car to see them all; the overlay announces each one after the event's result.
 
 **Run summary.** When the run ends, the control page shows how it ended, every car's events, wins and medals, and your achievements; the overlay's end card adds your best car and Gold + Perfects. The same summary is saved as `nuzlocke_summary_<date>_<time>.txt` next to `nuzlocke.exe`, ready to share.
 
 ### Modes
 
-Two optional modes are switched on in the patch, like the AI level: tick them in the Patches tab, or answer yes in the ISO patcher. The control page and overlay show them while they're on.
+Two optional modes are switched on in the patch, like the AI level: tick them in the Patches tab, or answer yes in the ISO patcher. While they're on, the control page shows the picks and your tokens in one line under the current car, and the overlay adds them in small type.
 
 **Limited Selection.** Before every event the tracker picks 2 of your usable cars for Race events and 2 for Crash junctions. Every other healthy car is blocked and shown as `[BENCHED]` (wrecked cars keep their wrecked names), so you choose between the two. A new pair is picked after every event, never with a car from the last pair unless there's nothing else left; with fewer usable cars you get what's left. Backing out of the garage or restarting the tracker doesn't reroll. Burning Laps and Preview events use their loaned car as before, and Grace mode lifts the bench.
 
@@ -115,7 +115,7 @@ Two optional modes are switched on in the patch, like the AI level: tick them in
 | Medium | 5 wins in a row | 2 |
 | Hard | 8 wins in a row | 1 |
 
-Spend one on the control page to give a wrecked car of your own one life back in the pool it's wrecked in. If an event would end the run while you hold a token, the token is used on the car that was just wrecked, and the run goes on. Tokens can't be used once the run is over or in Grace mode.
+Click **revive a car** next to your tokens on the control page to give a wrecked car of your own one life back in the pool it's wrecked in. If an event would end the run while you hold a token, the token is used on the car that was just wrecked, and the run goes on. Tokens can't be used once the run is over or in Grace mode.
 
 The stats are events won out of events played, cars wrecked in each pool, run time (time with the game running), your best win streak, and the difficulty and AI level.
 

@@ -67,20 +67,24 @@
   .car .pool { display: flex; align-items: center; gap: 6px; margin-left: 14px; }
   .msg.achievement { background: #3a2f12; border-left: 4px solid var(--hazard); }
   .panel { margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(243,234,211,.15); }
-  .panel h3 { font-family: var(--display); font-style: italic; font-weight: 800; font-size: 20px; margin: 0 0 6px; letter-spacing: .5px; }
-  .picks { display: flex; flex-wrap: wrap; gap: 8px 22px; }
-  .picks div > i { font-style: normal; font-weight: 800; font-size: 12px; letter-spacing: 1px; color: var(--smoke); margin-right: 6px; }
-  .picks b { font-family: var(--display); font-style: italic; font-size: 22px; }
-  .tokens { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .token { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--hazard); display: inline-block; }
-  .token.full { background: var(--hazard); }
-  .revive { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-  .revive button { padding: 8px 12px; font-size: 14px; }
-  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
-  .badge { background: var(--plate); padding: 6px 10px; border-left: 3px solid var(--hazard); }
-  .badge.locked { opacity: .35; border-left-color: var(--smoke); }
-  .badge b { display: block; font-family: var(--display); font-style: italic; font-size: 17px; }
-  .badge small { color: var(--smoke); }
+  .panel h3 { font-family: var(--display); font-style: italic; font-weight: 800; font-size: 20px; margin: 0 0 6px; }
+  .info { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; margin-top: 12px; font-size: 14px; color: var(--smoke); }
+  .info b { color: var(--chalk); font-weight: 600; }
+  .info i { font-style: normal; font-weight: 700; font-size: 11px; letter-spacing: 1px; margin-right: 4px; }
+  .tok { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--hazard); margin-right: 2px; vertical-align: -1px; }
+  .tok.full { background: var(--hazard); }
+  .linkish { background: none; border: 0; padding: 0; color: var(--hazard); font: 600 14px var(--text); cursor: pointer; text-decoration: underline; }
+  .linkish:hover { background: none; color: #fff; }
+  .revive { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .revive button { padding: 4px 10px; font-size: 13px; }
+  details.ach { margin-top: 10px; font-size: 14px; color: var(--smoke); }
+  details.ach summary { cursor: pointer; }
+  details.ach summary b { color: var(--chalk); font-weight: 600; }
+  .achlist { list-style: none; margin: 6px 0 0; padding: 0; columns: 2; column-gap: 24px; }
+  .achlist li { display: block; padding: 2px 0; border: 0; break-inside: avoid; color: var(--smoke); }
+  .achlist li.got { color: var(--chalk); }
+  .achlist li.got::before { content: "★ "; color: var(--hazard); }
+  .achlist li:not(.got)::before { content: "☆ "; }
   table.cars { width: 100%; border-collapse: collapse; margin-top: 6px; }
   table.cars th { text-align: left; color: var(--smoke); font-weight: 600; font-size: 13px; padding: 4px 6px; }
   table.cars td { padding: 5px 6px; border-top: 1px solid rgba(243,234,211,.08); }
@@ -136,9 +140,9 @@
     <div class="msg hidden" id="msg"></div>
     <div class="medals" id="medals" aria-label="Events with this car"></div>
     <div class="detail hidden" id="detail"></div>
-    <div class="panel hidden" id="pickpanel"><h3>Limited Selection: your cars for the next event</h3><div class="picks" id="picks"></div></div>
-    <div class="panel hidden" id="tokenpanel"><h3>Revive tokens</h3><div class="tokens" id="tokens"></div><div class="revive" id="revive"></div></div>
-    <div class="panel" id="achpanel"><h3 id="achtitle">Achievements</h3><div class="badges" id="badges"></div></div>
+    <div class="info" id="info"></div>
+    <div class="revive hidden" id="revive"></div>
+    <details class="ach" id="ach"><summary id="achsum"></summary><ul class="achlist" id="achlist"></ul></details>
   </section>
 
   <footer>
@@ -225,38 +229,46 @@ const ACHIEVEMENTS = [
   ['events50', 'Survivor', '50 events played in one run'], ['insane10', 'Certified Insane', '10 wins against Insane AI'],
   ['lastcar', 'Last One Standing', 'a win with only one usable car left'], ['comeback', 'Back From the Dead', 'a car revived with a token'],
 ];
-function badges(got) {
+function achList(got) {
   const have = new Set((got || []).map((a) => a.id));
   return ACHIEVEMENTS.map(([id, name, text]) =>
-    `<div class="badge${have.has(id) ? '' : ' locked'}"><b>${esc(name)}</b><small>${esc(text)}</small></div>`).join('');
+    `<li class="${have.has(id) ? 'got' : ''}" title="${esc(text)}">${esc(name)} <small>${esc(text)}</small></li>`).join('');
 }
 
+let reviveOpen = false;
 function renderModes(s, r) {
   const modes = s.modes || {};
+  const parts = [];
   const picks = r.dead ? null : r.picks;
-  $('pickpanel').classList.toggle('hidden', !picks);
   if (picks) {
-    const list = (p) => p && p.length ? p.map(esc).join(' <i>or</i> ') : '<span class="sub">none left</span>';
-    $('picks').innerHTML = `<div><i>RACE</i><b>${list(picks.race)}</b></div><div><i>CRASH</i><b>${list(picks.crash)}</b></div>`;
+    const list = (p) => p && p.length ? p.map(esc).join(' / ') : 'none left';
+    parts.push(`<span><i>NEXT RACE</i><b>${list(picks.race)}</b></span>`, `<span><i>NEXT CRASH</i><b>${list(picks.crash)}</b></span>`);
   }
   const rule = r.token_rule;
-  $('tokenpanel').classList.toggle('hidden', !(modes.revive && rule && !r.grace && !r.dead));
-  if (modes.revive && rule) {
+  const can = r.revivable || [];
+  if (modes.revive && rule && !r.grace && !r.dead) {
     let t = '';
-    for (let i = 0; i < rule.hold; i++) t += `<span class="token${i < r.tokens ? ' full' : ''}"></span>`;
+    for (let i = 0; i < rule.hold; i++) t += `<span class="tok${i < r.tokens ? ' full' : ''}"></span>`;
     const next = rule.streak - (r.streak % rule.streak);
-    t += `<span class="sub">${r.tokens >= rule.hold ? 'Holding the most you can.' : `Next one in ${next} ${next === 1 ? 'win' : 'wins'} in a row.`} One for every ${rule.streak} wins in a row.</span>`;
-    $('tokens').innerHTML = t;
-    const can = r.revivable || [];
-    $('revive').innerHTML = can.map((c) =>
-      `<button class="quiet" data-car="${esc(c.car)}" data-name="${esc(c.name)}" data-pool="${c.pool}">Revive ${esc(c.name)}<small>1 ${c.pool === 'crash' ? 'Crash' : 'Race'} life</small></button>`).join('');
-    $('revive').querySelectorAll('button').forEach((b) => b.onclick = () =>
-      confirm(`Spend a revive token on ${b.dataset.name} (${b.dataset.pool === 'crash' ? 'Crash' : 'Race'})?`) &&
-      post(`/api/revive?car=${encodeURIComponent(b.dataset.car)}&pool=${b.dataset.pool}`));
+    const hint = r.tokens >= rule.hold ? 'full' : `next in ${next} ${next === 1 ? 'win' : 'wins'}`;
+    parts.push(`<span title="One token for every ${rule.streak} wins in a row"><i>TOKENS</i>${t} ${hint}` +
+      (can.length ? ` · <button class="linkish" id="revivebtn">revive a car</button>` : '') + `</span>`);
+  } else {
+    reviveOpen = false;
   }
+  $('info').innerHTML = parts.join('');
+  $('info').classList.toggle('hidden', !parts.length);
+  if ($('revivebtn')) $('revivebtn').onclick = () => { reviveOpen = !reviveOpen; renderModes(state, state.run); };
+  $('revive').classList.toggle('hidden', !(reviveOpen && can.length));
+  $('revive').innerHTML = can.map((c) =>
+    `<button class="quiet" data-car="${esc(c.car)}" data-name="${esc(c.name)}" data-pool="${c.pool}">${esc(c.name)} (${c.pool === 'crash' ? 'Crash' : 'Race'})</button>`).join('');
+  $('revive').querySelectorAll('button').forEach((b) => b.onclick = () =>
+    confirm(`Spend a revive token on ${b.dataset.name} (${b.dataset.pool === 'crash' ? 'Crash' : 'Race'})?`) &&
+    (reviveOpen = false, post(`/api/revive?car=${encodeURIComponent(b.dataset.car)}&pool=${b.dataset.pool}`)));
   const got = r.achievements || [];
-  $('achtitle').textContent = `Achievements ${got.length}/${r.achievements_total || ACHIEVEMENTS.length}`;
-  $('badges').innerHTML = badges(got);
+  $('achsum').innerHTML = `<b>Achievements ${got.length}/${r.achievements_total || ACHIEVEMENTS.length}</b>` +
+    (got.length ? ` · latest: ${esc(got[got.length - 1].name)}` : '');
+  $('achlist').innerHTML = achList(got);
 }
 
 function renderSummary(r) {
@@ -272,7 +284,7 @@ function renderSummary(r) {
     `<div class="panel"><h3>How it ended</h3><p class="sub">${esc(sm.ended_by || 'Every car wrecked')}</p>` +
     `<p class="sub">Gold + Perfects: ${sm.perfects} · Cars revived: ${sm.revived}${modes ? ' · Modes: ' + esc(modes) : ''} · Seed ${esc(sm.seed)}</p></div>` +
     `<div class="panel"><h3>Cars</h3><table class="cars"><tr><th>Car</th><th class="num">Events</th><th class="num">Wins</th><th>Medals</th></tr>${rows}</table></div>` +
-    `<div class="panel"><h3>Achievements ${(sm.achievements || []).length}/${ACHIEVEMENTS.length}</h3><div class="badges">${badges(sm.achievements)}</div></div>` +
+    `<div class="panel"><h3>Achievements ${(sm.achievements || []).length}/${ACHIEVEMENTS.length}</h3><p class="sub">${(sm.achievements || []).map((a) => '★ ' + esc(a.name)).join(' · ') || 'None this run.'}</p></div>` +
     (sm.file ? `<p class="sub">Saved as <code>${esc(sm.file)}</code> next to nuzlocke.exe.</p>` : '');
 }
 
