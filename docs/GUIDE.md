@@ -99,7 +99,7 @@ The medal and the rating are checked separately: on Medium, Gold + Awesome and S
 
 **Achievements.** Every run has ten to unlock: Hot Streak, Unstoppable and Legend (5, 10 and 25 wins in a row), Perfectionist (5 Gold + Perfects), Junction King (5 Crash junctions won), Collector (15 cars of your own), Survivor (50 events in one run), Certified Insane (10 wins against Insane AI), Last One Standing (a win with only one usable car left, out of at least three) and Back From the Dead (a car revived with a token). On the control page, click **Achievements** under the current car to see them all; the overlay announces each one after the event's result.
 
-**Run summary.** When the run ends, the control page shows how it ended, every car's events, wins and medals, and your achievements; the overlay's end card adds your best car and Gold + Perfects. The same summary is saved as `nuzlocke_summary_<date>_<time>.txt` next to `nuzlocke.exe`, ready to share.
+**Run summary.** When the run ends, the control page shows the run's stats (events won, win rate, best streak, run time, Race and Crash wrecks, Gold + Perfects, Crash junctions won, cars owned, revives, difficulty, AI level and modes), how it ended, every car's events, wins and medals, and your achievements; the overlay's end card adds your best car and Gold + Perfects. The same summary is saved as `nuzlocke_summary_<date>_<time>.txt` next to `nuzlocke.exe`, ready to share.
 
 ### Modes
 

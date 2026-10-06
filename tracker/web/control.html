@@ -85,6 +85,15 @@
   .achlist li.got { color: var(--chalk); }
   .achlist li.got::before { content: "★ "; color: var(--hazard); }
   .achlist li:not(.got)::before { content: "☆ "; }
+  .bigstats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px 22px; margin-top: 4px; }
+  .bigstats b { display: block; font-family: var(--display); font-style: italic; font-weight: 800; font-size: 38px; line-height: 1; }
+  .bigstats b.small { font-size: 21px; line-height: 1.2; padding-top: 8px; }
+  .bigstats .wide { grid-column: span 2; }
+  .bigstats span { color: var(--smoke); font-size: 14px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge { background: var(--plate); padding: 8px 12px; border-left: 3px solid var(--hazard); }
+  .badge b { display: block; font-family: var(--display); font-style: italic; font-size: 19px; }
+  .badge small { color: var(--smoke); }
   table.cars { width: 100%; border-collapse: collapse; margin-top: 6px; }
   table.cars th { text-align: left; color: var(--smoke); font-weight: 600; font-size: 13px; padding: 4px 6px; }
   table.cars td { padding: 5px 6px; border-top: 1px solid rgba(243,234,211,.08); }
@@ -184,7 +193,7 @@ function render(s) {
   $('warnings').innerHTML = warns.map((w) => `<div class="warn">${w}</div>`).join('');
 
   const r = s.run;
-  $('run').classList.toggle('hidden', !r);
+  $('run').classList.toggle('hidden', !r || (r.dead && !r.grace && !!r.summary)); // the summary replaces it
   $('dead').classList.toggle('hidden', !(r && r.dead && !r.grace));
   if (!r) { $('newrun').classList.remove('hidden'); $('newrun-sub').textContent = 'Choose how many lives each car gets. This is locked for the whole run.'; return; }
   $('mode').textContent = r.grace ? 'Grace mode (not counting)' : (r.dead ? 'Final stats' : `${r.difficulty} Nuzlocke`);
@@ -279,13 +288,32 @@ function renderSummary(r) {
     `<tr><td class="${c.wrecked ? 'wrecked' : ''}">${esc(c.name)}${c.owned ? '' : ' (loaned)'}${c.wrecked ? ' · wrecked' : ''}</td>` +
     `<td class="num">${c.events}</td><td class="num">${c.wins}</td>` +
     `<td>${dot(MEDAL.gold, c.gold)}${dot(MEDAL.silver, c.silver)}${dot(MEDAL.bronze, c.bronze)}</td></tr>`).join('');
-  const modes = [sm.limited && 'Limited Selection', sm.revive && 'Revive tokens'].filter(Boolean).join(', ');
+  const modes = [sm.limited && 'Limited Selection', sm.revive && 'Revive tokens'].filter(Boolean).join(' + ');
+  const ai = r.ai_level && r.ai_level !== 'Off' ? `${r.ai_level} AI` : 'normal AI';
+  const stat = (v, label, small) => `<div${small ? ' class="wide"' : ''}><b${small ? ' class="small"' : ''}>${v}</b><span>${label}</span></div>`;
+  const stats = [
+    stat(`${r.won}/${r.played}`, 'events won'),
+    stat(r.played ? `${Math.round(100 * r.won / r.played)}%` : '-', 'win rate'),
+    stat(r.best_streak, 'best win streak'),
+    stat(r.time, 'run time'),
+    stat(`${r.cars_lost}/${r.race_cars_total ?? r.cars_total}`, 'race wrecks'),
+    stat(`${r.crash_cars_lost || 0}/${r.crash_cars_total ?? r.cars_total}`, 'crash wrecks'),
+    stat(sm.perfects, 'gold + perfects'),
+    stat(sm.crash_wins ?? 0, 'crash junctions won'),
+    stat(sm.owned ?? '-', 'cars owned'),
+    sm.revive ? stat(`${sm.revived} / ${sm.tokens_earned}`, 'revived / tokens earned') : '',
+    stat(`${esc(r.difficulty)} · ${esc(ai)}`, `${r.lives_start} + ${r.lives_start} lives per car`, true),
+    modes ? stat(esc(modes), 'modes', true) : '',
+  ].join('');
+  const got = sm.achievements || [];
   $('summary').innerHTML =
+    `<div class="panel"><h3>The run</h3><div class="bigstats">${stats}</div></div>` +
     `<div class="panel"><h3>How it ended</h3><p class="sub">${esc(sm.ended_by || 'Every car wrecked')}</p>` +
-    `<p class="sub">Gold + Perfects: ${sm.perfects} · Cars revived: ${sm.revived}${modes ? ' · Modes: ' + esc(modes) : ''} · Seed ${esc(sm.seed)}</p></div>` +
+    `<p class="sub">Started ${esc(r.started)} · Seed ${esc(sm.seed)}</p></div>` +
     `<div class="panel"><h3>Cars</h3><table class="cars"><tr><th>Car</th><th class="num">Events</th><th class="num">Wins</th><th>Medals</th></tr>${rows}</table></div>` +
-    `<div class="panel"><h3>Achievements ${(sm.achievements || []).length}/${ACHIEVEMENTS.length}</h3><p class="sub">${(sm.achievements || []).map((a) => '★ ' + esc(a.name)).join(' · ') || 'None this run.'}</p></div>` +
-    (sm.file ? `<p class="sub">Saved as <code>${esc(sm.file)}</code> next to nuzlocke.exe.</p>` : '');
+    `<div class="panel"><h3>Achievements ${got.length}/${ACHIEVEMENTS.length}</h3>` +
+    (got.length ? `<div class="badges">${got.map((a) => `<div class="badge"><b>★ ${esc(a.name)}</b><small>${esc(a.text)}</small></div>`).join('')}</div>` : '<p class="sub">None this run.</p>') + `</div>` +
+    (sm.file ? `<p class="sub" style="margin-top:16px">Saved as <code>${esc(sm.file)}</code> next to nuzlocke.exe.</p>` : '');
 }
 
 // The current car's events as medals, oldest first; click one to see the event.

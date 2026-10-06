@@ -377,7 +377,8 @@ func (t *Tracker) summarySnapshot() map[string]any {
 	}
 	return map[string]any{"cars": cars, "ended_by": r.EndedBy, "achievements": r.Achievements,
 		"perfects": r.Perfects, "revived": r.Revived, "tokens_earned": r.TokensEarned, "seed": r.Seed,
-		"limited": r.UsedLimited, "revive": r.UsedRevive, "file": r.SummaryFile}
+		"limited": r.UsedLimited, "revive": r.UsedRevive, "file": r.SummaryFile,
+		"crash_wins": r.CrashWins, "insane_wins": r.InsaneWins, "owned": t.ownedCars()}
 }
 
 // writeSummary saves the end-of-run summary as a text file next to the run's state.
@@ -405,6 +406,7 @@ func (t *Tracker) writeSummary() {
 		rate = fmt.Sprintf("%d%%", 100*r.EventsWon/r.EventsPlayed)
 	}
 	fmt.Fprintf(&b, "\r\nEvents won %d of %d (%s), best streak %d, Gold + Perfects %d\r\n", r.EventsWon, r.EventsPlayed, rate, r.BestStreak, r.Perfects)
+	fmt.Fprintf(&b, "Crash junctions won %d, cars owned %d\r\n", r.CrashWins, t.ownedCars())
 	fmt.Fprintf(&b, "Cars wrecked: %d Race, %d Crash; revived %d; revive tokens earned %d\r\n", r.CarsLost, r.CrashLost, r.Revived, r.TokensEarned)
 	fmt.Fprintf(&b, "\r\nCARS\r\n")
 	for _, s := range t.carSummaries() {
