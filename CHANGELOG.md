@@ -2,7 +2,7 @@
 
 ## V2.0
 
-**Upgrading:** replace all three files (`nuzlocke.exe`, the `.pnach` and `nuzlocke_isopatch.exe`), and remake
+"Fun + Pain": three optional modes, achievements and an end-of-run summary. **Upgrading:** replace all three files (`nuzlocke.exe`, the `.pnach` and `nuzlocke_isopatch.exe`), and remake
 any patched ISOs to use the new modes. Your current run carries over.
 
 - **Limited Selection mode (optional).** Before every event you get 2 random cars of your own for Race events
