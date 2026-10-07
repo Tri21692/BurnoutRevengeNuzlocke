@@ -143,9 +143,43 @@ func TestRouletteFreebie(t *testing.T) {
 	if r.Roulette != "K_01CDSR" || len(r.Freebies) != 1 || r.Cars["HIGHUSCAR1A"].Lives != lives {
 		t.Fatalf("should be a freebie: roulette %q, freebies %v", r.Roulette, r.Freebies)
 	}
+	// the game leaves the one-car list in memory: no second freebie for the next pick
+	for i := 0; i < 3; i++ {
+		m.tick()
+	}
+	if r.Roulette != "K_01CDSR" || len(r.Freebies) != 1 {
+		t.Fatalf("the stale garage gave another freebie: %q %v", r.Roulette, r.Freebies)
+	}
 	m.list(carouselList, []string{"HIGHUSCAR1A", "HIGHUSCAR1B"})
 	m.tick()
 	if r.Roulette != "K_01CDSR" || len(r.Freebies) != 1 {
 		t.Fatalf("a normal garage changes nothing: %q %v", r.Roulette, r.Freebies)
+	}
+}
+
+// Failing a Burning Lap wrecks its fixed car (yours); its one-car garage is still in memory when the
+// roulette picks the next event, which must not become a freebie.
+func TestRouletteNoFreebieAfterFailedBurningLap(t *testing.T) {
+	m := newModeRig(t, "Hard", []string{"HIGHUSCAR1A", "HIGHUSCAR1B"}, nil)
+	for i := 0; i < 169; i++ {
+		m.f.w64(eventIDs+uint32(8*i), 0)
+	}
+	m.f.w64(eventIDs, encodeLabel("K_01BFLR"))
+	m.f.w64(eventIDs+8, encodeLabel("K_01CDSR"))
+	r := m.tr.run()
+	m.f.w32(rouletteMarker, 1)
+	m.tick()
+	r.Roulette = "K_01BFLR"
+	m.list(carouselList, []string{"HIGHUSCAR1B"}) // the Burning Lap's car, healthy
+	m.tick()
+	m.playEvent("HIGHUSCAR1B", "K_01BFLR", false) // failed on Hard: HIGHUSCAR1B is wrecked
+	if r.Cars["HIGHUSCAR1B"].Lives != 0 || r.Roulette != "K_01CDSR" {
+		t.Fatalf("setup: lives %d, roulette %q", r.Cars["HIGHUSCAR1B"].Lives, r.Roulette)
+	}
+	for i := 0; i < 3; i++ {
+		m.tick()
+	}
+	if len(r.Freebies) != 0 || r.Roulette != "K_01CDSR" {
+		t.Fatalf("the old garage made the new pick a freebie: %v, %q", r.Freebies, r.Roulette)
 	}
 }

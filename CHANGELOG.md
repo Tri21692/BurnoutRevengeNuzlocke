@@ -2,6 +2,9 @@
 
 ## V2.0.3
 
+Event Roulette freebies. **Upgrading:** replace `nuzlocke.exe` (the `.pnach` and the ISO patcher only changed
+their version numbers); patched ISOs keep working. Your current run carries over.
+
 - **Event Roulette freebies.** If the roulette picks a Burning Lap or Preview whose fixed car is one you
   own and it's wrecked, the event can't be driven: it's a freebie. No life is lost, the roulette moves on
   to a new event, and that event counts as done. Without Event Roulette nothing changes.

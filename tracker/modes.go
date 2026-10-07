@@ -549,6 +549,7 @@ func (t *Tracker) rollRoulette() {
 	}
 	sort.Strings(fresh)
 	pick := fresh[t.pickRand().Intn(len(fresh))]
+	t.garageNew = false // a freebie needs a garage opened for this pick
 	region, base := t.currentText()
 	r.Roulette, r.RouletteName = pick, t.nameOf(region, base, pick)
 	t.later(fmt.Sprintf("Roulette: next up is %s (Rank %d)", r.RouletteName, eventRank(pick)), 15, "info")
@@ -563,9 +564,10 @@ func (t *Tracker) checkRoulette() {
 	r := t.run()
 	if r.Roulette == "" {
 		t.rollRoulette()
-	} else if c := r.Cars[t.fixedCar]; c != nil && c.Owned && c.CanRace() && c.Lives == 0 {
-		// The roulette's event (every other one is locked) has a fixed car you own that's wrecked, so it
-		// can't be driven: a freebie. No life lost, and the roulette moves on.
+	} else if c := r.Cars[t.fixedCar]; t.garageNew && c != nil && c.Owned && c.CanRace() && c.Lives == 0 {
+		// A garage opened since the pick (every other event is locked, so it's the roulette's event)
+		// holds only a fixed car you own that's wrecked, so the event can't be driven: a freebie. No
+		// life lost, and the roulette moves on.
 		r.Freebies = append(r.Freebies, r.Roulette)
 		t.say(fmt.Sprintf("Freebie: %s's car, %s, is wrecked, so the roulette moves on", r.RouletteName, c.Name), 20, "info")
 		t.fixedCar = ""

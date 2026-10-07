@@ -232,6 +232,8 @@ type Tracker struct {
 	carsBefore        map[string]bool   // cars the run had when the current event's result came in
 	limitedOn         bool              // the patch has Limited Selection on
 	fixedCar          string            // the only car in the garage: an event's fixed car
+	garageSig         string            // the garage list last seen
+	garageNew         bool              // the garage list changed since the roulette's last pick
 	reviveOn          bool              // the patch has Revive tokens on
 	rouletteOn        bool              // the patch has Event Roulette on
 	locations         map[byte]string   // location letter in event labels -> name, learned from race events
@@ -828,6 +830,14 @@ func (t *Tracker) registerCar(label, name string, crash bool) {
 	t.addCar(label, name, crash, true)
 }
 
+// noteGarage remembers the garage list; a change means a garage was opened (the game leaves the
+// last list in memory after you leave it).
+func (t *Tracker) noteGarage(sig string) {
+	if sig != t.garageSig {
+		t.garageSig, t.garageNew = sig, true
+	}
+}
+
 // ownedCars is how many cars the run owns.
 func (t *Tracker) ownedCars() int {
 	n := 0
@@ -1087,6 +1097,9 @@ func (t *Tracker) slowChecks() {
 		for li, list := range []uint32{carouselList, crashCarousel, crashCarousel + carouselSize} {
 			n := t.u32(list + 0xBA4)
 			if n == 0 || n > deadMax {
+				if li == 0 {
+					t.noteGarage("")
+				}
 				continue
 			}
 			raw := t.read(list, int(n)*8)
@@ -1097,6 +1110,9 @@ func (t *Tracker) slowChecks() {
 				if !strings.Contains(labels[i], "CAR") {
 					allCars = false
 				}
+			}
+			if li == 0 {
+				t.noteGarage(strings.Join(labels, ","))
 			}
 			if allCars {
 				// A Burning Lap or Preview loads only its loaned car into the garage. A garage holding one
