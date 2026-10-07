@@ -178,12 +178,25 @@ patch=1,EE,000FE134,word,00000001
 
 [Nuzlocke\Mode\Event Roulette]
 author=Nuzlocke mod
-description=After every event the tracker picks the next one at random from every World Tour event (ones you haven't won yet first). Playing any other event counts as a loss. One reroll to start, one more for your first win in each rank. Unlocks every rank (Dominator). Needs nuzlocke.exe V2.
+description=After every event the tracker picks the next one at random from every World Tour event (ones you haven't won yet first). Playing any other event counts as a loss. One reroll to start, one more for your first win in each rank. Every event in every rank is unlocked; your rank, results and cars are untouched. Needs nuzlocke.exe V2.
 // Tells the tracker the mode is on.
 patch=1,EE,000FE138,word,00000001
-// World Tour profile: points and rank (10 = Dominator), so every rank is open.
-patch=1,EE,01F64F08,word,000003E7
-patch=1,EE,01F64F0C,word,0000000A
+// Every event unlocked: the game's unlock check (00134568: the event's rank against yours, then the race
+// and crash chains in that rank) always answers yes. Its first test, lbu v0,0x400(s0) (the profile's
+// debug "everything unlocked" byte, which would also stop results being saved), becomes addiu v0,zero,1.
+patch=1,EE,00134580,word,24020001
+
+[Nuzlocke\Mode\Event Roulette - Unlock all cars]
+author=Nuzlocke mod
+description=Only together with Event Roulette: every car is unlocked from the start, so a rank 10 event never has to be raced with starter cars. Each car joins the run with full lives the first time it shows up in the garage. Needs nuzlocke.exe V2.
+// The game's car checks answer as if its debug "all cars" byte (profile +0x402) were set, without
+// setting it: each lbu of that byte becomes "load 1".
+// Car unlocked (00133FB0) and its second flag (00134008):
+patch=1,EE,00133FC0,word,24020001
+patch=1,EE,00134018,word,24020001
+// Number of cars the garage lists: all 80 instead of the unlocked count (+0x3FC):
+patch=1,EE,001BB930,word,24030001
+patch=1,EE,002B101C,word,24020001
 
 [Nuzlocke\Harder AI\Easy]
 author=Nuzlocke mod

@@ -3,7 +3,7 @@
 Loads the patched SLUS_212.42 by its program headers, like the PS2 does, and compares the memory image
 with the original file's image plus the .pnach's changes (relocated). Needs: pip install pycdlib
 
-Run: python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard|Insane> [widescreen] [60fps] [limited] [revive] [roulette]
+Run: python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard|Insane> [widescreen] [60fps] [limited] [revive] [roulette] [allcars]
 """
 import io, struct, sys, os
 import pycdlib
@@ -52,7 +52,7 @@ def main(orig_path, iso_path, name, *extras):
     struct.pack_into("<I", exp, B.LEVEL_ADDR, num)
     for key, grp in (("widescreen", "Widescreen 16:9"), ("60fps", "60 FPS menus and crash mode"),
                      ("limited", "Mode\\Limited Selection"), ("revive", "Mode\\Revive tokens"),
-                     ("roulette", "Mode\\Event Roulette")):
+                     ("roulette", "Mode\\Event Roulette"), ("allcars", "Mode\\Event Roulette - Unlock all cars")):
         if key in extras:
             runtime = []
             for a, w in g["Nuzlocke\\" + grp]:
@@ -63,23 +63,14 @@ def main(orig_path, iso_path, name, *extras):
                     struct.pack_into("<I", exp, a, w)
                 else:
                     runtime.append((a, w))
-            if runtime and key == "roulette":  # profile values: the roulette writer, before the aggression writer
-                call, = struct.unpack_from("<I", mem, B.AGGR_CALL)
-                assert call == 0x0C000000 | (B.ROULETTE_WRITER >> 2), "roulette writer isn't called"
-                got = run_writer(mem, B.ROULETTE_WRITER, B.AGGR_WRITER)
-                assert got == dict(runtime), f"roulette writer stores {got}, the .pnach has {dict(runtime)}"
-                print(f"roulette writer: {len(got)} values match the .pnach")
-                for a, w in B.roulette_writer(runtime) + [(B.AGGR_CALL, call)]:
-                    struct.pack_into("<I", exp, a, w)
-            elif runtime:  # .bss values: written every frame by the writer routine
+            if runtime:  # .bss values: written every frame by the writer routine
                 for a, w in B.writer(runtime):
                     struct.pack_into("<I", exp, a, w)
                 struct.pack_into("<I", exp, B.FRAME_CALL, 0x0C000000 | (B.WRITER_ADDR >> 2))
     # the level's aggression settings: the writer must store exactly the .pnach's values
     want = {a: w for a, w in g["Nuzlocke\\Harder AI\\" + name] if B.runtime_word(a)}
     call, = struct.unpack_from("<I", mem, B.AGGR_CALL)
-    first = B.ROULETTE_WRITER if "roulette" in extras else B.AGGR_WRITER  # the roulette writer jumps on to it
-    assert call == 0x0C000000 | (first >> 2), "aggression writer isn't called"
+    assert call == 0x0C000000 | (B.AGGR_WRITER >> 2), "aggression writer isn't called"
     got = run_writer(mem, B.AGGR_WRITER, B.AGGR_CALL_TARGET)
     assert got == want, f"aggression writer stores {got}, the .pnach has {want}"
     print(f"aggression writer: {len(got)} values match the .pnach")

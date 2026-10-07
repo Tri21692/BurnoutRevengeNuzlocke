@@ -16,8 +16,9 @@ any patched ISOs to use the new modes. Your current run carries over.
   and ISO patcher question.
 - **Event Roulette mode (optional).** After every event the tracker picks your next one at random from
   every World Tour event, ones you haven't won yet first. Playing any other event counts as a loss. One
-  reroll to start, one more for your first win in each rank (hold up to 3). Unlocks every rank. A new
-  `.pnach` option (`Mode\Event Roulette`) and ISO patcher question.
+  reroll to start, one more for your first win in each rank (hold up to 3). Every event in every rank is
+  unlocked, and with the extra `Mode\Event Roulette - Unlock all cars` option every car too. New `.pnach`
+  options and ISO patcher questions.
 - **Achievements.** Ten per run, from Hot Streak (5 wins in a row) to Certified Insane (10 wins against
   Insane AI), shown on the control page and announced on the overlay after the event's result.
 - **End-of-run summary.** How the run ended, every car's events, wins and medals, and your achievements, on

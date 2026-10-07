@@ -59,15 +59,6 @@ def writer(words):
 # The .pnach's mode markers (below the game) and where a patched ISO keeps them instead.
 MODE_MARKERS = {0x000FE130: 0x00479FF4, 0x000FE134: 0x00479FF8, 0x000FE138: 0x00479FFC}
 
-# Event Roulette's profile values (rank, unlocked events) are rewritten every frame by a writer that runs
-# before the aggression writer: the main loop's 0010454C calls it, and it jumps on to the aggression writer.
-ROULETTE_WRITER = 0x00479C00
-
-def roulette_writer(words):
-    code = store_code(words) + [0x08000000 | (AGGR_WRITER >> 2), 0]  # j aggression writer
-    assert ROULETTE_WRITER + 4 * len(code) <= 0x00479D00, "roulette writer runs into the mod code"
-    return [(ROULETTE_WRITER + 4 * i, w) for i, w in enumerate(code)]
-
 def option_patches(g, name):
     direct, runtime = {}, []
     for a, w in g[name]:
@@ -75,11 +66,7 @@ def option_patches(g, name):
             direct[MODE_MARKERS[a]] = w
             continue
         (direct.__setitem__(a, w) if in_file(a) else runtime.append((a, w)))
-    if runtime and name.endswith("Event Roulette"):
-        for a, w in roulette_writer(runtime):
-            direct[a] = w
-        direct[AGGR_CALL] = 0x0C000000 | (ROULETTE_WRITER >> 2)  # jal roulette writer
-    elif runtime:
+    if runtime:
         for a, w in writer(runtime):
             direct[a] = w
         assert WRITER_ADDR + 4 * len(writer(runtime)) <= 0x00479C00, "writer runs into the mod code"
@@ -188,7 +175,7 @@ def main():
     lines += ["", "var options = []struct {", "\tkey, name string", "\twords     []word", "}{"]
     for key, name in (("widescreen", "Widescreen 16:9"), ("fps60", "60 FPS menus and crash mode"),
                       ("limited", "Mode\\Limited Selection"), ("revive", "Mode\\Revive tokens"),
-                      ("roulette", "Mode\\Event Roulette")):
+                      ("roulette", "Mode\\Event Roulette"), ("allcars", "Mode\\Event Roulette - Unlock all cars")):
         lines.append(f'\t{{"{key}", "{name.split(chr(92))[-1]}", []word{{')
         for a, w in option_patches(g, "Nuzlocke\\" + name):
             lines.append(f"\t\t{{0x{a:08X}, 0x{w:08X}}},")
