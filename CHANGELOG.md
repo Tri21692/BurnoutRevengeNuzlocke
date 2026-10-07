@@ -18,8 +18,9 @@ any patched ISOs to use the new modes. Your current run carries over.
   every World Tour event, ones you haven't won yet first, and every other event is locked on the map. One
   reroll to start, one more for your first win in each rank (hold up to 3). Every rank is open, and with the extra `Mode\Event Roulette - Unlock all cars` option every car too. New `.pnach`
   options and ISO patcher questions.
-- **Achievements.** Ten per run, from Hot Streak (5 wins in a row) to Certified Insane (10 wins against
-  Insane AI), shown on the control page and announced on the overlay after the event's result.
+- **Achievements.** Nine per run, from Hot Streak (5 wins in a row) to Certified Insane (10 wins against
+  Insane AI), shown on the control page and announced on the overlay after the event's result. They're
+  locked for any run that uses Limited Selection, Revive tokens, Event Roulette or Unlock all cars.
 - **End-of-run summary.** How the run ended, every car's events, wins and medals, and your achievements, on
   the control page and the overlay's end card, and saved as a text file next to `nuzlocke.exe`.
 - **Fixed: crash junctions outside Motor City counted as Race events.** Only the 9 Motor City junctions
