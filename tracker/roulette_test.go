@@ -33,9 +33,7 @@ func TestEventRoulette(t *testing.T) {
 	for i, l := range events {
 		m.f.w64(eventIDs+uint32(8*i), encodeLabel(l))
 		m.f.ram[eventResults+i] = 0xFF
-		m.f.ram[eventUnlocked+i] = 0
 	}
-	m.f.ram[eventUnlocked+5] = 0xFF // K_03THLF is locked
 	r := m.tr.run()
 	m.tick()
 	if r.Roulette != "" {
@@ -43,8 +41,8 @@ func TestEventRoulette(t *testing.T) {
 	}
 	m.f.w32(rouletteMarker, 1)
 	m.tick()
-	if r.Roulette == "" || r.Roulette == "K_03THLF" || r.Rerolls != 1 {
-		t.Fatalf("first roll should be an open event, with one reroll: %q, %d", r.Roulette, r.Rerolls)
+	if r.Roulette == "" || r.Rerolls != 1 {
+		t.Fatalf("first roll should be an event, with one reroll: %q, %d", r.Roulette, r.Rerolls)
 	}
 	// playing something else is a loss, even with a Gold, and the roulette event stays
 	want := r.Roulette
@@ -58,7 +56,7 @@ func TestEventRoulette(t *testing.T) {
 	}
 	// winning every open event: each roll is one not won yet, never the one just played
 	seen := map[string]bool{}
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		ev := r.Roulette
 		if seen[ev] {
 			t.Fatalf("rolled %s again before every open event was won", ev)
@@ -74,19 +72,19 @@ func TestEventRoulette(t *testing.T) {
 			t.Fatalf("rolled %s twice in a row", ev)
 		}
 	}
-	if len(seen) != 5 {
-		t.Fatalf("every open event should come up once: %v", seen)
+	if len(seen) != 6 {
+		t.Fatalf("every event should come up once: %v", seen)
 	}
-	// rerolls: one to start with, one more for a win in a second rank
-	if len(r.RanksWon) != 2 || r.Rerolls != 2 {
-		t.Fatalf("ranks won %v, rerolls %d; want 2 ranks and 2", r.RanksWon, r.Rerolls)
+	// rerolls: one to start with, one more for a win in each other rank (3 ranks)
+	if len(r.RanksWon) != 3 || r.Rerolls != 3 {
+		t.Fatalf("ranks won %v, rerolls %d; want 3 ranks and 3", r.RanksWon, r.Rerolls)
 	}
 	before := r.Roulette
-	if !m.tr.Reroll() || r.Rerolls != 1 || r.Roulette == before {
+	if !m.tr.Reroll() || r.Rerolls != 2 || r.Roulette == before {
 		t.Fatalf("reroll should spend one and change the event: %q -> %q", before, r.Roulette)
 	}
 	snap := m.tr.Snapshot()["run"].(map[string]any)["roulette"].(map[string]any)
-	if snap["rerolls"] != 1 || snap["rank"] == 0 {
+	if snap["rerolls"] != 2 || snap["rank"] == 0 {
 		t.Fatalf("snapshot: %+v", snap)
 	}
 }
@@ -96,21 +94,5 @@ func TestEventRank(t *testing.T) {
 		if got := eventRank(l); got != want {
 			t.Errorf("%s: %d, want %d", l, got, want)
 		}
-	}
-}
-
-// With no event reading as unlocked, the roulette picks from every event.
-func TestRouletteAllLocked(t *testing.T) {
-	m := newModeRig(t, "Easy", []string{"HIGHUSCAR1A"}, nil)
-	for i := 0; i < 169; i++ {
-		m.f.w64(eventIDs+uint32(8*i), 0)
-		m.f.ram[eventUnlocked+i] = 0xFF
-	}
-	m.f.w64(eventIDs, encodeLabel("K_01CDSR"))
-	m.f.w64(eventIDs+8, encodeLabel("K_04TDLF"))
-	m.f.w32(rouletteMarker, 1)
-	m.tick()
-	if r := m.tr.run(); r.Roulette != "K_01CDSR" && r.Roulette != "K_04TDLF" {
-		t.Fatalf("should roll one of the events: %q", r.Roulette)
 	}
 }

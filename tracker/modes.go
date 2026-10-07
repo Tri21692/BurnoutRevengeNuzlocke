@@ -25,9 +25,9 @@ const (
 	rouletteMarkerISO = 0x00479FFC
 
 	// World Tour profile (01F64F08): rank at +4, then one byte per event (event list order) at +0x1C0
-	// saying whether it's unlocked (FF = locked), and the results at +0x2D3 (eventResults).
-	eventUnlocked = 0x01F650C8
-	maxRerolls    = 3
+	// with the best medal won (FF = none, 3 = Gold), and the results at +0x2D3 (eventResults).
+	eventMedals = 0x01F650C8
+	maxRerolls  = 3
 )
 
 // Revive tokens: wins in a row needed for one, and how many can be held at once.
@@ -476,23 +476,15 @@ func eventRank(label string) int {
 	return n
 }
 
-// openEvents lists the unlocked World Tour events (all of them if none reads as unlocked).
+// openEvents lists the World Tour events the roulette can pick: all of them, since the mode unlocks
+// every rank. (The byte per event at 01F650C8 is the best medal won, FF = none, not an unlock flag.)
 func (t *Tracker) openEvents() []string {
 	count := int(t.u32(eventCount))
 	if count <= 0 || count > 400 {
 		return nil
 	}
-	unlocked := t.read(eventUnlocked, count)
-	// Until the unlock flags are confirmed in the game: if no event reads as unlocked, every event counts.
-	anyOpen := false
-	for i := 0; i < count && i < len(unlocked); i++ {
-		anyOpen = anyOpen || unlocked[i] != 0xFF
-	}
 	var out []string
-	for i := 0; i < count && i < len(unlocked); i++ {
-		if anyOpen && unlocked[i] == 0xFF {
-			continue
-		}
+	for i := 0; i < count; i++ {
 		if l := decodeLabel(t.u64(eventIDs + uint32(i)*8)); strings.HasPrefix(l, "K_") && looksLikeLabel(l) {
 			out = append(out, l)
 		}
