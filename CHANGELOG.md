@@ -1,5 +1,11 @@
 # Changelog
 
+## V2.0.3
+
+- **Event Roulette freebies.** If the roulette picks a Burning Lap or Preview whose fixed car is one you
+  own and it's wrecked, the event can't be driven: it's a freebie. No life is lost, the roulette moves on
+  to a new event, and that event counts as done. Without Event Roulette nothing changes.
+
 ## V2.0.2
 
 Limited Selection fix. **Upgrading:** replace `nuzlocke.exe` (the `.pnach` and the ISO patcher only changed

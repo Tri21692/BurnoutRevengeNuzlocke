@@ -179,7 +179,8 @@ type Run struct {
 	Roulette     string         `json:"roulette,omitempty"` // Event Roulette: the event to play next
 	RouletteName string         `json:"roulette_name,omitempty"`
 	Rerolls      int            `json:"rerolls"`
-	RouletteWins int            `json:"roulette_wins"` // wins with Event Roulette on: a reroll every 5
+	RouletteWins int            `json:"roulette_wins"`      // wins with Event Roulette on: a reroll every 5
+	Freebies     []string       `json:"freebies,omitempty"` // roulette events skipped: their fixed car was wrecked
 	UsedRoulette bool           `json:"used_roulette,omitempty"`
 	UsedAllCars  bool           `json:"used_all_cars,omitempty"` // Event Roulette's Unlock all cars
 	EndedBy      string         `json:"ended_by,omitempty"`      // the event that ended the run

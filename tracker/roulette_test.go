@@ -119,3 +119,33 @@ func TestRouletteLockClears(t *testing.T) {
 		t.Fatal("Grace should open every event")
 	}
 }
+
+// Event Roulette picks a Burning Lap whose fixed car you own is wrecked: it's a freebie, the roulette
+// moves on without a life lost.
+func TestRouletteFreebie(t *testing.T) {
+	m := newModeRig(t, "Easy", []string{"HIGHUSCAR1A", "HIGHUSCAR1B"}, nil)
+	for i := 0; i < 169; i++ {
+		m.f.w64(eventIDs+uint32(8*i), 0)
+	}
+	m.f.w64(eventIDs, encodeLabel("K_01BFLR"))
+	m.f.w64(eventIDs+8, encodeLabel("K_01CDSR"))
+	r := m.tr.run()
+	r.Cars["HIGHUSCAR1B"].Lives = 0
+	r.CarsLost = 1
+	m.f.w32(rouletteMarker, 1)
+	m.tick()
+	if r.Roulette != "K_01BFLR" {
+		r.Roulette = "K_01BFLR" // the Burning Lap is picked
+	}
+	lives := r.Cars["HIGHUSCAR1A"].Lives
+	m.list(carouselList, []string{"HIGHUSCAR1B"}) // its fixed car, wrecked
+	m.tick()
+	if r.Roulette != "K_01CDSR" || len(r.Freebies) != 1 || r.Cars["HIGHUSCAR1A"].Lives != lives {
+		t.Fatalf("should be a freebie: roulette %q, freebies %v", r.Roulette, r.Freebies)
+	}
+	m.list(carouselList, []string{"HIGHUSCAR1A", "HIGHUSCAR1B"})
+	m.tick()
+	if r.Roulette != "K_01CDSR" || len(r.Freebies) != 1 {
+		t.Fatalf("a normal garage changes nothing: %q %v", r.Roulette, r.Freebies)
+	}
+}

@@ -521,6 +521,9 @@ func (t *Tracker) rollRoulette() {
 		return // profile not loaded yet: try again later
 	}
 	won := map[string]bool{}
+	for _, l := range r.Freebies { // freebies count as done
+		won[l] = true
+	}
 	for _, h := range r.History {
 		if h.Won && h.Counted && h.EventID != "" {
 			won[h.EventID] = true
@@ -559,6 +562,13 @@ func (t *Tracker) checkRoulette() {
 	}
 	r := t.run()
 	if r.Roulette == "" {
+		t.rollRoulette()
+	} else if c := r.Cars[t.fixedCar]; c != nil && c.Owned && c.CanRace() && c.Lives == 0 {
+		// The roulette's event (every other one is locked) has a fixed car you own that's wrecked, so it
+		// can't be driven: a freebie. No life lost, and the roulette moves on.
+		r.Freebies = append(r.Freebies, r.Roulette)
+		t.say(fmt.Sprintf("Freebie: %s's car, %s, is wrecked, so the roulette moves on", r.RouletteName, c.Name), 20, "info")
+		t.fixedCar = ""
 		t.rollRoulette()
 	} else if r.RouletteName == r.Roulette {
 		if region, base := t.currentText(); region != nil {
