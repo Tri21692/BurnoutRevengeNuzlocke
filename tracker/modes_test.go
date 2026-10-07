@@ -365,3 +365,32 @@ func TestAchievementsLockedByModes(t *testing.T) {
 		}
 	}
 }
+
+// A Burning Lap or Preview loads only its own car into the garage: if you own it and it isn't one of
+// the picks, it still isn't benched, so the event can be driven. The pair applies again afterwards.
+func TestLimitedSelectionFixedCar(t *testing.T) {
+	m := newModeRig(t, "Easy", garage5, nil)
+	m.f.w32(limitedMarker, 1)
+	m.tick()
+	r := m.tr.run()
+	var other string
+	for _, l := range garage5 {
+		if !contains(r.RacePick, l) {
+			other = l
+			break
+		}
+	}
+	if !m.table(deadTable)[other] {
+		t.Fatalf("%s should be benched in the normal garage", other)
+	}
+	m.list(carouselList, []string{other}) // the event's fixed car
+	m.tick()
+	if m.table(deadTable)[other] {
+		t.Fatalf("%s is the event's only car and mustn't be benched", other)
+	}
+	m.list(carouselList, garage5) // back to the full garage
+	m.tick()
+	if !m.table(deadTable)[other] && !contains(r.RacePick, other) {
+		t.Fatalf("%s should be benched again", other)
+	}
+}

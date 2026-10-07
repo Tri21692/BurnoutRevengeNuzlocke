@@ -230,6 +230,7 @@ type Tracker struct {
 	dirty             bool              // a car's garage / crash junction flags changed
 	carsBefore        map[string]bool   // cars the run had when the current event's result came in
 	limitedOn         bool              // the patch has Limited Selection on
+	fixedCar          string            // the only car in the garage: an event's fixed car
 	reviveOn          bool              // the patch has Revive tokens on
 	rouletteOn        bool              // the patch has Event Roulette on
 	locations         map[byte]string   // location letter in event labels -> name, learned from race events
@@ -1101,6 +1102,13 @@ func (t *Tracker) slowChecks() {
 				// car you don't own, while you already own one, is that: a real unlock shows up next to
 				// your other cars.
 				loanSelect := li == 0 && n == 1 && t.ownedCars() >= 1
+				if li == 0 {
+					// a garage of one car is an event's fixed car (Burning Lap, Preview): never benched
+					t.fixedCar = ""
+					if n == 1 {
+						t.fixedCar = labels[0]
+					}
+				}
 				for _, l := range labels {
 					t.addCar(l, t.carName(region, base, l), li > 0, !loanSelect)
 				}

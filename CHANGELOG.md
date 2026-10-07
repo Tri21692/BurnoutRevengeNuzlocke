@@ -1,5 +1,14 @@
 # Changelog
 
+## V2.0.2
+
+Limited Selection fix. **Upgrading:** replace `nuzlocke.exe` (the `.pnach` and the ISO patcher only changed
+their version numbers); patched ISOs keep working. Your current run carries over.
+
+- **Fixed: Burning Laps and Preview events couldn't be driven with Limited Selection** when their car was
+  one you own but not one of the two picks: it was benched, and the garage holds no other car. An event's
+  fixed car (the garage holds only that car) is now never benched; the pair applies again afterwards.
+
 ## V2.0.1
 
 Event Roulette patch. **Upgrading:** replace `nuzlocke.exe` and the `.pnach` (the patch only changed its

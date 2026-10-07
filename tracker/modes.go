@@ -187,7 +187,7 @@ func (t *Tracker) benched() (race, crash []string) {
 	}
 	r := t.run()
 	for _, l := range t.usable(false) {
-		if !contains(r.RacePick, l) {
+		if !contains(r.RacePick, l) && l != t.fixedCar { // a Burning Lap's or Preview's own car stays usable
 			race = append(race, l)
 		}
 	}
