@@ -252,12 +252,8 @@ func TestReviveTokens(t *testing.T) {
 	if m.tr.Revive("HIGHUSCAR1A", false) {
 		t.Fatal("no token left, and the car isn't wrecked")
 	}
-	found := false
-	for _, a := range r.Achievements {
-		found = found || a.ID == "comeback"
-	}
-	if !found {
-		t.Fatal("reviving should unlock Back From the Dead")
+	if len(r.Achievements) != 0 || !m.tr.achievementsLocked() {
+		t.Fatalf("a run with Revive tokens earns no achievements: %+v", r.Achievements)
 	}
 	// a held token saves the run when the last car goes
 	for i := 0; i < 3; i++ {
@@ -348,5 +344,24 @@ func TestJunctionLocation(t *testing.T) {
 	m.tr.Poll()
 	if h := m.tr.run().History; len(h) != 2 || h[1].Where != "ANGEL VALLEY" || !h[1].Crash || h[1].Event != "CRASH - THE FALLS" {
 		t.Fatalf("K_01LH6E should be a crash junction at Angel Valley: %+v", h[len(h)-1])
+	}
+}
+
+// Any mode (or Unlock all cars) locks the achievements; a standard run earns them.
+func TestAchievementsLockedByModes(t *testing.T) {
+	for _, mode := range []uint32{limitedMarker, reviveMarker, rouletteMarker, allCarsPatch} {
+		m := newModeRig(t, "Easy", []string{"HIGHUSCAR1A"}, nil)
+		if mode == allCarsPatch {
+			m.f.w32(allCarsPatch, allCarsPatchOn)
+		} else {
+			m.f.w32(mode, 1)
+		}
+		m.tick()
+		for i := 0; i < 5; i++ {
+			m.finish("HIGHUSCAR1A", false, true)
+		}
+		if r := m.tr.run(); len(r.Achievements) != 0 || !m.tr.achievementsLocked() {
+			t.Errorf("mode %08X: achievements %+v", mode, r.Achievements)
+		}
 	}
 }

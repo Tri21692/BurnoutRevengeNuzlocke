@@ -241,7 +241,7 @@ function render(s) {
     $('d-diff').textContent = aiText(r.ai_level) ? `${r.difficulty} · ${aiText(r.ai_level)}` : r.difficulty;
     const sm = r.summary || {};
     $('ended').textContent = sm.ended_by ? `Ended by ${sm.ended_by}` : '';
-    $('d-ach').textContent = `${(sm.achievements || []).length}/${r.achievements_total || 10}`;
+    $('d-ach').textContent = sm.achievements_locked ? 'locked' : `${(sm.achievements || []).length}/${r.achievements_total || 9}`;
     const best = (sm.cars || []).slice().sort((a, b) => b.wins - a.wins)[0];
     $('d-best').textContent = best && best.wins ? `${best.name} (${best.wins})` : '-';
     $('d-perf').textContent = sm.perfects ?? 0;

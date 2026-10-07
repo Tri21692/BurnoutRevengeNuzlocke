@@ -181,8 +181,9 @@ type Run struct {
 	Rerolls      int            `json:"rerolls"`
 	RanksWon     []string       `json:"ranks_won,omitempty"` // ranks with a win, for rerolls
 	UsedRoulette bool           `json:"used_roulette,omitempty"`
-	EndedBy      string         `json:"ended_by,omitempty"`     // the event that ended the run
-	SummaryFile  string         `json:"summary_file,omitempty"` // the end-of-run summary written next to the state
+	UsedAllCars  bool           `json:"used_all_cars,omitempty"` // Event Roulette's Unlock all cars
+	EndedBy      string         `json:"ended_by,omitempty"`      // the event that ended the run
+	SummaryFile  string         `json:"summary_file,omitempty"`  // the end-of-run summary written next to the state
 	Streak       int            `json:"streak"`
 	BestStreak   int            `json:"best_streak"`
 	History      []HistoryEntry `json:"history"`
@@ -1325,7 +1326,7 @@ func (t *Tracker) Snapshot() map[string]any {
 		"crash_cars_lost": r.CrashLost, "race_cars_total": raceCars, "crash_cars_total": crashCars,
 		"time": fmtTime(r.PlaySeconds), "best_streak": r.BestStreak, "streak": r.Streak, "started": r.Started,
 		"ai_level": r.AILevel, "seed": r.Seed, "tokens": r.Tokens, "achievements": r.Achievements,
-		"achievements_total": len(achievementList),
+		"achievements_total": len(achievementList), "achievements_locked": t.achievementsLocked(),
 	}
 	run := snap["run"].(map[string]any)
 	if rule, ok := reviveRules[r.Difficulty]; ok && t.reviveOn {

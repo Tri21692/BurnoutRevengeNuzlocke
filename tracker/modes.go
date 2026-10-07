@@ -24,6 +24,8 @@ const (
 	reviveMarkerISO   = 0x00479FF8
 	rouletteMarker    = 0x000FE138 // [Nuzlocke\Mode\Event Roulette]
 	rouletteMarkerISO = 0x00479FFC
+	allCarsPatch      = 0x00133FC0 // Unlock all cars changes this instruction to "load 1"
+	allCarsPatchOn    = 0x24020001
 	rouletteTarget    = 0x000FE140 // the picked event's label: the patched unlock check opens only this one (0 = all)
 
 	// World Tour profile (01F64F08): rank at +4, then one byte per event (event list order) at +0x1C0
@@ -41,6 +43,11 @@ func (t *Tracker) readModes() {
 	t.limitedOn = t.u32(limitedMarker) == 1 || t.u32(limitedMarkerISO) == 1
 	t.reviveOn = t.u32(reviveMarker) == 1 || t.u32(reviveMarkerISO) == 1
 	t.rouletteOn = t.u32(rouletteMarker) == 1 || t.u32(rouletteMarkerISO) == 1
+	allCars := t.u32(allCarsPatch) == allCarsPatchOn // Unlock all cars: the car check is patched
+	if r := t.run(); r != nil && r.Active && !r.Dead && allCars && !r.UsedAllCars {
+		r.UsedAllCars = true
+		t.save()
+	}
 	if r := t.run(); r != nil && r.Active && !r.Dead {
 		if t.limitedOn && !r.UsedLimited || t.reviveOn && !r.UsedRevive || t.rouletteOn && !r.UsedRoulette {
 			if t.rouletteOn && !r.UsedRoulette {
@@ -245,7 +252,6 @@ func (t *Tracker) Revive(label string, crash bool) bool {
 	r.Tokens--
 	r.Revived++
 	t.say(fmt.Sprintf("%s is back for %s events with 1 life (revive token)", c.Name, pool), 20, "win")
-	t.unlock("comeback")
 	t.save()
 	return true
 }
@@ -283,11 +289,19 @@ var achievementList = []struct{ id, name, text string }{
 	{"events50", "Survivor", "50 events played in one run"},
 	{"insane10", "Certified Insane", "10 wins against Insane AI"},
 	{"lastcar", "Last One Standing", "a win with only one usable car left"},
-	{"comeback", "Back From the Dead", "a car revived with a token"},
+}
+
+// achievementsLocked: achievements only count in a standard run, without any of the modes.
+func (t *Tracker) achievementsLocked() bool {
+	r := t.run()
+	return r.UsedLimited || r.UsedRevive || r.UsedRoulette || r.UsedAllCars
 }
 
 func (t *Tracker) unlock(id string) {
 	r := t.run()
+	if t.achievementsLocked() {
+		return
+	}
 	for _, a := range r.Achievements {
 		if a.ID == id {
 			return
@@ -391,7 +405,8 @@ func (t *Tracker) summarySnapshot() map[string]any {
 	}
 	return map[string]any{"cars": cars, "ended_by": r.EndedBy, "achievements": r.Achievements,
 		"perfects": r.Perfects, "revived": r.Revived, "tokens_earned": r.TokensEarned, "seed": r.Seed,
-		"limited": r.UsedLimited, "revive": r.UsedRevive, "roulette": r.UsedRoulette, "file": r.SummaryFile,
+		"limited": r.UsedLimited, "revive": r.UsedRevive, "roulette": r.UsedRoulette, "allcars": r.UsedAllCars,
+		"achievements_locked": t.achievementsLocked(), "file": r.SummaryFile,
 		"crash_wins": r.CrashWins, "insane_wins": r.InsaneWins, "owned": t.ownedCars()}
 }
 
@@ -410,6 +425,9 @@ func (t *Tracker) writeSummary() {
 	}
 	if r.UsedRoulette {
 		modes = append(modes, "Event Roulette")
+	}
+	if r.UsedAllCars {
+		modes = append(modes, "Unlock all cars")
 	}
 	if len(modes) > 0 {
 		fmt.Fprintf(&b, "Modes: %s\r\n", strings.Join(modes, ", "))
@@ -436,7 +454,9 @@ func (t *Tracker) writeSummary() {
 		}
 		fmt.Fprintf(&b, "  %-24s %3d events, %3d wins  (gold %d, silver %d, bronze %d)  %s\r\n", s.Name, s.Events, s.Wins, s.Gold, s.Silver, s.Bronze, state)
 	}
-	if len(r.Achievements) > 0 {
+	if t.achievementsLocked() {
+		fmt.Fprintf(&b, "\r\nAchievements: locked (modes were on)\r\n")
+	} else if len(r.Achievements) > 0 {
 		fmt.Fprintf(&b, "\r\nACHIEVEMENTS\r\n")
 		for _, a := range r.Achievements {
 			fmt.Fprintf(&b, "  %s: %s (%s)\r\n", a.Name, a.Text, a.Time)

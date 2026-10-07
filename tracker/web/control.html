@@ -236,7 +236,7 @@ const ACHIEVEMENTS = [
   ['streak25', 'Legend', '25 wins in a row'], ['perfect5', 'Perfectionist', '5 Gold + Perfect results'],
   ['crash5', 'Junction King', '5 Crash junctions won'], ['cars15', 'Collector', '15 cars of your own'],
   ['events50', 'Survivor', '50 events played in one run'], ['insane10', 'Certified Insane', '10 wins against Insane AI'],
-  ['lastcar', 'Last One Standing', 'a win with only one usable car left'], ['comeback', 'Back From the Dead', 'a car revived with a token'],
+  ['lastcar', 'Last One Standing', 'a win with only one usable car left'],
 ];
 function achList(got) {
   const have = new Set((got || []).map((a) => a.id));
@@ -282,8 +282,9 @@ function renderModes(s, r) {
     confirm(`Spend a revive token on ${b.dataset.name} (${b.dataset.pool === 'crash' ? 'Crash' : 'Race'})?`) &&
     (reviveOpen = false, post(`/api/revive?car=${encodeURIComponent(b.dataset.car)}&pool=${b.dataset.pool}`)));
   const got = r.achievements || [];
-  $('achsum').innerHTML = `<b>Achievements ${got.length}/${r.achievements_total || ACHIEVEMENTS.length}</b>` +
-    (got.length ? ` · latest: ${esc(got[got.length - 1].name)}` : '');
+  $('achsum').innerHTML = r.achievements_locked
+    ? `<b>Achievements locked</b> · only in a run without Limited Selection, Revive tokens, Event Roulette or Unlock all cars`
+    : `<b>Achievements ${got.length}/${r.achievements_total || ACHIEVEMENTS.length}</b>` + (got.length ? ` · latest: ${esc(got[got.length - 1].name)}` : '');
   $('achlist').innerHTML = achList(got);
 }
 
@@ -295,7 +296,7 @@ function renderSummary(r) {
     `<tr><td class="${c.wrecked ? 'wrecked' : ''}">${esc(c.name)}${c.owned ? '' : ' (loaned)'}${c.wrecked ? ' · wrecked' : ''}</td>` +
     `<td class="num">${c.events}</td><td class="num">${c.wins}</td>` +
     `<td>${dot(MEDAL.gold, c.gold)}${dot(MEDAL.silver, c.silver)}${dot(MEDAL.bronze, c.bronze)}</td></tr>`).join('');
-  const modes = [sm.limited && 'Limited Selection', sm.revive && 'Revive tokens', sm.roulette && 'Event Roulette'].filter(Boolean).join(' + ');
+  const modes = [sm.limited && 'Limited Selection', sm.revive && 'Revive tokens', sm.roulette && 'Event Roulette', sm.allcars && 'Unlock all cars'].filter(Boolean).join(' + ');
   const ai = r.ai_level && r.ai_level !== 'Off' ? `${r.ai_level} AI` : 'normal AI';
   const stat = (v, label, small) => `<div${small ? ' class="wide"' : ''}><b${small ? ' class="small"' : ''}>${v}</b><span>${label}</span></div>`;
   const stats = [
@@ -318,8 +319,8 @@ function renderSummary(r) {
     `<div class="panel"><h3>How it ended</h3><p class="sub">${esc(sm.ended_by || 'Every car wrecked')}</p>` +
     `<p class="sub">Started ${esc(r.started)} · Seed ${esc(sm.seed)}</p></div>` +
     `<div class="panel"><h3>Cars</h3><table class="cars"><tr><th>Car</th><th class="num">Events</th><th class="num">Wins</th><th>Medals</th></tr>${rows}</table></div>` +
-    `<div class="panel"><h3>Achievements ${got.length}/${ACHIEVEMENTS.length}</h3>` +
-    (got.length ? `<div class="badges">${got.map((a) => `<div class="badge"><b>★ ${esc(a.name)}</b><small>${esc(a.text)}</small></div>`).join('')}</div>` : '<p class="sub">None this run.</p>') + `</div>` +
+    `<div class="panel"><h3>Achievements ${sm.achievements_locked ? 'locked' : got.length + '/' + ACHIEVEMENTS.length}</h3>` +
+    (sm.achievements_locked ? '<p class="sub">Modes were on in this run.</p>' : got.length ? `<div class="badges">${got.map((a) => `<div class="badge"><b>★ ${esc(a.name)}</b><small>${esc(a.text)}</small></div>`).join('')}</div>` : '<p class="sub">None this run.</p>') + `</div>` +
     (sm.file ? `<p class="sub" style="margin-top:16px">Saved as <code>${esc(sm.file)}</code> next to nuzlocke.exe.</p>` : '');
 }
 
