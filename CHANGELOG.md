@@ -1,5 +1,14 @@
 # Changelog
 
+## V2.0.1
+
+Event Roulette patch. **Upgrading:** replace `nuzlocke.exe` and the `.pnach` (the patch only changed its
+description); patched ISOs from V2.0 keep working. Your current run carries over.
+
+- **Event Roulette rerolls** now come only from winning: one for every 5 events won with the mode on (hold
+  up to 3). There's no starting reroll or reroll per rank any more. The control page shows how many wins
+  until the next one.
+
 ## V2.0
 
 "Fun + Pain": three optional modes, achievements and an end-of-run summary. **Upgrading:** replace all three files (`nuzlocke.exe`, the `.pnach` and `nuzlocke_isopatch.exe`), and remake

@@ -251,7 +251,8 @@ function renderModes(s, r) {
   const rl = r.dead ? null : r.roulette;
   if (rl) {
     parts.push(`<span><i>ROULETTE</i><b>${esc(rl.name)}</b> (Rank ${rl.rank})` +
-      (rl.rerolls ? ` · <button class="linkish" id="rerollbtn">reroll</button> (${rl.rerolls} left)` : ' · no rerolls') + `</span>`);
+      (rl.rerolls ? ` · <button class="linkish" id="rerollbtn">reroll</button> (${rl.rerolls} left)` : ' · no rerolls') +
+      ` · next in ${rl.next_reroll} ${rl.next_reroll === 1 ? 'win' : 'wins'}</span>`);
   }
   const picks = r.dead ? null : r.picks;
   if (picks) {

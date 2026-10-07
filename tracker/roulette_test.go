@@ -41,8 +41,8 @@ func TestEventRoulette(t *testing.T) {
 	}
 	m.f.w32(rouletteMarker, 1)
 	m.tick()
-	if r.Roulette == "" || r.Rerolls != 1 {
-		t.Fatalf("first roll should be an event, with one reroll: %q, %d", r.Roulette, r.Rerolls)
+	if r.Roulette == "" || r.Rerolls != 0 {
+		t.Fatalf("first roll should be an event, with no reroll yet: %q, %d", r.Roulette, r.Rerolls)
 	}
 	if got := binary.LittleEndian.Uint64(m.f.ram[rouletteTarget:]); got != encodeLabel(r.Roulette) {
 		t.Fatalf("the patch should be told the pick: %x", got)
@@ -78,20 +78,20 @@ func TestEventRoulette(t *testing.T) {
 	if len(seen) != 6 {
 		t.Fatalf("every event should come up once: %v", seen)
 	}
-	// rerolls: one to start with, one more for a win in each other rank (3 ranks)
-	if len(r.RanksWon) != 3 || r.Rerolls != 3 {
-		t.Fatalf("ranks won %v, rerolls %d; want 3 ranks and 3", r.RanksWon, r.Rerolls)
+	// rerolls: one for every 5 wins (the off-roulette event was a loss)
+	if r.RouletteWins != 6 || r.Rerolls != 1 {
+		t.Fatalf("roulette wins %d, rerolls %d; want 6 and 1", r.RouletteWins, r.Rerolls)
 	}
 	m.tick()
 	if got := decodeLabel(binary.LittleEndian.Uint64(m.f.ram[rouletteTarget:])); got != r.Roulette {
 		t.Fatalf("lock follows the new pick: %s, roulette %s", got, r.Roulette)
 	}
 	before := r.Roulette
-	if !m.tr.Reroll() || r.Rerolls != 2 || r.Roulette == before {
+	if !m.tr.Reroll() || r.Rerolls != 0 || r.Roulette == before {
 		t.Fatalf("reroll should spend one and change the event: %q -> %q", before, r.Roulette)
 	}
 	snap := m.tr.Snapshot()["run"].(map[string]any)["roulette"].(map[string]any)
-	if snap["rerolls"] != 2 || snap["rank"] == 0 {
+	if snap["rerolls"] != 0 || snap["next_reroll"] != 4 || snap["rank"] == 0 {
 		t.Fatalf("snapshot: %+v", snap)
 	}
 }

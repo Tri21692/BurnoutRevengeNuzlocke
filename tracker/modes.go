@@ -30,8 +30,9 @@ const (
 
 	// World Tour profile (01F64F08): rank at +4, then one byte per event (event list order) at +0x1C0
 	// with the best medal won (FF = none, 3 = Gold), and the results at +0x2D3 (eventResults).
-	eventMedals = 0x01F650C8
-	maxRerolls  = 3
+	eventMedals   = 0x01F650C8
+	maxRerolls    = 3
+	winsPerReroll = 5
 )
 
 // Revive tokens: wins in a row needed for one, and how many can be held at once.
@@ -50,9 +51,6 @@ func (t *Tracker) readModes() {
 	}
 	if r := t.run(); r != nil && r.Active && !r.Dead {
 		if t.limitedOn && !r.UsedLimited || t.reviveOn && !r.UsedRevive || t.rouletteOn && !r.UsedRoulette {
-			if t.rouletteOn && !r.UsedRoulette {
-				r.Rerolls = 1 // one to start with, then one per new rank
-			}
 			r.UsedLimited = r.UsedLimited || t.limitedOn
 			r.UsedRevive = r.UsedRevive || t.reviveOn
 			r.UsedRoulette = r.UsedRoulette || t.rouletteOn
@@ -585,20 +583,22 @@ func (t *Tracker) syncRouletteLock() {
 	}
 }
 
-// earnReroll gives a reroll for the first win in each rank (the first rank's is the one every run
-// starts with). With every rank open, the ranks come in any order.
+// earnReroll gives a reroll for every 5 events won with Event Roulette on (up to maxRerolls held).
 func (t *Tracker) earnReroll(label string) {
 	r := t.run()
-	rank := eventRank(label)
-	if !t.rouletteActive() || rank == 0 || contains(r.RanksWon, fmt.Sprint(rank)) {
+	if !t.rouletteActive() {
 		return
 	}
-	r.RanksWon = append(r.RanksWon, fmt.Sprint(rank))
-	if len(r.RanksWon) == 1 || r.Rerolls >= maxRerolls {
+	r.RouletteWins++
+	if r.RouletteWins%winsPerReroll != 0 {
+		return
+	}
+	if r.Rerolls >= maxRerolls {
+		t.later(fmt.Sprintf("%d roulette wins, but you already hold %d rerolls", r.RouletteWins, r.Rerolls), 15, "info")
 		return
 	}
 	r.Rerolls++
-	t.later(fmt.Sprintf("Roulette reroll earned: first win in Rank %d (%d held)", rank, r.Rerolls), 15, "win")
+	t.later(fmt.Sprintf("Roulette reroll earned: %d wins (%d held)", r.RouletteWins, r.Rerolls), 15, "win")
 }
 
 // Reroll spends a reroll on a new roulette event.
@@ -619,5 +619,5 @@ func (t *Tracker) rouletteSnapshot() map[string]any {
 		return nil
 	}
 	return map[string]any{"name": r.RouletteName, "rank": eventRank(r.Roulette), "crash": isCrashEvent(r.Roulette),
-		"rerolls": r.Rerolls}
+		"rerolls": r.Rerolls, "next_reroll": winsPerReroll - r.RouletteWins%winsPerReroll}
 }

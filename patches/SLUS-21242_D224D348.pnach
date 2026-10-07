@@ -1,4 +1,4 @@
-gametitle=Burnout Revenge (PS2) - Nuzlocke v2.0
+gametitle=Burnout Revenge (PS2) - Nuzlocke v2.0.1
 
 [Nuzlocke\Block dead cars in garage]
 author=Nuzlocke mod
@@ -178,7 +178,7 @@ patch=1,EE,000FE134,word,00000001
 
 [Nuzlocke\Mode\Event Roulette]
 author=Nuzlocke mod
-description=After every event the tracker picks the next one at random from every World Tour event (ones you haven't won yet first), and every other event is locked on the map until you've played it. One reroll to start, one more for your first win in each rank. Every rank is open; your rank, results and cars are untouched. Needs nuzlocke.exe V2.
+description=After every event the tracker picks the next one at random from every World Tour event (ones you haven't won yet first), and every other event is locked on the map until you've played it. A reroll for every 5 wins (hold up to 3). Every rank is open; your rank, results and cars are untouched. Needs nuzlocke.exe V2.
 // Tells the tracker the mode is on.
 patch=1,EE,000FE138,word,00000001
 // The game's unlock check (00134568: the event's rank against yours, then the race and crash chains in
