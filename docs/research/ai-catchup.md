@@ -120,10 +120,10 @@ racer+0x24E0 = `01EDA550`). With d = gap − start distance and boost = min(k·d
 
 | Level | start distance | k (m/s per m) | max boost | eases off when ahead by | to (x player speed) | but at least |
 |---|---|---|---|---|---|---|
-| Easy | 40 m | 0.225 | 18 m/s | 40 m | 0.90 | 40 m/s |
-| Medium | 25 m | 0.36 | 27 m/s | 70 m | 0.94 | 45 m/s |
-| Hard | 10 m | 0.54 | 36 m/s | 100 m | 0.97 | 50 m/s |
-| Insane | 10 m | 0.6 | 40 m/s | 100 m | 0.97 | 50 m/s |
+| Easy | 40 m | 0.225 | 18 m/s | 50 m | 0.91 | 40 m/s |
+| Medium | 25 m | 0.36 | 27 m/s | 80 m | 0.95 | 45 m/s |
+| Hard | 10 m | 0.54 | 36 m/s | 110 m | 0.98 | 50 m/s |
+| Insane | 10 m | 0.6 | 40 m/s | 110 m | 0.98 | 50 m/s |
 
 Since V1.1.2 the wrapper also eases leaders off: when the opponent is further ahead of the player than
 the ease-off distance, its target becomes min(target, max(player speed x factor, minimum)). The wrapper

@@ -69,10 +69,10 @@ There are two separate settings: lives are chosen in the tracker when you start 
 
 | Lives (tracker) | | Harder AI (patch) | Cornering | Pace when out of sight | Speed limit | Catch-up | Eases off |
 |---|---|---|---|---|---|---|---|
-| **Easy** | 3 + 3 per car | **Easy** | 86.25% of the line's limit | 1.5–4.5 s per section quicker | 217 mph | from 40 m behind, up to +40 mph | 40 m ahead: 90% of your speed |
-| **Medium** | 2 + 2 per car | **Medium** | 91.25% | 3.5–6.5 s quicker | 239 mph | from 25 m behind, up to +60 mph | 70 m ahead: 94% |
-| **Hard** | 1 + 1 per car | **Hard** | 96.25% | 5.5–8.5 s quicker | 251 mph | from 10 m behind, up to +81 mph | 100 m ahead: 97% |
-| | | ⚠️ **Insane** | 97.5% | 6–9 s quicker | 257 mph | from 10 m behind, up to +89 mph | 100 m ahead: 97% |
+| **Easy** | 3 + 3 per car | **Easy** | 86.25% of the line's limit | 1.5–4.5 s per section quicker | 217 mph | from 40 m behind, up to +40 mph | 50 m ahead: 91% of your speed |
+| **Medium** | 2 + 2 per car | **Medium** | 91.25% | 3.5–6.5 s quicker | 239 mph | from 25 m behind, up to +60 mph | 80 m ahead: 95% |
+| **Hard** | 1 + 1 per car | **Hard** | 96.25% | 5.5–8.5 s quicker | 251 mph | from 10 m behind, up to +81 mph | 110 m ahead: 98% |
+| | | ⚠️ **Insane** | 97.5% | 6–9 s quicker | 257 mph | from 10 m behind, up to +89 mph | 110 m ahead: 98% |
 
 Each Harder AI level also makes opponents more aggressive, through the game's own attack settings:
 

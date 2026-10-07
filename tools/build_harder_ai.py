@@ -17,14 +17,14 @@ def fbits(x): return struct.unpack("<I", struct.pack("<f", x))[0]
 # front of the player, held to factor x the player's speed, at least minspeed m/s.
 SPEED = {
     "Easy":   dict(corner=(0.8625, 0.9125), pace=(-4.5, -1.5), cap=97,  d0=40, k=0.225, bmax=18,
-                   ahead=40,  factor=0.90, minspeed=40),
+                   ahead=50,  factor=0.91, minspeed=40),
     "Medium": dict(corner=(0.9125, 0.9625), pace=(-6.5, -3.5), cap=107, d0=25, k=0.36,  bmax=27,
-                   ahead=70,  factor=0.94, minspeed=45),
+                   ahead=80,  factor=0.95, minspeed=45),
     "Hard":   dict(corner=(0.9625, 0.9875), pace=(-8.5, -5.5), cap=112, d0=10, k=0.54,  bmax=36,
-                   ahead=100, factor=0.97, minspeed=50),
+                   ahead=110, factor=0.98, minspeed=50),
     # Insane: Hard's speed from before it was toned down for the aggression (V1.1.2's first Hard)
     "Insane": dict(corner=(0.975, 1.0),     pace=(-9, -6),     cap=115, d0=10, k=0.6,   bmax=40,
-                   ahead=100, factor=0.97, minspeed=50),
+                   ahead=110, factor=0.98, minspeed=50),
 }
 
 # Aggression: the game's own AI/Aggressive Driving settings and the AI slam/shunt forces.

@@ -60,6 +60,9 @@ carries over.
   with a run that should be dead. A loaned car is never blocked, so the event can always be retried; once
   it's wrecked, each failed retry costs a Race life from the last car of your own you drove (or the one
   with the most lives left). The control page and overlay mark it "(loaned)".
+- **Leaders ease off a little less.** An opponent ahead of you is held back from 10 m further ahead and
+  to one point more of your speed: Easy 50 m / 91%, Medium 80 m / 95%, Hard and Insane 110 m / 98%
+  (were 40 / 70 / 100 m and 90 / 94 / 97%). Remake patched ISOs to get it.
 - **Medal strip.** The control page and the overlay show the current car's events in order as medals
   (gold, silver, bronze or none; red ribbon and slash for a loss, "C" for a Crash junction). Click a
   medal on the control page to see the event, its result, location and time. It replaces the recent

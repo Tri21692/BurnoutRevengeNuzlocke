@@ -215,7 +215,7 @@ patch=1,EE,002B101C,word,24020001
 
 [Nuzlocke\Harder AI\Easy]
 author=Nuzlocke mod
-description=Harder opponents, Easy level: faster and more aggressive. Enable only one Harder AI level. Corners at 0.8625 of the racing line's limit (0.9125 on aggressive stretches); far from the player, 1.5-4.5 s per section quicker than their pace schedule; catch-up from 40 m behind the player (up to +18 m/s); ease-off from 40 m ahead of the player (to 0.9 x the player's speed); speed cap 97 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 15% harder. See docs/research/ai-catchup.md and ai-aggression.md.
+description=Harder opponents, Easy level: faster and more aggressive. Enable only one Harder AI level. Corners at 0.8625 of the racing line's limit (0.9125 on aggressive stretches); far from the player, 1.5-4.5 s per section quicker than their pace schedule; catch-up from 40 m behind the player (up to +18 m/s); ease-off from 50 m ahead of the player (to 0.91 x the player's speed); speed cap 97 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 15% harder. See docs/research/ai-catchup.md and ai-aggression.md.
 // Corner speed factor (game: 0.8, aggressive 0.85)
 patch=1,EE,0029EE1C,word,3C013F5C
 patch=1,EE,0029EE20,word,3421CCCD
@@ -245,7 +245,7 @@ patch=1,EE,0029ABE8,word,AE010A44
 // 000FFA00. When this opponent is more than 40 m behind the player (track progress), boost =
 // min(0.225 x (gap - 40), 18) m/s: its target speed becomes at least the player's speed + boost, and
 // its top speed (car+0x1354, mph) is set to stock + boost. Otherwise top speed is reset to stock.
-// When it is more than 40 m AHEAD of the player, its target speed is held to 0.9 x the player's speed
+// When it is more than 50 m AHEAD of the player, its target speed is held to 0.91 x the player's speed
 // (but at least 40 m/s), so a leader can be caught.
 patch=1,EE,00298FEC,word,0C03FE80
 patch=1,EE,000FFA00,word,27BDFFC0
@@ -285,7 +285,7 @@ patch=1,EE,000FFA84,word,46150834
 patch=1,EE,000FFA88,word,00000000
 patch=1,EE,000FFA8C,word,45010022
 patch=1,EE,000FFA90,word,00000000
-patch=1,EE,000FFA94,word,3C01C2A0
+patch=1,EE,000FFA94,word,3C01C2B4
 patch=1,EE,000FFA98,word,44810800
 patch=1,EE,000FFA9C,word,00000000
 patch=1,EE,000FFAA0,word,4601A834
@@ -295,8 +295,8 @@ patch=1,EE,000FFAAC,word,00000000
 patch=1,EE,000FFAB0,word,3C0801EE
 patch=1,EE,000FFAB4,word,8D09B7F0
 patch=1,EE,000FFAB8,word,C52200AC
-patch=1,EE,000FFABC,word,3C013F66
-patch=1,EE,000FFAC0,word,34216666
+patch=1,EE,000FFABC,word,3C013F68
+patch=1,EE,000FFAC0,word,3421F5C3
 patch=1,EE,000FFAC4,word,44810800
 patch=1,EE,000FFAC8,word,00000000
 patch=1,EE,000FFACC,word,46011082
@@ -403,7 +403,7 @@ patch=1,EE,000FE110,word,00000001
 
 [Nuzlocke\Harder AI\Medium]
 author=Nuzlocke mod
-description=Harder opponents, Medium level: faster and more aggressive. Enable only one Harder AI level. Corners at 0.9125 of the racing line's limit (0.9625 on aggressive stretches); far from the player, 3.5-6.5 s per section quicker than their pace schedule; catch-up from 25 m behind the player (up to +27 m/s); ease-off from 70 m ahead of the player (to 0.94 x the player's speed); speed cap 107 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 30% harder. See docs/research/ai-catchup.md and ai-aggression.md.
+description=Harder opponents, Medium level: faster and more aggressive. Enable only one Harder AI level. Corners at 0.9125 of the racing line's limit (0.9625 on aggressive stretches); far from the player, 3.5-6.5 s per section quicker than their pace schedule; catch-up from 25 m behind the player (up to +27 m/s); ease-off from 80 m ahead of the player (to 0.95 x the player's speed); speed cap 107 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 30% harder. See docs/research/ai-catchup.md and ai-aggression.md.
 // Corner speed factor (game: 0.8, aggressive 0.85)
 patch=1,EE,0029EE1C,word,3C013F69
 patch=1,EE,0029EE20,word,3421999A
@@ -433,7 +433,7 @@ patch=1,EE,0029ABE8,word,AE010A44
 // 000FFA00. When this opponent is more than 25 m behind the player (track progress), boost =
 // min(0.36 x (gap - 25), 27) m/s: its target speed becomes at least the player's speed + boost, and
 // its top speed (car+0x1354, mph) is set to stock + boost. Otherwise top speed is reset to stock.
-// When it is more than 70 m AHEAD of the player, its target speed is held to 0.94 x the player's speed
+// When it is more than 80 m AHEAD of the player, its target speed is held to 0.95 x the player's speed
 // (but at least 45 m/s), so a leader can be caught.
 patch=1,EE,00298FEC,word,0C03FE80
 patch=1,EE,000FFA00,word,27BDFFC0
@@ -473,7 +473,7 @@ patch=1,EE,000FFA84,word,46150834
 patch=1,EE,000FFA88,word,00000000
 patch=1,EE,000FFA8C,word,45010022
 patch=1,EE,000FFA90,word,00000000
-patch=1,EE,000FFA94,word,3C01C2BE
+patch=1,EE,000FFA94,word,3C01C2D2
 patch=1,EE,000FFA98,word,44810800
 patch=1,EE,000FFA9C,word,00000000
 patch=1,EE,000FFAA0,word,4601A834
@@ -483,8 +483,8 @@ patch=1,EE,000FFAAC,word,00000000
 patch=1,EE,000FFAB0,word,3C0801EE
 patch=1,EE,000FFAB4,word,8D09B7F0
 patch=1,EE,000FFAB8,word,C52200AC
-patch=1,EE,000FFABC,word,3C013F70
-patch=1,EE,000FFAC0,word,3421A3D7
+patch=1,EE,000FFABC,word,3C013F73
+patch=1,EE,000FFAC0,word,34213333
 patch=1,EE,000FFAC4,word,44810800
 patch=1,EE,000FFAC8,word,00000000
 patch=1,EE,000FFACC,word,46011082
@@ -591,7 +591,7 @@ patch=1,EE,000FE110,word,00000002
 
 [Nuzlocke\Harder AI\Hard]
 author=Nuzlocke mod
-description=Harder opponents, Hard level: faster and more aggressive. Enable only one Harder AI level. Corners at 0.9625 of the racing line's limit (0.9875 on aggressive stretches); far from the player, 5.5-8.5 s per section quicker than their pace schedule; catch-up from 10 m behind the player (up to +36 m/s); ease-off from 100 m ahead of the player (to 0.97 x the player's speed); speed cap 112 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 50% harder, and every opponent attacks. See docs/research/ai-catchup.md and ai-aggression.md.
+description=Harder opponents, Hard level: faster and more aggressive. Enable only one Harder AI level. Corners at 0.9625 of the racing line's limit (0.9875 on aggressive stretches); far from the player, 5.5-8.5 s per section quicker than their pace schedule; catch-up from 10 m behind the player (up to +36 m/s); ease-off from 110 m ahead of the player (to 0.98 x the player's speed); speed cap 112 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 50% harder, and every opponent attacks. See docs/research/ai-catchup.md and ai-aggression.md.
 // Corner speed factor (game: 0.8, aggressive 0.85)
 patch=1,EE,0029EE1C,word,3C013F76
 patch=1,EE,0029EE20,word,34216666
@@ -621,7 +621,7 @@ patch=1,EE,0029ABE8,word,AE010A44
 // 000FFA00. When this opponent is more than 10 m behind the player (track progress), boost =
 // min(0.54 x (gap - 10), 36) m/s: its target speed becomes at least the player's speed + boost, and
 // its top speed (car+0x1354, mph) is set to stock + boost. Otherwise top speed is reset to stock.
-// When it is more than 100 m AHEAD of the player, its target speed is held to 0.97 x the player's speed
+// When it is more than 110 m AHEAD of the player, its target speed is held to 0.98 x the player's speed
 // (but at least 50 m/s), so a leader can be caught.
 patch=1,EE,00298FEC,word,0C03FE80
 patch=1,EE,000FFA00,word,27BDFFC0
@@ -661,7 +661,7 @@ patch=1,EE,000FFA84,word,46150834
 patch=1,EE,000FFA88,word,00000000
 patch=1,EE,000FFA8C,word,45010022
 patch=1,EE,000FFA90,word,00000000
-patch=1,EE,000FFA94,word,3C01C2DC
+patch=1,EE,000FFA94,word,3C01C2F0
 patch=1,EE,000FFA98,word,44810800
 patch=1,EE,000FFA9C,word,00000000
 patch=1,EE,000FFAA0,word,4601A834
@@ -671,8 +671,8 @@ patch=1,EE,000FFAAC,word,00000000
 patch=1,EE,000FFAB0,word,3C0801EE
 patch=1,EE,000FFAB4,word,8D09B7F0
 patch=1,EE,000FFAB8,word,C52200AC
-patch=1,EE,000FFABC,word,3C013F78
-patch=1,EE,000FFAC0,word,342151EC
+patch=1,EE,000FFABC,word,3C013F7A
+patch=1,EE,000FFAC0,word,3421E148
 patch=1,EE,000FFAC4,word,44810800
 patch=1,EE,000FFAC8,word,00000000
 patch=1,EE,000FFACC,word,46011082
@@ -779,7 +779,7 @@ patch=1,EE,000FE110,word,00000003
 
 [Nuzlocke\Harder AI\Insane]
 author=Nuzlocke mod
-description=Harder opponents, Insane level: faster and more aggressive. Enable only one Harder AI level. WARNING: Insane is not meant to be fair; most runs will end within a few events. Corners at 0.975 of the racing line's limit (1 on aggressive stretches); far from the player, 6-9 s per section quicker than their pace schedule; catch-up from 10 m behind the player (up to +40 m/s); ease-off from 100 m ahead of the player (to 0.97 x the player's speed); speed cap 115 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 100% harder, and every opponent attacks. See docs/research/ai-catchup.md and ai-aggression.md.
+description=Harder opponents, Insane level: faster and more aggressive. Enable only one Harder AI level. WARNING: Insane is not meant to be fair; most runs will end within a few events. Corners at 0.975 of the racing line's limit (1 on aggressive stretches); far from the player, 6-9 s per section quicker than their pace schedule; catch-up from 10 m behind the player (up to +40 m/s); ease-off from 110 m ahead of the player (to 0.98 x the player's speed); speed cap 115 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 100% harder, and every opponent attacks. See docs/research/ai-catchup.md and ai-aggression.md.
 // Corner speed factor (game: 0.8, aggressive 0.85)
 patch=1,EE,0029EE1C,word,3C013F79
 patch=1,EE,0029EE20,word,3421999A
@@ -809,7 +809,7 @@ patch=1,EE,0029ABE8,word,AE010A44
 // 000FFA00. When this opponent is more than 10 m behind the player (track progress), boost =
 // min(0.6 x (gap - 10), 40) m/s: its target speed becomes at least the player's speed + boost, and
 // its top speed (car+0x1354, mph) is set to stock + boost. Otherwise top speed is reset to stock.
-// When it is more than 100 m AHEAD of the player, its target speed is held to 0.97 x the player's speed
+// When it is more than 110 m AHEAD of the player, its target speed is held to 0.98 x the player's speed
 // (but at least 50 m/s), so a leader can be caught.
 patch=1,EE,00298FEC,word,0C03FE80
 patch=1,EE,000FFA00,word,27BDFFC0
@@ -849,7 +849,7 @@ patch=1,EE,000FFA84,word,46150834
 patch=1,EE,000FFA88,word,00000000
 patch=1,EE,000FFA8C,word,45010022
 patch=1,EE,000FFA90,word,00000000
-patch=1,EE,000FFA94,word,3C01C2DC
+patch=1,EE,000FFA94,word,3C01C2F0
 patch=1,EE,000FFA98,word,44810800
 patch=1,EE,000FFA9C,word,00000000
 patch=1,EE,000FFAA0,word,4601A834
@@ -859,8 +859,8 @@ patch=1,EE,000FFAAC,word,00000000
 patch=1,EE,000FFAB0,word,3C0801EE
 patch=1,EE,000FFAB4,word,8D09B7F0
 patch=1,EE,000FFAB8,word,C52200AC
-patch=1,EE,000FFABC,word,3C013F78
-patch=1,EE,000FFAC0,word,342151EC
+patch=1,EE,000FFABC,word,3C013F7A
+patch=1,EE,000FFAC0,word,3421E148
 patch=1,EE,000FFAC4,word,44810800
 patch=1,EE,000FFAC8,word,00000000
 patch=1,EE,000FFACC,word,46011082
