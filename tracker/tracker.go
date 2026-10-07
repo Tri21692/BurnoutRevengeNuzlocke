@@ -224,6 +224,7 @@ type Tracker struct {
 	carsBefore        map[string]bool   // cars the run had when the current event's result came in
 	limitedOn         bool              // the patch has Limited Selection on
 	reviveOn          bool              // the patch has Revive tokens on
+	locations         map[byte]string   // location letter in event labels -> name, learned from race events
 	lastLoss          string            // the car of your own that lost its last life in this event
 	lastLossCrash     bool              // ...in the Crash pool
 }
@@ -583,6 +584,9 @@ func (t *Tracker) finishEvent(before []byte) {
 		car = t.pendingCar // the car loaded for the junction
 	}
 	location := t.trackName(region, base, t.pendingTrack)
+	if location == "" && crash {
+		location = t.junctionLocation(region, base, eventLabel)
+	}
 	t.pendingEvent, t.pendingCar, t.pendingTrack = "", "", ""
 	eventName := "Unknown event"
 	if eventLabel != "" {
@@ -966,6 +970,47 @@ func (t *Tracker) captureEvent() {
 	}
 }
 
+// junctionLocation names a crash junction's location from its label's location letter (K_01DH1E: D),
+// learned from the race events, which carry the same letter and are named after their location
+// (K_01CDSR, "Race - Motor City").
+func (t *Tracker) junctionLocation(region []byte, base uint32, label string) string {
+	if !isCrashEvent(label) || region == nil {
+		return ""
+	}
+	letter := label[4]
+	if name, ok := t.locations[letter]; ok {
+		return name
+	}
+	count := int(t.u32(eventCount))
+	if count <= 0 || count > 400 {
+		return ""
+	}
+	votes := map[string]int{}
+	for i := 0; i < count; i++ {
+		l := decodeLabel(t.u64(eventIDs + uint32(i)*8))
+		if len(l) != 8 || isCrashEvent(l) || l[5] != letter || strings.Contains(l, "GP") {
+			continue
+		}
+		name := t.nameOf(region, base, l)
+		if i := strings.LastIndex(name, " - "); i >= 0 && name != l {
+			votes[strings.TrimSpace(name[i+3:])]++
+		}
+	}
+	best, most := "", 0
+	for name, n := range votes {
+		if n > most || n == most && name < best {
+			best, most = name, n
+		}
+	}
+	if best != "" {
+		if t.locations == nil {
+			t.locations = map[byte]string{}
+		}
+		t.locations[letter] = best
+	}
+	return best
+}
+
 // trackLabel matches the game's track labels, US_K1_V1 to AS_S3_V2 (region, route, variant).
 var trackLabel = regexp.MustCompile(`^(US|EU|AS)_[A-Z][0-9]_V[0-9]$`)
 
@@ -991,9 +1036,11 @@ func (t *Tracker) crashEventChosen() bool {
 	return isCrashEvent(decodeLabel(t.u64(ptr + 0x18)))
 }
 
-// isCrashEvent: Crash junction labels have DH after the number, e.g. K_01DH1E (Crash - Dock Fight).
+// isCrashEvent: Crash junction labels are K_<rank><location>H<junction><letter>, e.g. K_01DH1E
+// (Crash - Dock Fight, Motor City) or K_01LH6E: 50 of the 169 World Tour events. Other events have a
+// letter in that place, e.g. K_03THLF.
 func isCrashEvent(label string) bool {
-	return len(label) >= 6 && strings.HasPrefix(label, "K_") && label[4:6] == "DH"
+	return len(label) == 8 && strings.HasPrefix(label, "K_") && label[5] == 'H' && label[6] >= '0' && label[6] <= '9'
 }
 
 func deadTableBytes(labels []string) []byte {

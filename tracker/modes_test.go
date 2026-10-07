@@ -312,3 +312,41 @@ func TestAchievementsAndSummary(t *testing.T) {
 	}
 	t.Logf("summary:\n%s", data)
 }
+
+// A crash junction gets its location from the race events that share its location letter.
+func TestJunctionLocation(t *testing.T) {
+	m := newModeRig(t, "Easy", []string{"HIGHUSCAR1A"}, []string{"HIGHUSCAR1A"})
+	pos := uint32(0x01234560)
+	add := func(label, text string) {
+		m.f.w32(pos, textID(label))
+		d := append(utf16le(text), 0, 0)
+		copy(m.f.ram[pos+4:], d)
+		pos = (pos + 4 + uint32(len(d)) + 3) &^ 3
+	}
+	for i, ev := range [][2]string{{"K_01CDSR", "RACE - MOTOR CITY"}, {"K_01TDLR", "TRAFFIC ATTACK - MOTOR CITY"},
+		{"K_01RLLR", "ROAD RAGE - ANGEL VALLEY"}, {"K_01DH1E", "CRASH - DOCK FIGHT"}, {"K_01LH6E", "CRASH - THE FALLS"}} {
+		m.f.w64(eventIDs+uint32(8*i), encodeLabel(ev[0]))
+		add(ev[0], ev[1])
+	}
+	add("HIGHUSCAR1A", "FACTORY R160 ST")
+	add("HIGHEUCAR2S1", "EA RACER GT")
+	add("HIGHASCAR1S1", "NIXON")
+	add("K_01DH3E", "CRASH - DECON")
+	for i := 0; i < 5; i++ {
+		m.tick()
+	}
+	m.finish("HIGHUSCAR1A", true, true) // K_01DH1E
+	if h := m.tr.run().History; len(h) != 1 || h[0].Where != "MOTOR CITY" || !h[0].Crash {
+		t.Fatalf("Dock Fight should be a crash junction at Motor City: %+v", h)
+	}
+	m.f.w64(rigObj+0x18, encodeLabel("K_01LH6E"))
+	m.f.w64(selectedCar, encodeLabel("HIGHUSCAR1A"))
+	m.f.w32(finishCounter, binary.LittleEndian.Uint32(m.f.ram[finishCounter:])+1)
+	m.clock += 0.25
+	m.tr.Poll()
+	m.clock += 1.5
+	m.tr.Poll()
+	if h := m.tr.run().History; len(h) != 2 || h[1].Where != "ANGEL VALLEY" || !h[1].Crash || h[1].Event != "CRASH - THE FALLS" {
+		t.Fatalf("K_01LH6E should be a crash junction at Angel Valley: %+v", h[len(h)-1])
+	}
+}

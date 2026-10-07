@@ -779,3 +779,20 @@ func TestLoanRetryLastCarPays(t *testing.T) {
 		t.Fatalf("payer = %s, want none", got)
 	}
 }
+
+// All 50 crash junctions are recognized, in every location, and no other event is.
+func TestCrashEventLabels(t *testing.T) {
+	crash := []string{"K_01DH1E", "K_01LH6E", "K_01NH1H", "K_02SH5R", "K_02RH5E", "K_02HH9H", "K_03TH2R",
+		"K_05FH3R", "K_10NH7H", "K_09DH9E"}
+	other := []string{"K_01CDSR", "K_03THLF", "K_06EHSR", "K_09RHLR", "K_01GP_1", "K_10ULTI", "K_04PRSF", "K_08TRSR", ""}
+	for _, l := range crash {
+		if !isCrashEvent(l) {
+			t.Errorf("%s should be a crash junction", l)
+		}
+	}
+	for _, l := range other {
+		if isCrashEvent(l) {
+			t.Errorf("%s isn't a crash junction", l)
+		}
+	}
+}

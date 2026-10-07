@@ -18,6 +18,9 @@ any patched ISOs to use the new modes. Your current run carries over.
   Insane AI), shown on the control page and announced on the overlay after the event's result.
 - **End-of-run summary.** How the run ended, every car's events, wins and medals, and your achievements, on
   the control page and the overlay's end card, and saved as a text file next to `nuzlocke.exe`.
+- **Fixed: crash junctions outside Motor City counted as Race events.** Only the 9 Motor City junctions
+  were recognized; the other 41 took a life from the garage car's Race pool instead of the junction car's
+  Crash pool. All 50 are recognized now, and each one's location comes from the game's own event names.
 - The overlay shows the Limited Selection picks and your revive tokens; messages now queue, so an
   achievement never covers an event's result.
 
