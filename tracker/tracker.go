@@ -982,6 +982,15 @@ func (t *Tracker) trackName(region []byte, base uint32, label string) string {
 	return ""
 }
 
+// crashEventChosen: the event the game has loaded is a Crash junction, so its car select is the one in use.
+func (t *Tracker) crashEventChosen() bool {
+	ptr := t.u32(currentEvent)
+	if ptr < 0x00100000 || ptr >= 0x01FFFFE0 {
+		return false
+	}
+	return isCrashEvent(decodeLabel(t.u64(ptr + 0x18)))
+}
+
 // isCrashEvent: Crash junction labels have DH after the number, e.g. K_01DH1E (Crash - Dock Fight).
 func isCrashEvent(label string) bool {
 	return len(label) >= 6 && strings.HasPrefix(label, "K_") && label[4:6] == "DH"
@@ -1072,6 +1081,7 @@ func (t *Tracker) slowChecks() {
 		inCrash[l] = true
 	}
 	dead := union(raceDead, crashDead)
+	crashSelect := t.crashEventChosen()
 
 	renamed := map[string]bool{}
 	for _, label := range dead {
@@ -1088,7 +1098,7 @@ func (t *Tracker) slowChecks() {
 				c.Name = text
 			}
 		}
-		newName := blockedName(r.Cars[label], room, inRace[label], inCrash[label])
+		newName := blockedName(r.Cars[label], room, inRace[label], inCrash[label], crashSelect)
 		if newName == "" {
 			continue // still usable in one pool and not wrecked in the other: keeps its real name
 		}
@@ -1141,22 +1151,28 @@ func (t *Tracker) readAILevel() {
 	}
 }
 
-// blockedName is the garage name of a blocked car ("" to keep its real name). blockedRace and
-// blockedCrash say which pools it's blocked in, whether wrecked or benched.
-func blockedName(c *Car, room int, blockedRace, blockedCrash bool) string {
-	usableRace := c.CanRace() && !blockedRace
-	usableCrash := c.CanCrash() && !blockedCrash
+// blockedName is the name a blocked car shows ("" to keep its real name). blockedRace and blockedCrash
+// say which pools it's blocked in, wrecked or benched. A car's name is shared by the garage and the
+// crash junction car select, so a benched car is named for the car select in use (crashSelect):
+// [BENCHED] where it can't be picked, its own (or wrecked) name where it can.
+func blockedName(c *Car, room int, blockedRace, blockedCrash, crashSelect bool) string {
 	wreckedRace := c.CanRace() && c.Lives == 0
 	wreckedCrash := c.CanCrash() && c.CrashLives == 0
-	switch {
-	case !usableRace && !usableCrash:
-		if (!c.CanRace() || wreckedRace) && (!c.CanCrash() || wreckedCrash) {
-			return wreckedName(room, false, false, true)
-		}
+	benched := blockedRace && c.CanRace() && !wreckedRace
+	if crashSelect {
+		benched = blockedCrash && c.CanCrash() && !wreckedCrash
+	}
+	if benched {
 		return pickName(benchedSet, room)
-	case usableCrash && wreckedRace:
+	}
+	outRace := !c.CanRace() || wreckedRace
+	outCrash := !c.CanCrash() || wreckedCrash
+	switch {
+	case outRace && outCrash:
+		return wreckedName(room, false, false, true)
+	case wreckedRace:
 		return wreckedName(room, true, false, false)
-	case usableRace && wreckedCrash:
+	case wreckedCrash:
 		return wreckedName(room, false, true, false)
 	}
 	return ""

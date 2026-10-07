@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -148,25 +149,80 @@ func TestLimitedSelection(t *testing.T) {
 func TestBlockedNames(t *testing.T) {
 	both := &Car{Lives: 1, CrashLives: 1, InGarage: true, InCrash: true}
 	cases := []struct {
-		c           *Car
-		race, crash bool
-		want        string
+		c                 *Car
+		race, crash, inCJ bool
+		want              string
 	}{
-		{both, true, true, "[BENCHED]"},
-		{both, true, false, ""}, // benched for races, usable in crash junctions: real name
-		{&Car{Lives: 0, CrashLives: 1, InGarage: true, InCrash: true}, true, false, "[RACE X]"},
-		{&Car{Lives: 0, CrashLives: 1, InGarage: true, InCrash: true}, true, true, "[BENCHED]"},
-		{&Car{Lives: 0, CrashLives: 0, InGarage: true, InCrash: true}, true, true, "[WRECKED]"},
-		{&Car{Lives: 0, InGarage: true}, true, false, "[WRECKED]"},
-		{&Car{Lives: 2, InGarage: true}, true, false, "[BENCHED]"},
+		{both, true, true, false, "[BENCHED]"},
+		{both, true, true, true, "[BENCHED]"},
+		{both, true, false, false, "[BENCHED]"}, // benched for races: the garage can't pick it
+		{both, true, false, true, ""},           // ...but the crash junction select can
+		{both, false, true, false, ""},          // a race pick benched for crash junctions, in the garage
+		{both, false, true, true, "[BENCHED]"},  // ...and in a crash junction's car select
+		{&Car{Lives: 0, CrashLives: 1, InGarage: true, InCrash: true}, true, false, true, "[RACE X]"},
+		{&Car{Lives: 0, CrashLives: 1, InGarage: true, InCrash: true}, true, true, true, "[BENCHED]"},
+		{&Car{Lives: 0, CrashLives: 1, InGarage: true, InCrash: true}, true, true, false, "[RACE X]"},
+		{&Car{Lives: 0, CrashLives: 0, InGarage: true, InCrash: true}, true, true, false, "[WRECKED]"},
+		{&Car{Lives: 0, InGarage: true}, true, false, false, "[WRECKED]"},
+		{&Car{Lives: 2, InGarage: true}, true, false, false, "[BENCHED]"},
+		{&Car{CrashLives: 2, InCrash: true}, false, true, true, "[BENCHED]"}, // crash-only car
 	}
 	for i, c := range cases {
-		if got := blockedName(c.c, 12, c.race, c.crash); got != c.want {
+		if got := blockedName(c.c, 12, c.race, c.crash, c.inCJ); got != c.want {
 			t.Errorf("case %d: %q, want %q", i, got, c.want)
 		}
 	}
-	if got := blockedName(&Car{Lives: 2, InGarage: true}, 4, true, false); got != "[B]" {
+	if got := blockedName(&Car{Lives: 2, InGarage: true}, 4, true, false, false); got != "[B]" {
 		t.Errorf("short name: %q", got)
+	}
+}
+
+// In a crash junction's car select every car but the two crash picks shows [BENCHED], even the race picks.
+func TestBenchedNamesInCrashJunction(t *testing.T) {
+	m := newModeRig(t, "Easy", nil, nil)
+	pos := uint32(0x01234560)
+	addrs := map[string]uint32{}
+	add := func(label, text string) {
+		m.f.w32(pos, textID(label))
+		d := append(utf16le(text), 0, 0)
+		copy(m.f.ram[pos+4:], d)
+		addrs[label] = pos + 4
+		pos = (pos + 4 + uint32(len(d)) + 3) &^ 3
+	}
+	for i, l := range garage5 {
+		add(l, fmt.Sprintf("CAR NUMBER %d", i))
+	}
+	add("HIGHEUCAR2S1", "EA RACER GT")
+	add("HIGHASCAR1S1", "NIXON")
+	add("K_01DH1E", "CRASH - DOCK FIGHT")
+	add("K_01DH3E", "CRASH - DECON")
+	m.list(carouselList, garage5)
+	m.list(crashCarousel, garage5) // every car can also crash
+	m.f.w32(limitedMarker, 1)
+	m.f.w64(rigObj+0x18, encodeLabel("K_01DH1E")) // a crash junction is chosen
+	for i := 0; i < 5; i++ {
+		m.tick()
+	}
+	r := m.tr.run()
+	benched := 0
+	for _, l := range garage5 {
+		got := m.f.text(addrs[l], 30)
+		if contains(r.CrashPick, l) == (got == "[BENCHED]") {
+			t.Errorf("%s: %q (crash picks %v, race picks %v)", l, got, r.CrashPick, r.RacePick)
+		}
+		if got == "[BENCHED]" {
+			benched++
+		}
+	}
+	if benched != 3 {
+		t.Errorf("%d benched, want 3", benched)
+	}
+	m.f.w64(rigObj+0x18, encodeLabel("K_01RDSF")) // a race is chosen: named for the garage
+	m.tick()
+	for _, l := range garage5 {
+		if got := m.f.text(addrs[l], 30); contains(r.RacePick, l) == (got == "[BENCHED]") {
+			t.Errorf("garage: %s: %q (race picks %v)", l, got, r.RacePick)
+		}
 	}
 }
 
