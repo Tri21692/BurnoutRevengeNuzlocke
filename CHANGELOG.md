@@ -23,6 +23,9 @@ any patched ISOs to use the new modes. Your current run carries over.
   locked for any run that uses Limited Selection, Revive tokens, Event Roulette or Unlock all cars.
 - **End-of-run summary.** How the run ended, every car's events, wins and medals, and your achievements, on
   the control page and the overlay's end card, and saved as a text file next to `nuzlocke.exe`.
+- **Leaders ease off a little less.** An opponent ahead of you is held back from 10 m further ahead and
+  to one point more of your speed: Easy 50 m / 91%, Medium 80 m / 95%, Hard and Insane 110 m / 98%
+  (were 40 / 70 / 100 m and 90 / 94 / 97%). Remake patched ISOs to get it.
 - **Fixed: crash junctions outside Motor City counted as Race events.** Only the 9 Motor City junctions
   were recognized; the other 41 took a life from the garage car's Race pool instead of the junction car's
   Crash pool. All 50 are recognized now, and each one's location comes from the game's own event names.
@@ -60,9 +63,6 @@ carries over.
   with a run that should be dead. A loaned car is never blocked, so the event can always be retried; once
   it's wrecked, each failed retry costs a Race life from the last car of your own you drove (or the one
   with the most lives left). The control page and overlay mark it "(loaned)".
-- **Leaders ease off a little less.** An opponent ahead of you is held back from 10 m further ahead and
-  to one point more of your speed: Easy 50 m / 91%, Medium 80 m / 95%, Hard and Insane 110 m / 98%
-  (were 40 / 70 / 100 m and 90 / 94 / 97%). Remake patched ISOs to get it.
 - **Medal strip.** The control page and the overlay show the current car's events in order as medals
   (gold, silver, bronze or none; red ribbon and slash for a loss, "C" for a Crash junction). Click a
   medal on the control page to see the event, its result, location and time. It replaces the recent
