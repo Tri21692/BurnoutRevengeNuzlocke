@@ -47,11 +47,11 @@ Setup takes about ten minutes and only needs doing once.
      - **Nuzlocke\Block dead cars in garage** (required)
      - **Nuzlocke\Block pause-menu Retry and Quit** (recommended)
      - **one** of **Nuzlocke\Harder AI\Easy / Medium / Hard / Insane** (optional; faster and more aggressive opponents; never more than one. Insane is not meant to be fair)
-     - **Nuzlocke\Mode\Limited Selection** and **Nuzlocke\Mode\Revive tokens** (optional, see [Modes](#modes))
+     - **Nuzlocke\Mode\Limited Selection**, **Nuzlocke\Mode\Revive tokens** and **Nuzlocke\Mode\Event Roulette** (optional, see [Modes](#modes))
      - **Nuzlocke\Widescreen 16:9** and **Nuzlocke\60 FPS menus and crash mode** (optional, by SuperType1/remco)
 
      It also works from the `cheats` folder and the Cheats tab. Check Windows hasn't added a hidden `.txt` to the file name. Restart the game after changing anything.
-   - **Patched ISO.** Drag your clean Burnout Revenge ISO onto `nuzlocke_isopatch.exe` choose Easy, Medium, Hard or Insane (Insane shows a warning and asks you to type YES), and answer whether you want widescreen, 60 FPS, Limited Selection and Revive tokens. It writes a new ISO next to the original, for example `Burnout Revenge (Nuzlocke Hard, 16-9).iso`, with everything above built in. Add that ISO to PCSX2 and play it, **without** the `.pnach` enabled. Your original ISO isn't changed.
+   - **Patched ISO.** Drag your clean Burnout Revenge ISO onto `nuzlocke_isopatch.exe` choose Easy, Medium, Hard or Insane (Insane shows a warning and asks you to type YES), and answer whether you want widescreen, 60 FPS, Limited Selection, Revive tokens and Event Roulette. It writes a new ISO next to the original, for example `Burnout Revenge (Nuzlocke Hard, 16-9).iso`, with everything above built in. Add that ISO to PCSX2 and play it, **without** the `.pnach` enabled. Your original ISO isn't changed.
 3. **Set up the tracker.** Put `nuzlocke.exe` in a folder of its own, since it saves your run next to itself. Double-click it.
    - If Windows SmartScreen warns you, click More info, then Run anyway. The program isn't signed.
    - A small console window opens. Keep it open while you play; closing it stops the tracker.
@@ -103,7 +103,7 @@ The medal and the rating are checked separately: on Medium, Gold + Awesome and S
 
 ### Modes
 
-Two optional modes are switched on in the patch, like the AI level: tick them in the Patches tab, or answer yes in the ISO patcher. While they're on, the control page shows the picks and your tokens in one line under the current car, and the overlay adds them in small type.
+Three optional modes are switched on in the patch, like the AI level: tick them in the Patches tab, or answer yes in the ISO patcher. While they're on, the control page shows the picks and your tokens in one line under the current car, and the overlay adds them in small type.
 
 **Limited Selection.** Before every event the tracker picks 2 of your usable cars for Race events and 2 for Crash junctions. Every other healthy car is blocked and shown as `[BENCHED]` (wrecked cars keep their wrecked names), so you choose between the two. A car has one name for both car selects, so the names follow the event you've chosen: in a crash junction's car select every car but the two crash picks shows `[BENCHED]`, in the garage every car but the two race picks. A new pair is picked after every event, never with a car from the last pair unless there's nothing else left; with fewer usable cars you get what's left. Backing out of the garage or restarting the tracker doesn't reroll. Burning Laps and Preview events use their loaned car as before, and Grace mode lifts the bench.
 
@@ -116,6 +116,8 @@ Two optional modes are switched on in the patch, like the AI level: tick them in
 | Hard | 8 wins in a row | 1 |
 
 Click **revive a car** next to your tokens on the control page to give a wrecked car of your own one life back in the pool it's wrecked in. If an event would end the run while you hold a token, the token is used on the car that was just wrecked, and the run goes on. Tokens can't be used once the run is over or in Grace mode.
+
+**Event Roulette.** The tracker picks the event you play next, at random from every World Tour event: ones you haven't won yet in this run first, and once you've won them all, any event. It never picks the same event twice in a row. The control page and overlay show it, for example "ROULETTE Crash - Dock Fight (Rank 1)". Playing any other event counts as a loss for the car you drove, whatever your result, and the roulette event stays the same. You start with one reroll and get another for your first win in each rank (hold up to 3); click **reroll** on the control page to spend one. The mode also unlocks every rank (Dominator), so it's best on a fresh profile. With Limited Selection on, only the pair for the roulette event's type is shown.
 
 The stats are events won out of events played, cars wrecked in each pool, run time (time with the game running), your best win streak, and the difficulty and AI level.
 

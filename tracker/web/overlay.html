@@ -197,9 +197,12 @@ function render(s) {
     $('crashhearts').innerHTML = hearts(crashLives, r.lives_start);
   }
   const p = r.dead ? null : r.picks;
-  $('picks').classList.toggle('hidden', !p);
-  if (p) {
-    const list = (x) => x && x.length ? x.map(esc).join(' / ') : '-';
+  const rl = r.dead ? null : r.roulette;
+  $('picks').classList.toggle('hidden', !p && !rl);
+  const list = (x) => x && x.length ? x.map(esc).join(' / ') : '-';
+  if (rl) {
+    $('picks').innerHTML = `Roulette: <b>${esc(rl.name)}</b> (R${rl.rank})` + (p ? ` · Cars: <b>${list(rl.crash ? p.crash : p.race)}</b>` : '');
+  } else if (p) {
     $('picks').innerHTML = `Next: <b>${list(p.race)}</b> · Crash: <b>${list(p.crash)}</b>`;
   }
   const rule = r.token_rule;

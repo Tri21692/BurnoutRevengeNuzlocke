@@ -72,6 +72,7 @@ func startServer(tr *Tracker, game *Game) (*http.Server, error) {
 		action(func() { tr.StartRun(r.URL.Query().Get("difficulty")) })(w, r)
 	})
 	mux.HandleFunc("/api/grace", action(tr.Grace))
+	mux.HandleFunc("/api/reroll", action(func() { tr.Reroll() }))
 	mux.HandleFunc("/api/revive", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		action(func() { tr.Revive(q.Get("car"), q.Get("pool") == "crash") })(w, r)

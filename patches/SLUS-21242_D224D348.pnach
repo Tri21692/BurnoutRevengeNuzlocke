@@ -176,6 +176,15 @@ description=Win streaks earn revive tokens that give a wrecked car one life back
 // Tells the tracker the mode is on.
 patch=1,EE,000FE134,word,00000001
 
+[Nuzlocke\Mode\Event Roulette]
+author=Nuzlocke mod
+description=After every event the tracker picks the next one at random from every World Tour event (ones you haven't won yet first). Playing any other event counts as a loss. One reroll to start, one more for your first win in each rank. Unlocks every rank (Dominator). Needs nuzlocke.exe V2.
+// Tells the tracker the mode is on.
+patch=1,EE,000FE138,word,00000001
+// World Tour profile: points and rank (10 = Dominator), so every rank is open.
+patch=1,EE,01F64F08,word,000003E7
+patch=1,EE,01F64F0C,word,0000000A
+
 [Nuzlocke\Harder AI\Easy]
 author=Nuzlocke mod
 description=Harder opponents, Easy level: faster and more aggressive. Enable only one Harder AI level. Corners at 0.8625 of the racing line's limit (0.9125 on aggressive stretches); far from the player, 1.5-4.5 s per section quicker than their pace schedule; catch-up from 40 m behind the player (up to +18 m/s); ease-off from 40 m ahead of the player (to 0.9 x the player's speed); speed cap 97 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 15% harder. See docs/research/ai-catchup.md and ai-aggression.md.

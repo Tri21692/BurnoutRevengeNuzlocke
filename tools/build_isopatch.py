@@ -57,7 +57,16 @@ def writer(words):
     return [(WRITER_ADDR + 4 * i, w) for i, w in enumerate(code)]
 
 # The .pnach's mode markers (below the game) and where a patched ISO keeps them instead.
-MODE_MARKERS = {0x000FE130: 0x00479FF4, 0x000FE134: 0x00479FF8}
+MODE_MARKERS = {0x000FE130: 0x00479FF4, 0x000FE134: 0x00479FF8, 0x000FE138: 0x00479FFC}
+
+# Event Roulette's profile values (rank, unlocked events) are rewritten every frame by a writer that runs
+# before the aggression writer: the main loop's 0010454C calls it, and it jumps on to the aggression writer.
+ROULETTE_WRITER = 0x00479C00
+
+def roulette_writer(words):
+    code = store_code(words) + [0x08000000 | (AGGR_WRITER >> 2), 0]  # j aggression writer
+    assert ROULETTE_WRITER + 4 * len(code) <= 0x00479D00, "roulette writer runs into the mod code"
+    return [(ROULETTE_WRITER + 4 * i, w) for i, w in enumerate(code)]
 
 def option_patches(g, name):
     direct, runtime = {}, []
@@ -66,15 +75,19 @@ def option_patches(g, name):
             direct[MODE_MARKERS[a]] = w
             continue
         (direct.__setitem__(a, w) if in_file(a) else runtime.append((a, w)))
-    if runtime:
+    if runtime and name.endswith("Event Roulette"):
+        for a, w in roulette_writer(runtime):
+            direct[a] = w
+        direct[AGGR_CALL] = 0x0C000000 | (ROULETTE_WRITER >> 2)  # jal roulette writer
+    elif runtime:
         for a, w in writer(runtime):
             direct[a] = w
         assert WRITER_ADDR + 4 * len(writer(runtime)) <= 0x00479C00, "writer runs into the mod code"
         direct[FRAME_CALL] = 0x0C000000 | (WRITER_ADDR >> 2)  # jal writer (delay slot unchanged)
     return sorted(direct.items())
 
-def aggr_writer(words):
-    """Like writer(), sharing lui at between neighbouring addresses; ends with j 0034A688."""
+def store_code(words):
+    """lui/ori/sw for each (address, value), sharing lui at between neighbouring addresses (at, v1 only)."""
     code, hi_at = [], None
     for a, v in sorted(words):
         hi = ((a + 0x8000) >> 16) & 0xFFFF
@@ -87,8 +100,11 @@ def aggr_writer(words):
         if v & 0xFFFF:
             code.append(0x34630000 | (v & 0xFFFF))               # ori v1, v1, value lo
         code.append(0xAC230000 | (a & 0xFFFF))                   # sw v1, lo(at)
-    code.append(0x08000000 | (AGGR_CALL_TARGET >> 2))            # j 0034A688
-    code.append(0)
+    return code
+
+def aggr_writer(words):
+    """The Harder AI level's aggression settings, every frame; ends with j 0034A688."""
+    code = store_code(words) + [0x08000000 | (AGGR_CALL_TARGET >> 2), 0]  # j 0034A688
     out = [(AGGR_WRITER + 4 * i, w) for i, w in enumerate(code)]
     assert AGGR_WRITER + 4 * len(code) <= LEVEL_ADDR, "aggression writer runs into the level word"
     return out
@@ -171,7 +187,8 @@ def main():
     lines.append("}")
     lines += ["", "var options = []struct {", "\tkey, name string", "\twords     []word", "}{"]
     for key, name in (("widescreen", "Widescreen 16:9"), ("fps60", "60 FPS menus and crash mode"),
-                      ("limited", "Mode\\Limited Selection"), ("revive", "Mode\\Revive tokens")):
+                      ("limited", "Mode\\Limited Selection"), ("revive", "Mode\\Revive tokens"),
+                      ("roulette", "Mode\\Event Roulette")):
         lines.append(f'\t{{"{key}", "{name.split(chr(92))[-1]}", []word{{')
         for a, w in option_patches(g, "Nuzlocke\\" + name):
             lines.append(f"\t\t{{0x{a:08X}, 0x{w:08X}}},")

@@ -248,10 +248,16 @@ let reviveOpen = false;
 function renderModes(s, r) {
   const modes = s.modes || {};
   const parts = [];
+  const rl = r.dead ? null : r.roulette;
+  if (rl) {
+    parts.push(`<span><i>ROULETTE</i><b>${esc(rl.name)}</b> (Rank ${rl.rank})` +
+      (rl.rerolls ? ` · <button class="linkish" id="rerollbtn">reroll</button> (${rl.rerolls} left)` : ' · no rerolls') + `</span>`);
+  }
   const picks = r.dead ? null : r.picks;
   if (picks) {
     const list = (p) => p && p.length ? p.map(esc).join(' / ') : 'none left';
-    parts.push(`<span><i>NEXT RACE</i><b>${list(picks.race)}</b></span>`, `<span><i>NEXT CRASH</i><b>${list(picks.crash)}</b></span>`);
+    if (rl) parts.push(`<span><i>CARS</i><b>${list(rl.crash ? picks.crash : picks.race)}</b></span>`);
+    else parts.push(`<span><i>NEXT RACE</i><b>${list(picks.race)}</b></span>`, `<span><i>NEXT CRASH</i><b>${list(picks.crash)}</b></span>`);
   }
   const rule = r.token_rule;
   const can = r.revivable || [];
@@ -267,6 +273,7 @@ function renderModes(s, r) {
   }
   $('info').innerHTML = parts.join('');
   $('info').classList.toggle('hidden', !parts.length);
+  if ($('rerollbtn')) $('rerollbtn').onclick = () => confirm(`Spend a reroll on a different event than ${rl.name}?`) && post('/api/reroll');
   if ($('revivebtn')) $('revivebtn').onclick = () => { reviveOpen = !reviveOpen; renderModes(state, state.run); };
   $('revive').classList.toggle('hidden', !(reviveOpen && can.length));
   $('revive').innerHTML = can.map((c) =>
@@ -288,7 +295,7 @@ function renderSummary(r) {
     `<tr><td class="${c.wrecked ? 'wrecked' : ''}">${esc(c.name)}${c.owned ? '' : ' (loaned)'}${c.wrecked ? ' · wrecked' : ''}</td>` +
     `<td class="num">${c.events}</td><td class="num">${c.wins}</td>` +
     `<td>${dot(MEDAL.gold, c.gold)}${dot(MEDAL.silver, c.silver)}${dot(MEDAL.bronze, c.bronze)}</td></tr>`).join('');
-  const modes = [sm.limited && 'Limited Selection', sm.revive && 'Revive tokens'].filter(Boolean).join(' + ');
+  const modes = [sm.limited && 'Limited Selection', sm.revive && 'Revive tokens', sm.roulette && 'Event Roulette'].filter(Boolean).join(' + ');
   const ai = r.ai_level && r.ai_level !== 'Off' ? `${r.ai_level} AI` : 'normal AI';
   const stat = (v, label, small) => `<div${small ? ' class="wide"' : ''}><b${small ? ' class="small"' : ''}>${v}</b><span>${label}</span></div>`;
   const stats = [

@@ -14,6 +14,10 @@ any patched ISOs to use the new modes. Your current run carries over.
   5 on Medium (hold 2), 8 on Hard (hold 1). Spend one on the control page to give a wrecked car one life
   back; a held token also saves a run that would otherwise end. A new `.pnach` option (`Mode\Revive tokens`)
   and ISO patcher question.
+- **Event Roulette mode (optional).** After every event the tracker picks your next one at random from
+  every World Tour event, ones you haven't won yet first. Playing any other event counts as a loss. One
+  reroll to start, one more for your first win in each rank (hold up to 3). Unlocks every rank. A new
+  `.pnach` option (`Mode\Event Roulette`) and ISO patcher question.
 - **Achievements.** Ten per run, from Hot Streak (5 wins in a row) to Certified Insane (10 wins against
   Insane AI), shown on the control page and announced on the overlay after the event's result.
 - **End-of-run summary.** How the run ended, every car's events, wins and medals, and your achievements, on

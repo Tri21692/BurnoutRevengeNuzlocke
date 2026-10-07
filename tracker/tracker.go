@@ -127,6 +127,7 @@ type HistoryEntry struct {
 	Label   string `json:"car_label,omitempty"`
 	Medal   string `json:"medal,omitempty"` // gold, silver, bronze or none (empty in older saves)
 	Where   string `json:"location,omitempty"`
+	EventID string `json:"event_label,omitempty"` // the event's label, e.g. K_01CDSR
 }
 
 // medalOf returns gold, silver, bronze or none for a history entry, from its result for older saves.
@@ -175,6 +176,11 @@ type Run struct {
 	CrashWins    int            `json:"crash_wins"`
 	InsaneWins   int            `json:"insane_wins"`
 	Achievements []Achievement  `json:"achievements,omitempty"`
+	Roulette     string         `json:"roulette,omitempty"` // Event Roulette: the event to play next
+	RouletteName string         `json:"roulette_name,omitempty"`
+	Rerolls      int            `json:"rerolls"`
+	RanksWon     []string       `json:"ranks_won,omitempty"` // ranks with a win, for rerolls
+	UsedRoulette bool           `json:"used_roulette,omitempty"`
 	EndedBy      string         `json:"ended_by,omitempty"`     // the event that ended the run
 	SummaryFile  string         `json:"summary_file,omitempty"` // the end-of-run summary written next to the state
 	Streak       int            `json:"streak"`
@@ -224,6 +230,7 @@ type Tracker struct {
 	carsBefore        map[string]bool   // cars the run had when the current event's result came in
 	limitedOn         bool              // the patch has Limited Selection on
 	reviveOn          bool              // the patch has Revive tokens on
+	rouletteOn        bool              // the patch has Event Roulette on
 	locations         map[byte]string   // location letter in event labels -> name, learned from race events
 	lastLoss          string            // the car of your own that lost its last life in this event
 	lastLossCrash     bool              // ...in the Crash pool
@@ -616,6 +623,11 @@ func (t *Tracker) finishEvent(before []byte) {
 		difficulty = r.Difficulty
 	}
 	won := passes(difficulty, medal, shownIdx, perfectNow)
+	// Event Roulette: any other event than the one rolled counts as a loss, whatever the result
+	offRoulette := t.rouletteActive() && r.Roulette != "" && eventLabel != "" && eventLabel != r.Roulette
+	if offRoulette {
+		won = false
+	}
 	medalName, ok := medals[medal]
 	if !ok {
 		medalName = "?"
@@ -627,7 +639,7 @@ func (t *Tracker) finishEvent(before []byte) {
 	}
 	r.History = append(r.History, HistoryEntry{Time: time.Now().Format("2006-01-02 15:04:05"),
 		Event: eventName, Car: carName, Result: resultText, Won: won, Counted: t.counting(), Crash: crash,
-		Label: car, Medal: medalKeyOf(medal), Where: location})
+		Label: car, Medal: medalKeyOf(medal), Where: location, EventID: eventLabel})
 	if len(r.History) > 200 {
 		r.History = r.History[len(r.History)-200:]
 	}
@@ -652,6 +664,7 @@ func (t *Tracker) finishEvent(before []byte) {
 		}
 		t.say(where+": "+resultText, 15, "win")
 		t.earnToken()
+		t.earnReroll(eventLabel)
 	} else {
 		r.Streak = 0
 		c := r.Cars[car]
@@ -668,7 +681,9 @@ func (t *Tracker) finishEvent(before []byte) {
 			*lives--
 		}
 		reason := resultText
-		if difficulty == "Hard" && medal == 3 && rating == 3 && !perfectNow {
+		if offRoulette {
+			reason = "not the roulette event, " + r.RouletteName
+		} else if difficulty == "Hard" && medal == 3 && rating == 3 && !perfectNow {
 			reason = "already perfected"
 		} else if req, ok := requirements[difficulty]; ok {
 			reason += ", needs " + req.text
@@ -707,6 +722,9 @@ func (t *Tracker) finishEvent(before []byte) {
 	t.eventAchievements(won, crash, medal == 3 && shownIdx == 4, lastCar)
 	if t.limitedActive() {
 		t.rollPicks() // a new pair for the next event
+	}
+	if t.rouletteActive() && !offRoulette {
+		t.rollRoulette() // and the next event
 	}
 	// Only the cars the run had before this event (and the one just driven) count: a car this event
 	// unlocks can't save the run.
@@ -1096,6 +1114,7 @@ func (t *Tracker) slowChecks() {
 	t.readModes()
 	if r != nil && r.Active {
 		t.checkPicks()
+		t.checkRoulette()
 		if t.dirty {
 			t.dirty = false
 			t.save()
@@ -1277,7 +1296,7 @@ func (t *Tracker) Snapshot() map[string]any {
 		"patch_ok":   t.patchOK,
 		"patch_old":  t.patchOK == 1 && t.patchOld,
 		"pine":       t.mem.HasPine(),
-		"modes":      map[string]bool{"limited": t.limitedOn, "revive": t.reviveOn},
+		"modes":      map[string]bool{"limited": t.limitedOn, "revive": t.reviveOn, "roulette": t.rouletteOn},
 		"ai_level":   "",
 		"run":        nil,
 	}
@@ -1328,6 +1347,9 @@ func (t *Tracker) Snapshot() map[string]any {
 			})
 			run["revivable"] = can
 		}
+	}
+	if rs := t.rouletteSnapshot(); rs != nil {
+		run["roulette"] = rs
 	}
 	if t.limitedActive() {
 		names := func(labels []string) []string {

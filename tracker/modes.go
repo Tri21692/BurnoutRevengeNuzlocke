@@ -17,10 +17,17 @@ import (
 // The patch tells the tracker which modes are on: the .pnach's mode groups write a marker below the
 // game, a patched ISO has the same words in the mod's space in the game file.
 const (
-	limitedMarker    = 0x000FE130 // [Nuzlocke\Mode\Limited Selection]
-	limitedMarkerISO = 0x00479FF4
-	reviveMarker     = 0x000FE134 // [Nuzlocke\Mode\Revive tokens]
-	reviveMarkerISO  = 0x00479FF8
+	limitedMarker     = 0x000FE130 // [Nuzlocke\Mode\Limited Selection]
+	limitedMarkerISO  = 0x00479FF4
+	reviveMarker      = 0x000FE134 // [Nuzlocke\Mode\Revive tokens]
+	reviveMarkerISO   = 0x00479FF8
+	rouletteMarker    = 0x000FE138 // [Nuzlocke\Mode\Event Roulette]
+	rouletteMarkerISO = 0x00479FFC
+
+	// World Tour profile (01F64F08): rank at +4, then one byte per event (event list order) at +0x1C0
+	// saying whether it's unlocked (FF = locked), and the results at +0x2D3 (eventResults).
+	eventUnlocked = 0x01F650C8
+	maxRerolls    = 3
 )
 
 // Revive tokens: wins in a row needed for one, and how many can be held at once.
@@ -31,10 +38,15 @@ var reviveRules = map[string]struct{ streak, hold int }{
 func (t *Tracker) readModes() {
 	t.limitedOn = t.u32(limitedMarker) == 1 || t.u32(limitedMarkerISO) == 1
 	t.reviveOn = t.u32(reviveMarker) == 1 || t.u32(reviveMarkerISO) == 1
+	t.rouletteOn = t.u32(rouletteMarker) == 1 || t.u32(rouletteMarkerISO) == 1
 	if r := t.run(); r != nil && r.Active && !r.Dead {
-		if t.limitedOn && !r.UsedLimited || t.reviveOn && !r.UsedRevive {
+		if t.limitedOn && !r.UsedLimited || t.reviveOn && !r.UsedRevive || t.rouletteOn && !r.UsedRoulette {
+			if t.rouletteOn && !r.UsedRoulette {
+				r.Rerolls = 1 // one to start with, then one per new rank
+			}
 			r.UsedLimited = r.UsedLimited || t.limitedOn
 			r.UsedRevive = r.UsedRevive || t.reviveOn
+			r.UsedRoulette = r.UsedRoulette || t.rouletteOn
 			t.save()
 		}
 	}
@@ -377,7 +389,7 @@ func (t *Tracker) summarySnapshot() map[string]any {
 	}
 	return map[string]any{"cars": cars, "ended_by": r.EndedBy, "achievements": r.Achievements,
 		"perfects": r.Perfects, "revived": r.Revived, "tokens_earned": r.TokensEarned, "seed": r.Seed,
-		"limited": r.UsedLimited, "revive": r.UsedRevive, "file": r.SummaryFile,
+		"limited": r.UsedLimited, "revive": r.UsedRevive, "roulette": r.UsedRoulette, "file": r.SummaryFile,
 		"crash_wins": r.CrashWins, "insane_wins": r.InsaneWins, "owned": t.ownedCars()}
 }
 
@@ -393,6 +405,9 @@ func (t *Tracker) writeSummary() {
 	}
 	if r.UsedRevive {
 		modes = append(modes, "Revive tokens")
+	}
+	if r.UsedRoulette {
+		modes = append(modes, "Event Roulette")
 	}
 	if len(modes) > 0 {
 		fmt.Fprintf(&b, "Modes: %s\r\n", strings.Join(modes, ", "))
@@ -437,4 +452,139 @@ func orDash(s string) string {
 		return "-"
 	}
 	return s
+}
+
+// ---- Event Roulette ----
+
+func (t *Tracker) rouletteActive() bool {
+	r := t.run()
+	return t.rouletteOn && r != nil && r.Active && !r.Dead && !r.Grace
+}
+
+// eventRank is an event's World Tour rank, from its label (K_03THLF: 3).
+func eventRank(label string) int {
+	if len(label) < 4 || !strings.HasPrefix(label, "K_") {
+		return 0
+	}
+	n := 0
+	for _, c := range label[2:4] {
+		if c < '0' || c > '9' {
+			return 0
+		}
+		n = n*10 + int(c-'0')
+	}
+	return n
+}
+
+// openEvents lists the unlocked World Tour events, or nil if the profile isn't loaded.
+func (t *Tracker) openEvents() []string {
+	count := int(t.u32(eventCount))
+	if count <= 0 || count > 400 {
+		return nil
+	}
+	unlocked := t.read(eventUnlocked, count)
+	var out []string
+	for i := 0; i < count && i < len(unlocked); i++ {
+		if unlocked[i] == 0xFF {
+			continue
+		}
+		if l := decodeLabel(t.u64(eventIDs + uint32(i)*8)); strings.HasPrefix(l, "K_") && looksLikeLabel(l) {
+			out = append(out, l)
+		}
+	}
+	return out
+}
+
+// rollRoulette picks the next event: one you haven't won yet in this run if there is any, else any
+// open event, never the same one twice in a row unless it's the only one.
+func (t *Tracker) rollRoulette() {
+	r := t.run()
+	open := t.openEvents()
+	if len(open) == 0 {
+		return // profile not loaded yet: try again later
+	}
+	won := map[string]bool{}
+	for _, h := range r.History {
+		if h.Won && h.Counted && h.EventID != "" {
+			won[h.EventID] = true
+		}
+	}
+	var fresh []string
+	for _, l := range open {
+		if !won[l] {
+			fresh = append(fresh, l)
+		}
+	}
+	if len(fresh) == 0 {
+		fresh = open
+	}
+	if len(fresh) > 1 {
+		var others []string
+		for _, l := range fresh {
+			if l != r.Roulette {
+				others = append(others, l)
+			}
+		}
+		fresh = others
+	}
+	sort.Strings(fresh)
+	pick := fresh[t.pickRand().Intn(len(fresh))]
+	region, base := t.currentText()
+	r.Roulette, r.RouletteName = pick, t.nameOf(region, base, pick)
+	t.later(fmt.Sprintf("Roulette: next up is %s (Rank %d)", r.RouletteName, eventRank(pick)), 15, "info")
+	t.dirty = true
+}
+
+// checkRoulette rolls the first event once the profile is loaded, and fixes up a name read too early.
+func (t *Tracker) checkRoulette() {
+	if !t.rouletteActive() {
+		return
+	}
+	r := t.run()
+	if r.Roulette == "" {
+		t.rollRoulette()
+	} else if r.RouletteName == r.Roulette {
+		if region, base := t.currentText(); region != nil {
+			if name := t.nameOf(region, base, r.Roulette); name != r.Roulette {
+				r.RouletteName, t.dirty = name, true
+			}
+		}
+	}
+}
+
+// earnReroll gives a reroll for the first win in each rank (the first rank's is the one every run
+// starts with). With every rank open, the ranks come in any order.
+func (t *Tracker) earnReroll(label string) {
+	r := t.run()
+	rank := eventRank(label)
+	if !t.rouletteActive() || rank == 0 || contains(r.RanksWon, fmt.Sprint(rank)) {
+		return
+	}
+	r.RanksWon = append(r.RanksWon, fmt.Sprint(rank))
+	if len(r.RanksWon) == 1 || r.Rerolls >= maxRerolls {
+		return
+	}
+	r.Rerolls++
+	t.later(fmt.Sprintf("Roulette reroll earned: first win in Rank %d (%d held)", rank, r.Rerolls), 15, "win")
+}
+
+// Reroll spends a reroll on a new roulette event.
+func (t *Tracker) Reroll() bool {
+	r := t.run()
+	if !t.rouletteActive() || r.Rerolls == 0 || r.Roulette == "" {
+		return false
+	}
+	r.Rerolls--
+	t.rollRoulette()
+	t.save()
+	return true
+}
+
+func (t *Tracker) rouletteSnapshot() map[string]any {
+	r := t.run()
+	if !t.rouletteActive() || r.Roulette == "" {
+		return nil
+	}
+	return map[string]any{"name": r.RouletteName, "rank": eventRank(r.Roulette), "crash": isCrashEvent(r.Roulette),
+		"rerolls": r.Rerolls}
 }
