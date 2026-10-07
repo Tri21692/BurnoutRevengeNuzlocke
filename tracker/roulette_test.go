@@ -98,3 +98,19 @@ func TestEventRank(t *testing.T) {
 		}
 	}
 }
+
+// With no event reading as unlocked, the roulette picks from every event.
+func TestRouletteAllLocked(t *testing.T) {
+	m := newModeRig(t, "Easy", []string{"HIGHUSCAR1A"}, nil)
+	for i := 0; i < 169; i++ {
+		m.f.w64(eventIDs+uint32(8*i), 0)
+		m.f.ram[eventUnlocked+i] = 0xFF
+	}
+	m.f.w64(eventIDs, encodeLabel("K_01CDSR"))
+	m.f.w64(eventIDs+8, encodeLabel("K_04TDLF"))
+	m.f.w32(rouletteMarker, 1)
+	m.tick()
+	if r := m.tr.run(); r.Roulette != "K_01CDSR" && r.Roulette != "K_04TDLF" {
+		t.Fatalf("should roll one of the events: %q", r.Roulette)
+	}
+}

@@ -476,16 +476,21 @@ func eventRank(label string) int {
 	return n
 }
 
-// openEvents lists the unlocked World Tour events, or nil if the profile isn't loaded.
+// openEvents lists the unlocked World Tour events (all of them if none reads as unlocked).
 func (t *Tracker) openEvents() []string {
 	count := int(t.u32(eventCount))
 	if count <= 0 || count > 400 {
 		return nil
 	}
 	unlocked := t.read(eventUnlocked, count)
+	// Until the unlock flags are confirmed in the game: if no event reads as unlocked, every event counts.
+	anyOpen := false
+	for i := 0; i < count && i < len(unlocked); i++ {
+		anyOpen = anyOpen || unlocked[i] != 0xFF
+	}
 	var out []string
 	for i := 0; i < count && i < len(unlocked); i++ {
-		if unlocked[i] == 0xFF {
+		if anyOpen && unlocked[i] == 0xFF {
 			continue
 		}
 		if l := decodeLabel(t.u64(eventIDs + uint32(i)*8)); strings.HasPrefix(l, "K_") && looksLikeLabel(l) {
