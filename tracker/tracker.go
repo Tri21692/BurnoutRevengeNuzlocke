@@ -1115,6 +1115,7 @@ func (t *Tracker) slowChecks() {
 	if r != nil && r.Active {
 		t.checkPicks()
 		t.checkRoulette()
+		t.syncRouletteLock()
 		if t.dirty {
 			t.dirty = false
 			t.save()

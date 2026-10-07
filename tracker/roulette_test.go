@@ -44,6 +44,9 @@ func TestEventRoulette(t *testing.T) {
 	if r.Roulette == "" || r.Rerolls != 1 {
 		t.Fatalf("first roll should be an event, with one reroll: %q, %d", r.Roulette, r.Rerolls)
 	}
+	if got := binary.LittleEndian.Uint64(m.f.ram[rouletteTarget:]); got != encodeLabel(r.Roulette) {
+		t.Fatalf("the patch should be told the pick: %x", got)
+	}
 	// playing something else is a loss, even with a Gold, and the roulette event stays
 	want := r.Roulette
 	other := "K_01CDSR"
@@ -79,6 +82,10 @@ func TestEventRoulette(t *testing.T) {
 	if len(r.RanksWon) != 3 || r.Rerolls != 3 {
 		t.Fatalf("ranks won %v, rerolls %d; want 3 ranks and 3", r.RanksWon, r.Rerolls)
 	}
+	m.tick()
+	if got := decodeLabel(binary.LittleEndian.Uint64(m.f.ram[rouletteTarget:])); got != r.Roulette {
+		t.Fatalf("lock follows the new pick: %s, roulette %s", got, r.Roulette)
+	}
 	before := r.Roulette
 	if !m.tr.Reroll() || r.Rerolls != 2 || r.Roulette == before {
 		t.Fatalf("reroll should spend one and change the event: %q -> %q", before, r.Roulette)
@@ -94,5 +101,21 @@ func TestEventRank(t *testing.T) {
 		if got := eventRank(l); got != want {
 			t.Errorf("%s: %d, want %d", l, got, want)
 		}
+	}
+}
+
+// Without a live roulette (Grace, mode off) every event is open.
+func TestRouletteLockClears(t *testing.T) {
+	m := newModeRig(t, "Easy", []string{"HIGHUSCAR1A"}, nil)
+	m.f.w64(eventIDs, encodeLabel("K_01CDSR"))
+	m.f.w32(rouletteMarker, 1)
+	m.tick()
+	if binary.LittleEndian.Uint64(m.f.ram[rouletteTarget:]) == 0 {
+		t.Fatal("the pick should be set")
+	}
+	m.tr.Grace()
+	m.tick()
+	if binary.LittleEndian.Uint64(m.f.ram[rouletteTarget:]) != 0 {
+		t.Fatal("Grace should open every event")
 	}
 }

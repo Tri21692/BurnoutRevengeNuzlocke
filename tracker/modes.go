@@ -4,6 +4,7 @@ package main
 // and the achievements and end-of-run summary every run gets.
 
 import (
+	"encoding/binary"
 	"fmt"
 	"hash/fnv"
 	"math/rand"
@@ -23,6 +24,7 @@ const (
 	reviveMarkerISO   = 0x00479FF8
 	rouletteMarker    = 0x000FE138 // [Nuzlocke\Mode\Event Roulette]
 	rouletteMarkerISO = 0x00479FFC
+	rouletteTarget    = 0x000FE140 // the picked event's label: the patched unlock check opens only this one (0 = all)
 
 	// World Tour profile (01F64F08): rank at +4, then one byte per event (event list order) at +0x1C0
 	// with the best medal won (FF = none, 3 = Gold), and the results at +0x2D3 (eventResults).
@@ -546,6 +548,20 @@ func (t *Tracker) checkRoulette() {
 				r.RouletteName, t.dirty = name, true
 			}
 		}
+	}
+}
+
+// syncRouletteLock tells the patched unlock check which event to leave open: the roulette's pick
+// while the mode runs, nothing (every event open) otherwise.
+func (t *Tracker) syncRouletteLock() {
+	var want uint64
+	if r := t.run(); t.rouletteActive() && r.Roulette != "" {
+		want = encodeLabel(r.Roulette)
+	}
+	if t.u64(rouletteTarget) != want {
+		b := make([]byte, 8)
+		binary.LittleEndian.PutUint64(b, want)
+		_ = t.mem.Write(rouletteTarget, b)
 	}
 }
 

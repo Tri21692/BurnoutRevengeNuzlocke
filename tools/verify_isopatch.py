@@ -59,6 +59,7 @@ def main(orig_path, iso_path, name, *extras):
                 if a in B.MODE_MARKERS:
                     struct.pack_into("<I", exp, B.MODE_MARKERS[a], w)
                     continue
+                a, w = B.reloc_addr(a), B.reloc_word(w)
                 if B.in_file(a):
                     struct.pack_into("<I", exp, a, w)
                 else:

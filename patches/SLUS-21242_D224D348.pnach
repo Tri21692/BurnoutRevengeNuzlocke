@@ -178,13 +178,28 @@ patch=1,EE,000FE134,word,00000001
 
 [Nuzlocke\Mode\Event Roulette]
 author=Nuzlocke mod
-description=After every event the tracker picks the next one at random from every World Tour event (ones you haven't won yet first). Playing any other event counts as a loss. One reroll to start, one more for your first win in each rank. Every event in every rank is unlocked; your rank, results and cars are untouched. Needs nuzlocke.exe V2.
+description=After every event the tracker picks the next one at random from every World Tour event (ones you haven't won yet first), and every other event is locked on the map until you've played it. One reroll to start, one more for your first win in each rank. Every rank is open; your rank, results and cars are untouched. Needs nuzlocke.exe V2.
 // Tells the tracker the mode is on.
 patch=1,EE,000FE138,word,00000001
-// Every event unlocked: the game's unlock check (00134568: the event's rank against yours, then the race
-// and crash chains in that rank) always answers yes. Its first test, lbu v0,0x400(s0) (the profile's
-// debug "everything unlocked" byte, which would also stop results being saved), becomes addiu v0,zero,1.
-patch=1,EE,00134580,word,24020001
+// The game's unlock check (00134568: the event's rank against yours, then the race and crash chains in
+// that rank) is replaced: an event is unlocked if it's the one the tracker picked (its label at
+// 000FE140), or if nothing is picked (every event unlocked). Its first test, lbu v0,0x400(s0) (the
+// profile's debug "everything unlocked" byte), becomes j 000FF200.
+patch=1,EE,000FF200,word,3C010010
+patch=1,EE,000FF204,word,DC28E140
+patch=1,EE,000FF208,word,11000006
+patch=1,EE,000FF20C,word,00000000
+patch=1,EE,000FF210,word,DCA90018
+patch=1,EE,000FF214,word,11090003
+patch=1,EE,000FF218,word,00000000
+patch=1,EE,000FF21C,word,0804D184
+patch=1,EE,000FF220,word,0000102D
+patch=1,EE,000FF224,word,0804D163
+patch=1,EE,000FF228,word,00000000
+patch=1,EE,00134580,word,0803FC80
+patch=1,EE,00134584,word,00000000
+// Every rank tab on the map open: the tab is locked when your rank is below it (001A362C slt v0,v0,s2).
+patch=1,EE,001A362C,word,0000102D
 
 [Nuzlocke\Mode\Event Roulette - Unlock all cars]
 author=Nuzlocke mod
