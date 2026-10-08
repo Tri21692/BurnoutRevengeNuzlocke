@@ -4,8 +4,11 @@
 // menus (by SuperType1/remco) and the Limited Selection, Revive tokens and Event Roulette modes. The original ISO is
 // never modified.
 //
-// Usage: nuzlocke_isopatch.exe [game.iso] [easy|medium|hard|insane] [widescreen] [60fps] [limited] [revive] [roulette [allcars]] [chaos]
-// (or drag the ISO onto the .exe and answer the questions)
+// Run it (or drag the ISO onto it) and choose what goes in on the page it opens in your browser. Every
+// part can be chosen on its own; the modes need the Nuzlocke rules, since nuzlocke.exe runs them.
+//
+// Command line: nuzlocke_isopatch.exe game.iso <easy|medium|hard|insane|off> [widescreen] [60fps] [limited]
+// [revive] [roulette] [allcars] [chaos] makes the full Nuzlocke (dead-car and pause blocks) with that AI.
 package main
 
 import (
@@ -29,110 +32,58 @@ const (
 )
 
 func main() {
-	err := run(os.Args[1:], bufio.NewReader(os.Stdin))
-	if err != nil {
-		fmt.Println()
-		fmt.Println("Error:", err)
+	args := os.Args[1:]
+	if len(args) >= 2 {
+		// command line: nuzlocke_isopatch.exe game.iso <level> [options...], the full Nuzlocke with that level
+		if err := runCLI(args); err != nil {
+			fmt.Println("Error:", err)
+			os.Exit(1)
+		}
+		return
 	}
-	if len(os.Args) < 3 {
-		fmt.Println()
+	iso := ""
+	if len(args) == 1 {
+		iso = strings.Trim(strings.TrimSpace(args[0]), `"`) // an ISO dragged onto the .exe
+	}
+	if err := runGUI(iso); err != nil {
+		fmt.Println("Error:", err)
 		fmt.Print("Press Enter to close.")
 		_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
-	}
-	if err != nil {
 		os.Exit(1)
 	}
 }
 
-func run(args []string, in *bufio.Reader) error {
+func runCLI(args []string) error {
 	fmt.Println("Burnout Revenge Nuzlocke - ISO patcher v" + version)
-	fmt.Println()
-	isoPath := ""
-	if len(args) > 0 {
-		isoPath = args[0]
-	} else {
-		fmt.Print("Drag your Burnout Revenge ISO here (or type its path), then press Enter: ")
-		line, _ := in.ReadString('\n')
-		isoPath = line
-	}
-	isoPath = strings.Trim(strings.TrimSpace(isoPath), `"`)
-	if isoPath == "" {
-		return errors.New("no ISO given")
-	}
-
-	level := -1
-	if len(args) > 1 {
-		level = levelIndex(args[1])
-		if level == insane {
-			fmt.Println(insaneWarning)
-			fmt.Println()
+	isoPath := strings.Trim(strings.TrimSpace(args[0]), `"`)
+	sel := Selection{Core: true, Pause: true}
+	if !strings.EqualFold(args[1], "off") {
+		if levelIndex(args[1]) < 0 {
+			return errors.New("unknown AI level " + args[1] + " (easy, medium, hard, insane or off)")
 		}
+		sel.Level = levels[levelIndex(args[1])].name
 	}
-	for level < 0 {
-		fmt.Println("Harder AI level (opponents' speed and aggression):  1 = Easy   2 = Medium   3 = Hard   4 = Insane")
-		fmt.Print("Choose 1, 2, 3 or 4: ")
-		line, err := in.ReadString('\n')
-		level = levelIndex(strings.TrimSpace(line))
-		if level < 0 && err != nil {
-			return errors.New("no level chosen")
+	for _, a := range args[2:] {
+		a = strings.ToLower(a)
+		switch a {
+		case "60fps":
+			a = "fps60"
+		case "ws":
+			a = "widescreen"
 		}
-		if level == insane {
-			fmt.Println()
-			fmt.Println(insaneWarning)
-			fmt.Print("Type YES to use Insane, or press Enter to choose again: ")
-			line, err := in.ReadString('\n')
-			if strings.TrimSpace(line) != "YES" {
-				if err != nil {
-					return errors.New("Insane not confirmed")
-				}
-				level = -1
-			}
-			fmt.Println()
-		}
+		sel.Options = append(sel.Options, a)
 	}
-
-	// Extras: given on the command line, or asked for when the level was chosen interactively.
-	var extras []int
-	tags := map[string]string{"widescreen": "16-9", "fps60": "60 FPS", "limited": "Limited", "revive": "Revive", "roulette": "Roulette", "allcars": "All cars", "chaos": "Chaos"}
-	about := map[string]string{
-		"limited":  " (each event you get 2 random cars; the rest are benched)",
-		"revive":   " (win streaks earn tokens that bring a wrecked car back)",
-		"roulette": " (the tracker picks your next event; every event is unlocked)",
-		"allcars":  " (every car from the start)",
-		"chaos":    " (every event gets a random modifier, good or bad)",
-	}
-	roulette := false
-	for i, o := range options {
-		if o.key == "allcars" && !roulette {
-			continue // only offered together with Event Roulette
-		}
-		want := false
-		if len(args) > 1 {
-			for _, a := range args[2:] {
-				a = strings.ToLower(a)
-				want = want || a == o.key || (o.key == "fps60" && a == "60fps") || (o.key == "widescreen" && a == "ws")
-			}
-		} else {
-			fmt.Printf("Add %s%s? (y/n): ", o.name, about[o.key])
-			line, _ := in.ReadString('\n')
-			want = strings.HasPrefix(strings.ToLower(strings.TrimSpace(line)), "y")
-		}
-		if want {
-			extras = append(extras, i)
-			roulette = roulette || o.key == "roulette"
-		}
-	}
-
-	name := "Nuzlocke " + levels[level].name
-	for _, i := range extras {
-		name += ", " + tags[options[i].key]
-	}
-	ext := filepath.Ext(isoPath)
-	outPath := strings.TrimSuffix(isoPath, ext) + " (" + name + ")" + ext
-	if err := patchISO(isoPath, outPath, level, extras); err != nil {
+	if err := sel.Validate(); err != nil {
 		return err
 	}
-	fmt.Println()
+	if sel.Level == "Insane" {
+		fmt.Println(insaneWarning)
+	}
+	outPath := sel.OutputPath(isoPath)
+	fmt.Println("Writing", filepath.Base(outPath), "...")
+	if err := patchISO(isoPath, outPath, sel, nil); err != nil {
+		return err
+	}
 	fmt.Println("Done:", outPath)
 	fmt.Println("Play that ISO. Don't also enable the Nuzlocke .pnach for it.")
 	return nil
@@ -161,7 +112,11 @@ func levelIndex(s string) int {
 }
 
 // patchISO copies the ISO to outPath and replaces SLUS_212.42 inside the copy with the patched one.
-func patchISO(isoPath, outPath string, level int, extras []int) error {
+// progress, if given, is told how much of the copy is done.
+func patchISO(isoPath, outPath string, sel Selection, progress func(done, total int64)) error {
+	if err := sel.Validate(); err != nil {
+		return err
+	}
 	iso, err := os.Open(isoPath)
 	if err != nil {
 		return err
@@ -180,7 +135,7 @@ func patchISO(isoPath, outPath string, level int, extras []int) error {
 	if hex.EncodeToString(sum[:]) != elfSHA1 {
 		return fmt.Errorf("%s isn't the unmodified US release (SLUS-21242). Use a clean copy of the game", elfName)
 	}
-	if err := patchELF(elf, level, extras); err != nil {
+	if err := patchELF(elf, sel.Words()); err != nil {
 		return err
 	}
 
@@ -199,11 +154,14 @@ func patchISO(isoPath, outPath string, level int, extras []int) error {
 		os.Remove(tmpPath)
 		return err
 	}
-	fmt.Printf("Writing %s (%s AI)...\n", filepath.Base(outPath), levels[level].name)
 	if _, err := iso.Seek(0, io.SeekStart); err != nil {
 		return fail(err)
 	}
-	if _, err := io.Copy(out, iso); err != nil {
+	var total int64
+	if st, err := iso.Stat(); err == nil {
+		total = st.Size()
+	}
+	if _, err := io.Copy(&progressWriter{w: out, total: total, report: progress}, iso); err != nil {
 		return fail(err)
 	}
 	if _, err := out.WriteAt(elf, int64(lba)*sectorSize); err != nil {
@@ -269,9 +227,24 @@ func readPhdrs(elf []byte) []phdr {
 	return out
 }
 
-// patchELF applies the chosen level's words and those of the chosen extras. The mod's code goes into unused space inside the game's
+type progressWriter struct {
+	w           io.Writer
+	done, total int64
+	report      func(done, total int64)
+}
+
+func (p *progressWriter) Write(b []byte) (int, error) {
+	n, err := p.w.Write(b)
+	p.done += int64(n)
+	if p.report != nil {
+		p.report(p.done, p.total)
+	}
+	return n, err
+}
+
+// patchELF writes the selection's words. The mod's code goes into unused space inside the game's
 // .data section (freeLo-freeHi), so the file's layout stays exactly as it was.
-func patchELF(elf []byte, level int, extras []int) error {
+func patchELF(elf []byte, words []word) error {
 	le := binary.LittleEndian
 	segs := readPhdrs(elf)
 	if len(segs) != 2 {
@@ -286,10 +259,6 @@ func patchELF(elf []byte, level int, extras []int) error {
 		if b != 0 {
 			return errors.New("the space for the mod isn't empty")
 		}
-	}
-	words := levels[level].words
-	for _, i := range extras {
-		words = append(append([]word(nil), words...), options[i].words...)
 	}
 	for _, w := range words {
 		off, ok := fileOffset(segs, w.addr)

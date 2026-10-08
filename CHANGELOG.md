@@ -15,6 +15,11 @@
 - **Twitch chat votes (optional).** Type your channel name on the control page and chat votes on the next
   Event Roulette event (1, 2 or 3) and Chaos modifier (A, B or C) after every event, with live vote bars on
   the overlay. The tracker reads chat anonymously: no login. Ties and no votes keep the tracker's pick.
+- **New ISO patcher.** It opens a page in your browser, styled like the overlay, with a button for every
+  part, presets, a Windows file picker and a progress bar. Every part can now be chosen on its own: the
+  Harder AI, Unlock all cars, widescreen and 60 FPS work without the Nuzlocke rules, and the AI can be left
+  normal. The modes still need **Block wrecked cars**, since `nuzlocke.exe` runs them. Patched ISOs are
+  named after what's in them. The command line still works: `nuzlocke_isopatch.exe game.iso hard chaos`.
 
 ## V2.0.3
 

@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuzlocke ISO Patcher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,600;1,800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --hazard: #F2B705; --ember: #E8571C; --wreck: #C8261B;
+    --steel: #24211D; --plate: #2E2A25; --ink: #1a1714; --chalk: #F3EAD3; --smoke: #9A8F7E;
+    --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --text: "Barlow", "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--ink); }
+  body { margin: 0; background: var(--ink); color: var(--chalk); font: 15px/1.4 var(--text); }
+  body::before { content: ""; display: block; height: 12px;
+                 background: repeating-linear-gradient(-45deg, var(--hazard) 0 12px, var(--ink) 12px 24px); }
+  main { max-width: 860px; margin: 0 auto; padding: 22px 16px 60px; }
+  .hidden { display: none !important; }
+
+  /* the title plate, as on the overlay */
+  .plate { display: inline-grid; grid-template-columns: 22px auto; transform: skewX(-12deg); transform-origin: left top;
+           margin-left: 14px; background: var(--steel); border-bottom: 3px solid var(--ember);
+           filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); }
+  .stripe { background: repeating-linear-gradient(-45deg, var(--hazard) 0 9px, var(--ink) 9px 18px); }
+  .plate .body { padding: 10px 26px 12px 16px; transform: skewX(12deg); }
+  h1 { margin: 0; font: italic 800 40px/0.95 var(--display); color: var(--hazard); }
+  h1 small { font-size: 20px; color: var(--smoke); font-weight: 600; margin-left: 10px; }
+
+  section { margin-top: 26px; }
+  h2 { margin: 0 0 4px; font: italic 800 24px var(--display); letter-spacing: .02em; text-transform: uppercase; }
+  h2 i { font-style: normal; font-family: var(--text); font-weight: 600; font-size: 13px; color: var(--smoke);
+         text-transform: none; letter-spacing: 0; margin-left: 8px; }
+  .note { color: var(--smoke); margin: 0 0 10px; font-size: 14px; }
+
+  /* the ISO */
+  .iso { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--steel); padding: 12px 14px;
+         border-left: 6px solid var(--smoke); }
+  .iso.ok { border-left-color: var(--hazard); }
+  .iso .file { flex: 1 1 260px; min-width: 0; font: italic 800 20px var(--display); overflow-wrap: anywhere; }
+  .iso .file small { display: block; font: 400 13px var(--text); color: var(--smoke); }
+  .iso .err { color: var(--ember); }
+  .pathrow { display: flex; gap: 8px; margin-top: 8px; }
+  input[type=text] { flex: 1; min-width: 0; font: inherit; background: var(--plate); color: var(--chalk);
+                     border: 1px solid rgba(243,234,211,.25); padding: 8px 10px; }
+
+  button { font: italic 800 17px var(--display); letter-spacing: .03em; text-transform: uppercase; cursor: pointer;
+           border: 0; padding: 9px 18px; color: var(--ink); background: var(--hazard); transform: skewX(-12deg); }
+  button > span { display: inline-block; transform: skewX(12deg); }
+  button.quiet { background: transparent; color: var(--chalk); border: 1px solid rgba(243,234,211,.3); }
+  button:hover { filter: brightness(1.1); }
+  button:disabled { opacity: .4; cursor: default; filter: none; }
+  button:focus-visible, .card:focus-visible, .seg button:focus-visible { outline: 2px solid var(--chalk); outline-offset: 2px; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* option cards: off = dim steel, on = hazard edge and bright */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+  .card { position: relative; text-align: left; transform: none; text-transform: none; letter-spacing: 0;
+          background: var(--steel); color: var(--smoke); padding: 12px 14px 12px 44px; border-left: 6px solid #3a352f;
+          font: 400 14px/1.35 var(--text); }
+  .card b { display: block; font: italic 800 21px/1.1 var(--display); color: var(--chalk); opacity: .7;
+            text-transform: uppercase; margin-bottom: 3px; }
+  .card::before { content: ""; position: absolute; left: 14px; top: 15px; width: 18px; height: 18px;
+                  border: 2px solid var(--smoke); transform: skewX(-12deg); }
+  .card.on { border-left-color: var(--hazard); background: var(--plate); color: var(--chalk); }
+  .card.on b { color: var(--hazard); opacity: 1; }
+  .card.on::before { background: var(--hazard); border-color: var(--hazard); }
+  .card.locked { opacity: .45; cursor: not-allowed; }
+  .card .why { display: block; margin-top: 4px; color: var(--ember); font-size: 13px; }
+
+  /* AI level: one row of buttons */
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seg button { background: var(--steel); color: var(--chalk); min-width: 100px; }
+  .seg button.on { background: var(--hazard); color: var(--ink); }
+  .seg button.insane.on { background: var(--wreck); color: var(--chalk); }
+  .leveltext { margin-top: 8px; color: var(--smoke); font-size: 14px; min-height: 2.8em; }
+  .warnbox { margin-top: 10px; background: #3a1512; border-left: 6px solid var(--wreck); padding: 10px 14px;
+             white-space: pre-line; font-size: 14px; }
+  .warnbox .row { display: flex; gap: 8px; margin-top: 8px; }
+
+  /* the result */
+  .go { margin-top: 30px; background: var(--steel); padding: 16px 18px; border-bottom: 3px solid var(--ember); }
+  .go .name { font: italic 800 20px var(--display); overflow-wrap: anywhere; }
+  .go .name small { display: block; font: 400 13px var(--text); color: var(--smoke); }
+  .go .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+  .go button.big { font-size: 26px; padding: 12px 34px; }
+  .bar { flex: 1 1 200px; height: 14px; background: rgba(243,234,211,.12); transform: skewX(-12deg); }
+  .bar span { display: block; height: 100%; width: 0; background: var(--hazard); transition: width .3s; }
+  .msg { margin-top: 12px; padding: 10px 14px; font-weight: 600; }
+  .msg.done { background: var(--hazard); color: var(--ink); }
+  .msg.error { background: var(--wreck); color: var(--chalk); }
+  .msg small { display: block; font-weight: 400; }
+  footer { margin-top: 26px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; color: var(--smoke); font-size: 13px; }
+  @media (max-width: 520px) { h1 { font-size: 30px; } .go button.big { width: 100%; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="plate"><div class="stripe"></div><div class="body">
+    <h1>Burnout Revenge Nuzlocke<small>ISO patcher <span id="ver"></span></small></h1>
+  </div></div>
+
+  <section>
+    <h2>1 · Your game</h2>
+    <p class="note">Burnout Revenge, USA (SLUS-21242), unmodified. The original is never changed: the patcher makes a copy next to it.</p>
+    <div class="iso" id="isobox">
+      <div class="file" id="isofile">No ISO chosen<small>Choose the .iso file of your game</small></div>
+      <button id="browse"><span>Browse…</span></button>
+    </div>
+    <div class="pathrow">
+      <input type="text" id="path" placeholder="…or paste the ISO's full path here" spellcheck="false">
+      <button class="quiet" id="usepath"><span>Use</span></button>
+    </div>
+  </section>
+
+  <section>
+    <h2>2 · What goes in <i>pick exactly what you want</i></h2>
+    <div class="presets">
+      <button class="quiet" data-preset="nuzlocke"><span>Classic Nuzlocke</span></button>
+      <button class="quiet" data-preset="chaos"><span>Nuzlocke + Chaos</span></button>
+      <button class="quiet" data-preset="fun"><span>Just for fun</span></button>
+      <button class="quiet" data-preset="none"><span>Clear all</span></button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Nuzlocke rules <i>for nuzlocke.exe</i></h2>
+    <div class="cards" id="rules"></div>
+  </section>
+
+  <section>
+    <h2>Opponents</h2>
+    <div class="seg" id="levels"></div>
+    <div class="leveltext" id="leveltext"></div>
+    <div class="warnbox hidden" id="insanewarn"><span id="insanetext"></span>
+      <div class="row"><button id="insaneyes" style="background:var(--wreck);color:var(--chalk)"><span>Bring it on</span></button>
+        <button class="quiet" id="insaneno"><span>Back</span></button></div></div>
+  </section>
+
+  <section>
+    <h2>Modes <i>run by nuzlocke.exe, so they need the Nuzlocke rules</i></h2>
+    <div class="cards" id="modes"></div>
+  </section>
+
+  <section>
+    <h2>Extras <i>work on their own too</i></h2>
+    <div class="cards" id="extras"></div>
+  </section>
+
+  <div class="go">
+    <div class="name" id="outname"></div>
+    <div class="row">
+      <button class="big" id="patch"><span>Patch ISO</span></button>
+      <div class="bar hidden" id="bar"><span id="barfill"></span></div>
+    </div>
+    <div class="msg hidden" id="msg"></div>
+  </div>
+
+  <footer>
+    <span>Play the patched ISO in PCSX2. Don't also enable the Nuzlocke .pnach for it.</span>
+    <button class="quiet" id="quit"><span>Close patcher</span></button>
+  </footer>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const RULES = [
+  ['core', 'Block wrecked cars', 'Cars out of lives can\'t be picked in the garage or crash junctions, and every result goes to nuzlocke.exe, which counts the lives. The heart of the Nuzlocke.'],
+  ['pause', 'No bailing out', 'Retry, Restart and Quit in the pause menu do nothing, and Retry on the results screen acts like Continue.'],
+];
+const MODES = [
+  ['limited', 'Limited Selection', 'Before every event you get 2 random cars for Race events and 2 for Crash junctions; the rest are benched.'],
+  ['revive', 'Revive tokens', 'Win streaks earn tokens that bring a wrecked car back with one life.'],
+  ['roulette', 'Event Roulette', 'The tracker picks your next event at random; every other event is locked. Every rank is open.'],
+  ['chaos', 'Chaos modifiers', 'Every event gets a random modifier: Safety Net, Sudden Death, Lone Wolf, Double or Nothing…'],
+];
+const EXTRAS = [
+  ['allcars', 'Unlock all cars', 'Every car in the garage from the start. Great with Event Roulette.'],
+  ['widescreen', 'Widescreen 16:9', 'Proper 16:9 picture (by SuperType1 / remco). Set PCSX2 to 16:9 too.'],
+  ['fps60', '60 FPS menus and crash mode', 'Menus and Crash junctions run at 60 FPS instead of 30.'],
+];
+const LEVELS = [
+  ['', 'Normal', 'The game\'s own opponents, untouched.'],
+  ['Easy', 'Easy', 'A little quicker, they come back when they fall behind, and go for takedowns a bit more.'],
+  ['Medium', 'Medium', 'Noticeably faster and pushier: a real race most of the time.'],
+  ['Hard', 'Hard', 'Fast, relentless catch-up, and every opponent attacks.'],
+  ['Insane', 'Insane', 'Not meant to be fair. Full speed and near-constant attacks from everyone.'],
+];
+const TAGS = { widescreen: '16-9', fps60: '60 FPS', limited: 'Limited', revive: 'Revive', roulette: 'Roulette', allcars: 'All cars', chaos: 'Chaos' };
+const ORDER = ['widescreen', 'fps60', 'limited', 'revive', 'roulette', 'allcars', 'chaos'];
+const PRESETS = {
+  nuzlocke: { core: true, pause: true, level: 'Medium', options: [] },
+  chaos: { core: true, pause: true, level: 'Medium', options: ['chaos', 'roulette', 'revive'] },
+  fun: { core: false, pause: false, level: 'Hard', options: ['allcars', 'widescreen', 'fps60'] },
+  none: { core: false, pause: false, level: '', options: [] },
+};
+
+let sel = PRESETS.nuzlocke;
+try { const saved = JSON.parse(localStorage.getItem('patcher-sel')); if (saved && Array.isArray(saved.options)) sel = saved; } catch (e) {}
+let state = {}, pendingInsane = false;
+const remember = () => { try { localStorage.setItem('patcher-sel', JSON.stringify(sel)); } catch (e) {} };
+const has = (k) => sel.options.includes(k);
+const toggle = (k) => { sel.options = has(k) ? sel.options.filter((x) => x !== k) : [...sel.options, k]; };
+
+function card(key, title, text, on, locked) {
+  return `<button class="card${on ? ' on' : ''}${locked ? ' locked' : ''}" data-key="${key}" aria-pressed="${on}"${locked ? ' aria-disabled="true"' : ''}>` +
+    `<b>${esc(title)}</b>${esc(text)}${locked ? '<span class="why">Turn on "Block wrecked cars" first</span>' : ''}</button>`;
+}
+
+function name() {
+  const parts = [];
+  if (sel.core) parts.push('Nuzlocke');
+  if (sel.pause) parts.push('No retry');
+  if (sel.level) parts.push(sel.level + ' AI');
+  ORDER.forEach((k) => has(k) && parts.push(TAGS[k]));
+  return parts.join(', ');
+}
+
+function render() {
+  if (!sel.core) sel.options = sel.options.filter((k) => !MODES.some(([m]) => m === k));
+  $('rules').innerHTML = RULES.map(([k, t, d]) => card(k, t, d, sel[k], false)).join('');
+  $('modes').innerHTML = MODES.map(([k, t, d]) => card(k, t, d, has(k), !sel.core)).join('');
+  $('extras').innerHTML = EXTRAS.map(([k, t, d]) => card(k, t, d, has(k), false)).join('');
+  $('levels').innerHTML = LEVELS.map(([k, t]) =>
+    `<button class="${sel.level === k ? 'on' : ''}${k === 'Insane' ? ' insane' : ''}" data-level="${k}" aria-pressed="${sel.level === k}"><span>${t}</span></button>`).join('');
+  $('leveltext').textContent = (LEVELS.find(([k]) => k === sel.level) || LEVELS[0])[2];
+  $('insanewarn').classList.toggle('hidden', !pendingInsane);
+
+  const n = name();
+  const iso = state.iso_name;
+  const base = iso ? iso.replace(/\.[^.]*$/, '') : 'Your game';
+  const ext = iso && iso.includes('.') ? iso.slice(iso.lastIndexOf('.')) : '.iso';
+  $('outname').innerHTML = n
+    ? `${esc(base)} (${esc(n)})${esc(ext)}<small>${sel.core ? 'Run nuzlocke.exe while you play it.' : 'No Nuzlocke rules: no tracker needed.'}${sel.core && !sel.pause ? ' Without "No bailing out" you can quit an event to save a life.' : ''}</small>`
+    : 'Nothing chosen yet<small>Pick at least one thing above.</small>';
+  const job = state.job || {};
+  $('patch').disabled = !n || !state.iso || !!state.iso_error || job.state === 'working';
+  remember();
+}
+
+function renderState() {
+  const s = state;
+  $('ver').textContent = s.version ? 'v' + s.version : '';
+  $('browse').classList.toggle('hidden', !s.can_browse);
+  $('isobox').classList.toggle('ok', !!s.iso && !s.iso_error);
+  $('isofile').innerHTML = s.iso
+    ? `${esc(s.iso_name)}<small class="${s.iso_error ? 'err' : ''}">${esc(s.iso_error || s.iso)}</small>`
+    : 'No ISO chosen<small>' + (s.can_browse ? 'Click Browse, or paste its path below' : 'Paste its path below') + '</small>';
+  $('insanetext').textContent = s.insane_warning || '';
+  const job = s.job || {};
+  $('bar').classList.toggle('hidden', job.state !== 'working');
+  $('barfill').style.width = job.total ? `${Math.round(100 * job.done / job.total)}%` : '0';
+  const msg = $('msg');
+  msg.className = 'msg' + (job.state === 'done' ? ' done' : job.state === 'error' ? ' error' : ' hidden');
+  if (job.state === 'done') {
+    msg.innerHTML = `Done! Made ${esc(job.out.split(/[\\/]/).pop())}<small>${esc(job.out)}</small>` +
+      `<div class="row" style="margin-top:8px"><button class="quiet" id="openfolder" style="color:var(--ink);border-color:var(--ink)"><span>Show in folder</span></button></div>`;
+    $('openfolder').onclick = () => fetch('/api/open', { method: 'POST' });
+  } else if (job.state === 'error') {
+    msg.innerHTML = `Couldn't patch: ${esc(job.error)}`;
+  }
+  render();
+}
+
+async function refresh() {
+  try {
+    const before = JSON.stringify(state);
+    state = await (await fetch('/api/state', { cache: 'no-store' })).json();
+    if (JSON.stringify(state) !== before) renderState();
+  } catch (e) {}
+}
+
+document.addEventListener('click', (e) => {
+  const c = e.target.closest('.card');
+  if (c) {
+    const k = c.dataset.key;
+    if (c.classList.contains('locked')) return;
+    if (k === 'core' || k === 'pause') sel[k] = !sel[k]; else toggle(k);
+    render();
+    return;
+  }
+  const l = e.target.closest('[data-level]');
+  if (l) {
+    if (l.dataset.level === 'Insane' && sel.level !== 'Insane') pendingInsane = true;
+    else { sel.level = l.dataset.level; pendingInsane = false; }
+    render();
+    return;
+  }
+  const p = e.target.closest('[data-preset]');
+  if (p) { sel = JSON.parse(JSON.stringify(PRESETS[p.dataset.preset])); pendingInsane = false; render(); }
+});
+$('insaneyes').onclick = () => { sel.level = 'Insane'; pendingInsane = false; render(); };
+$('insaneno').onclick = () => { pendingInsane = false; render(); };
+
+async function post(path, body) {
+  const res = await fetch(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined });
+  if (!res.ok) alert(await res.text());
+  await refresh();
+}
+$('browse').onclick = () => post('/api/browse');
+$('usepath').onclick = () => { const v = $('path').value.trim(); if (v) post('/api/iso?path=' + encodeURIComponent(v)).then(() => $('path').value = ''); };
+$('path').addEventListener('keydown', (e) => e.key === 'Enter' && $('usepath').click());
+$('patch').onclick = () => post('/api/patch', sel);
+$('quit').onclick = async () => {
+  await fetch('/api/quit', { method: 'POST' }).catch(() => {});
+  document.body.innerHTML = '<main><h1 style="color:var(--hazard)">Patcher closed</h1><p class="note">You can close this tab.</p></main>';
+  clearInterval(timer);
+};
+
+render();
+refresh();
+const timer = setInterval(refresh, 1000);
+</script>
+</body>
+</html>

@@ -231,7 +231,7 @@ patch=1,EE,001A362C,word,0000102D
 
 [Nuzlocke\Mode\Event Roulette - Unlock all cars]
 author=Nuzlocke mod
-description=Only together with Event Roulette: every car is unlocked from the start, so a rank 10 event never has to be raced with starter cars. Each car joins the run with full lives the first time it shows up in the garage. Needs nuzlocke.exe V2.
+description=Every car is unlocked from the start, so a rank 10 event never has to be raced with starter cars (made for Event Roulette, works on its own too). Each car joins the run with full lives the first time it shows up in the garage. Needs nuzlocke.exe V2.
 // The game's car checks answer as if its debug "all cars" byte (profile +0x402) were set, without
 // setting it: each lbu of that byte becomes "load 1".
 // Car unlocked (00133FB0) and its second flag (00134008):

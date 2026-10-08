@@ -45,7 +45,7 @@ Inspired by the [Need for Speed Underground Nuzlocke mod](https://github.com/xan
 | 🛠️ **The patch** ([`patches/SLUS-21242_D224D348.pnach`](patches/SLUS-21242_D224D348.pnach)) | Native game code changes: blocks wrecked cars, blocks pause-menu Retry/Quit, signals every finished event to the tracker, four Harder AI levels (speed and aggression), the Limited Selection and Revive tokens modes, plus optional widescreen 16:9 and 60 FPS menus. |
 | 📊 **The tracker** ([`bin/nuzlocke.exe`](bin/nuzlocke.exe)) | Judges every result, counts lives, wrecks cars, and keeps your run's stats. No install, no Python. |
 | 🎥 **Stream overlay** | A Burnout-style HUD plate for OBS, served by the tracker. |
-| 💿 **ISO patcher** ([`bin/nuzlocke_isopatch.exe`](bin/nuzlocke_isopatch.exe)) | Builds the whole patch into your own copy of the game (one ISO per AI level, widescreen and 60 FPS optional), so no `.pnach` is needed. |
+| 💿 **ISO patcher** ([`bin/nuzlocke_isopatch.exe`](bin/nuzlocke_isopatch.exe)) | Builds the patch into your own copy of the game, so no `.pnach` is needed. It opens a page in your browser with a button for every part: the full Nuzlocke, or just the parts you want (Harder AI, Unlock all cars, widescreen, 60 FPS) without the Nuzlocke rules. |
 
 <p align="center">
   <img src="docs/images/control.png" alt="The tracker's control page: the run's difficulty, stats, the current car's lives and its events as medals, one opened" width="560">
@@ -62,7 +62,7 @@ You need the **US version of Burnout Revenge (SLUS-21242)**, **PCSX2 2.x** on Wi
 1. **In PCSX2, turn on PINE** (Settings → Advanced, slot 28011).
 2. **Add the patch, either:**
    - copy `patches/SLUS-21242_D224D348.pnach` into PCSX2's `patches` folder, then in the game's Properties → Patches tick **Block dead cars in garage**, **Block pause-menu Retry and Quit**, **one** Harder AI level, and if you like **Mode\Limited Selection**, **Mode\Revive tokens**, **Mode\Event Roulette**, **Mode\Chaos modifiers**, **Widescreen 16:9** and **60 FPS menus and crash mode**; **or**
-   - drag your ISO onto `bin/nuzlocke_isopatch.exe`, pick a level and the extras, and play the ISO it makes.
+   - run `bin/nuzlocke_isopatch.exe` (or drag your ISO onto it), choose your ISO and what goes in on the page it opens, click **Patch ISO**, and play the ISO it makes.
 3. **Run `bin/nuzlocke.exe`.** The control page opens at `http://localhost:8765`. Pick a difficulty to start a run.
 4. **For streaming,** add a Browser Source in OBS: `http://localhost:8765/overlay`, about 800 × 400.
 
@@ -87,7 +87,7 @@ Each Harder AI level also makes opponents more aggressive, through the game's ow
 | **Hard** | 0 (every opponent) | 0.2–1 s | 75 m ahead, 120 m behind | 1 s | 5–12 s, from 30 m | +50% |
 | ⚠️ **Insane** | 0 (every opponent) | 0.1–0.5 s | 100 m ahead, 150 m behind | 0.5 s | 6–15 s, from 40 m | +100% |
 
-**Insane** is not meant to be fair: it keeps the full speed Hard had before the aggression was added and has opponents attacking almost constantly. With 1 + 1 lives, expect most runs to end within a few events. The ISO patcher asks you to confirm it.
+**Insane** is not meant to be fair: it keeps the full speed Hard had before the aggression was added and has opponents attacking almost constantly. With 1 + 1 lives, expect most runs to end within a few events. The ISO patcher shows a warning and asks you to confirm it.
 
 Each opponent has its own aggression (0 to 1); the more aggressive it is, the shorter its wait between attacks. Slams also last longer, opponents try for longer to get into slamming position, and a rubbed opponent recovers sooner. Details are in the [aggression research notes](docs/research/ai-aggression.md).
 
