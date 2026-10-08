@@ -796,3 +796,66 @@ func TestCrashEventLabels(t *testing.T) {
 		}
 	}
 }
+
+// A Burning Lap's location comes from its label's location letter, learned from the race events,
+// even when the track read from memory is another one; the track's name is kept when it matches.
+func TestLocationFromLetter(t *testing.T) {
+	f := &fakeMem{ram: make([]byte, 0x2000000)}
+	f.w32(eventCount, 169)
+	for i := 0; i < 169; i++ {
+		f.ram[eventResults+i] = 0xFF
+	}
+	for a, v := range patchHooks {
+		f.w32(a, v)
+	}
+	f.w32(crashTableRef, crashTableRefOn)
+	pos := uint32(0x01234560)
+	add := func(label, text string) {
+		f.w32(pos, textID(label))
+		d := append(utf16le(text), 0, 0)
+		copy(f.ram[pos+4:], d)
+		pos = (pos + 4 + uint32(len(d)) + 3) &^ 3
+	}
+	add("HIGHUSCAR1A", "FACTORY R160 ST")
+	add("HIGHEUCAR2S1", "EA RACER GT")
+	add("K_01DH1E", "CRASH - DOCK FIGHT")
+	events := map[string]string{"K_01CDSR": "RACE - MOTOR CITY", "K_01CKSR": "RACE - SUNSHINE KEYS",
+		"K_02RKLF": "ROAD RAGE - SUNSHINE KEYS", "K_01TKLR": "BURNING LAP - FORWARDS", "K_01TDLR": "BURNING LAP - FORWARDS"}
+	i := 0
+	for l, name := range events {
+		add(l, name)
+		f.w64(eventIDs+uint32(8*i), encodeLabel(l))
+		i++
+	}
+	add("US_K1_V1", "MOTOR CITY SHORT R")
+	const obj = 0x01D00000
+	f.w32(currentEvent, obj)
+	clock := 100.0
+	tr := NewTracker(f, filepath.Join(t.TempDir(), "s.json"), func() float64 { return clock })
+	tr.StartRun("Easy")
+	r := tr.run()
+	tr.registerCar("HIGHUSCAR1A", "FACTORY R160 ST", false)
+	tr.registerCar("HIGHEUCAR2S1", "EA RACER GT", false)
+	finish := func(event string) string {
+		f.w64(selectedCar, encodeLabel("HIGHUSCAR1A"))
+		f.w64(obj, encodeLabel("HIGHUSCAR1A"))
+		f.w64(obj+0x18, encodeLabel(event))
+		f.w64(obj+0x40, encodeLabel("US_K1_V1")) // the track read from memory: Motor City's
+		f.w32(lastMedal, 3)
+		f.w32(lastRating, 2)
+		f.w32(finishCounter, binary.LittleEndian.Uint32(f.ram[finishCounter:])+1)
+		clock += 0.25
+		tr.Poll()
+		clock += 1.5
+		tr.Poll()
+		return r.History[len(r.History)-1].Where
+	}
+	clock += 0.25
+	tr.Poll()
+	if w := finish("K_01TKLR"); w != "SUNSHINE KEYS" {
+		t.Fatalf("a Burning Lap in Sunshine Keys: %q", w)
+	}
+	if w := finish("K_01TDLR"); w != "MOTOR CITY SHORT R" {
+		t.Fatalf("a Burning Lap in Motor City keeps the track's name: %q", w)
+	}
+}

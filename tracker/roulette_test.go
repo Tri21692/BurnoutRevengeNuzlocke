@@ -200,6 +200,9 @@ func TestPerfectedEventsLocked(t *testing.T) {
 	if binary.LittleEndian.Uint64(table) != encodeLabel("K_01TFLR") || binary.LittleEndian.Uint64(table[8:]) != 0 {
 		t.Fatalf("lock table should hold the perfected event only: %x", table)
 	}
+	if binary.LittleEndian.Uint32(m.f.ram[hardLockFlag:]) != 1 {
+		t.Fatal("the patch should be told this is a Hard run")
+	}
 	m.f.w32(rouletteMarker, 1)
 	for i := 0; i < 20; i++ {
 		m.tick()
@@ -214,5 +217,8 @@ func TestPerfectedEventsLocked(t *testing.T) {
 	m.tick()
 	if binary.LittleEndian.Uint64(m.f.ram[lockTable:]) != 0 {
 		t.Fatal("grace mode should unlock everything")
+	}
+	if binary.LittleEndian.Uint32(m.f.ram[hardLockFlag:]) != 0 {
+		t.Fatal("no Hard lock in grace mode")
 	}
 }

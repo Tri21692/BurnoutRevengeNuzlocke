@@ -113,7 +113,7 @@ cd isopatch && GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o 
 cd tracker  && go test ./...
 ```
 
-To retune the AI, edit the table in `tools/build_harder_ai.py` and run it. After changing the `.pnach`, regenerate the ISO patcher's data with `python tools/build_isopatch.py`. To check a patched ISO against the `.pnach`, run `python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard|Insane>` (needs `pip install pycdlib`).
+To retune the AI, edit the table in `tools/build_harder_ai.py` and run it. After changing the `.pnach`, regenerate the ISO patcher's data with `python tools/build_isopatch.py`. The event unlock check (part 4 of Block dead cars in garage) is written by `python tools/build_unlock_check.py` from its assembly. To check a patched ISO against the `.pnach`, run `python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard|Insane>` (needs `pip install pycdlib`).
 
 ## Research tools
 

@@ -595,9 +595,12 @@ func (t *Tracker) finishEvent(before []byte) {
 	if crash && strings.Contains(t.pendingCar, "CAR") {
 		car = t.pendingCar // the car loaded for the junction
 	}
-	location := t.trackName(region, base, t.pendingTrack)
-	if location == "" && crash {
-		location = t.junctionLocation(region, base, eventLabel)
+	// the location from the event's label; the track's own name (with its route, "Motor City Short R")
+	// when it's at that location, since the track read from memory can be another one
+	location := t.eventLocation(region, base, eventLabel)
+	if track := t.trackName(region, base, t.pendingTrack); location == "" ||
+		track != "" && strings.HasPrefix(strings.ToUpper(track), strings.ToUpper(location)) {
+		location = track
 	}
 	t.pendingEvent, t.pendingCar, t.pendingTrack = "", "", ""
 	eventName := "Unknown event"
@@ -1004,14 +1007,18 @@ func (t *Tracker) captureEvent() {
 	}
 }
 
-// junctionLocation names a crash junction's location from its label's location letter (K_01DH1E: D),
-// learned from the race events, which carry the same letter and are named after their location
-// (K_01CDSR, "Race - Motor City").
-func (t *Tracker) junctionLocation(region []byte, base uint32, label string) string {
-	if !isCrashEvent(label) || region == nil {
+// eventLocation names an event's location from its label's location letter (K_01CDSR and K_01TFLR:
+// the 6th letter, D and F; crash junctions K_01DH1E: the 5th, D), learned from the event names that
+// carry a location ("Race - Motor City"). A name ending shared by several letters ("Burning Lap -
+// Forwards") isn't a location.
+func (t *Tracker) eventLocation(region []byte, base uint32, label string) string {
+	if region == nil || len(label) != 8 || !strings.HasPrefix(label, "K_") {
 		return ""
 	}
-	letter := label[4]
+	letter := label[5]
+	if isCrashEvent(label) {
+		letter = label[4]
+	}
 	if name, ok := t.locations[letter]; ok {
 		return name
 	}
@@ -1019,30 +1026,46 @@ func (t *Tracker) junctionLocation(region []byte, base uint32, label string) str
 	if count <= 0 || count > 400 {
 		return ""
 	}
-	votes := map[string]int{}
+	votes := map[byte]map[string]int{}
+	letters := map[string]map[byte]bool{}
 	for i := 0; i < count; i++ {
 		l := decodeLabel(t.u64(eventIDs + uint32(i)*8))
-		if len(l) != 8 || isCrashEvent(l) || l[5] != letter || strings.Contains(l, "GP") {
+		if len(l) != 8 || isCrashEvent(l) || strings.Contains(l, "GP") {
 			continue
 		}
 		name := t.nameOf(region, base, l)
-		if i := strings.LastIndex(name, " - "); i >= 0 && name != l {
-			votes[strings.TrimSpace(name[i+3:])]++
+		j := strings.LastIndex(name, " - ")
+		if j < 0 || name == l {
+			continue
+		}
+		where := strings.TrimSpace(name[j+3:])
+		if votes[l[5]] == nil {
+			votes[l[5]] = map[string]int{}
+		}
+		votes[l[5]][where]++
+		if letters[where] == nil {
+			letters[where] = map[byte]bool{}
+		}
+		letters[where][l[5]] = true
+	}
+	if t.locations == nil {
+		t.locations = map[byte]string{}
+	}
+	for ch, names := range votes {
+		best, most := "", 0
+		for name, n := range names {
+			if len(letters[name]) > 1 {
+				continue
+			}
+			if n > most || n == most && name < best {
+				best, most = name, n
+			}
+		}
+		if best != "" {
+			t.locations[ch] = best
 		}
 	}
-	best, most := "", 0
-	for name, n := range votes {
-		if n > most || n == most && name < best {
-			best, most = name, n
-		}
-	}
-	if best != "" {
-		if t.locations == nil {
-			t.locations = map[byte]string{}
-		}
-		t.locations[letter] = best
-	}
-	return best
+	return t.locations[letter]
 }
 
 // trackLabel matches the game's track labels, US_K1_V1 to AS_S3_V2 (region, route, variant).

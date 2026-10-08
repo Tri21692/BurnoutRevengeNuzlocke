@@ -28,6 +28,7 @@ const (
 	allCarsPatchOn    = 0x24020001
 	rouletteTarget    = 0x000FE140 // the picked event's label: the patched unlock check opens only this one (0 = all)
 	lockTable         = 0x000FE400 // 8-byte labels of events the patched unlock check locks, ending with 0
+	hardLockFlag      = 0x000FE3FC // 1 on a Hard run: the patched unlock check locks every Gold + Perfect event itself
 	perfectedResult   = 0x04       // eventResults byte for Gold + Perfect
 
 	// World Tour profile (01F64F08): rank at +4, then one byte per event (event list order) at +0x1C0
@@ -544,8 +545,17 @@ func (t *Tracker) lockedEvents() []string {
 	return out
 }
 
-// syncEventLock writes the lock table for the patched unlock check.
+// syncEventLock writes the lock table for the patched unlock check, and tells it whether this is a
+// Hard run: then it checks each event's saved result itself, so an event is locked as soon as the game
+// saves its Perfect (the game works out what's unlocked before the tracker has seen the result).
 func (t *Tracker) syncEventLock() {
+	flag := make([]byte, 4)
+	if r := t.run(); t.counting() && r.Difficulty == "Hard" {
+		flag[0] = 1
+	}
+	if string(t.read(hardLockFlag, 4)) != string(flag) {
+		_ = t.mem.Write(hardLockFlag, flag)
+	}
 	labels := t.lockedEvents()
 	want := make([]byte, (len(labels)+1)*8)
 	for i, l := range labels {
