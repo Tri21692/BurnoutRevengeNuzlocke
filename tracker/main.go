@@ -19,8 +19,6 @@ func main() {
 
 	game := NewGame()
 	tr := NewTracker(game, statePath, now)
-	tr.chat = NewChat()
-	tr.chat.SetChannel(tr.twitch.Channel)
 	url := "http://localhost:" + port
 
 	if _, err := startServer(tr, game); err != nil {

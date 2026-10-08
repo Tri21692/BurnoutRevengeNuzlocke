@@ -75,20 +75,6 @@
   .chaos.bad b { color: var(--ember); }
   .tok { display: inline-block; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--hazard); margin-left: 3px; vertical-align: 1px; }
   .tok.full { background: var(--hazard); }
-  /* Chat vote: a second plate under the HUD */
-  .voteplate { display: block; width: max-content; max-width: 640px; margin-top: 10px; padding: 8px 18px 10px;
-               transform: skewX(-12deg); transform-origin: left top; background: var(--steel);
-               border-left: 6px solid var(--hazard); filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45)); }
-  .voteplate > div { transform: skewX(12deg); }
-  .vt { font-weight: 800; font-size: 18px; color: var(--hazard); letter-spacing: 0.5px; }
-  .vt small { color: var(--smoke); font-weight: 600; font-size: 15px; margin-left: 8px; }
-  .vrow { display: grid; grid-template-columns: 30px 260px 1fr; align-items: center; gap: 2px 8px; margin-top: 4px; font-weight: 700; font-size: 16px; }
-  .vrow .k { font-weight: 800; font-size: 18px; color: var(--hazard); text-align: center; background: #1a1714; }
-  .vrow .n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .vrow .bar { height: 10px; background: rgba(243, 234, 211, 0.12); position: relative; min-width: 120px; }
-  .vrow .bar span { position: absolute; inset: 0 auto 0 0; background: var(--ember); transition: width 300ms; }
-  .vrow.lead .bar span { background: var(--hazard); }
-  .vgroup { margin-top: 6px; font-style: normal; font-weight: 800; font-size: 12px; letter-spacing: 1px; color: var(--smoke); }
   .ticker.enter { animation: slam 420ms cubic-bezier(.2, .9, .25, 1.15); }
   @keyframes slam {
     from { opacity: 0; transform: skewX(-12deg) translateX(-60px); }
@@ -133,7 +119,6 @@
         <div class="chaos hidden" id="chaos"></div>
       </div>
     </div>
-    <div class="voteplate hidden" id="vote"><div id="votebody"></div></div>
     <div class="ticker hidden" id="ticker"><span id="tickertext"></span></div>
   </div>
 
@@ -224,20 +209,6 @@ function render(s) {
     $('picks').innerHTML = `Roulette: <b>${esc(rl.name)}</b> (R${rl.rank})` + (p ? ` · Cars: <b>${list(rl.crash ? p.crash : p.race)}</b>` : '');
   } else if (p) {
     $('picks').innerHTML = `Next: <b>${list(p.race)}</b> · Crash: <b>${list(p.crash)}</b>`;
-  }
-  const v = r.dead ? null : r.vote;
-  $('vote').classList.toggle('hidden', !v);
-  if (v) {
-    const group = (opts, title) => {
-      const total = opts.reduce((n, o) => n + o.votes, 0), top = Math.max(...opts.map((o) => o.votes));
-      return `<div class="vgroup">${title}</div>` + opts.map((o) =>
-        `<div class="vrow${top > 0 && o.votes === top ? ' lead' : ''}"><span class="k">${esc(o.key)}</span>` +
-        `<span class="n">${esc(o.name)}${o.rank ? ` (R${o.rank})` : ''}</span>` +
-        `<span class="bar"><span style="width:${total ? Math.round(100 * o.votes / total) : 0}%"></span></span></div>`).join('');
-    };
-    const keys = [v.events && '1, 2 or 3', v.mods && 'A, B or C'].filter(Boolean).join(' and ');
-    $('votebody').innerHTML = `<div class="vt">CHAT VOTE<small>type ${keys} · ${v.left}s</small></div>` +
-      (v.events ? group(v.events, 'NEXT EVENT') : '') + (v.mods ? group(v.mods, 'CHAOS MODIFIER') : '');
   }
   const ch = r.dead ? null : r.chaos;
   $('chaos').classList.toggle('hidden', !ch);

@@ -4,7 +4,6 @@ import (
 	"embed"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"sync"
 )
 
@@ -79,20 +78,6 @@ func startServer(tr *Tracker, game *Game) (*http.Server, error) {
 		action(func() { tr.Revive(q.Get("car"), q.Get("pool") == "crash") })(w, r)
 	})
 	mux.HandleFunc("/api/shutdown", action(game.CloseWindows))
-	mux.HandleFunc("/api/twitch", func(w http.ResponseWriter, r *http.Request) {
-		q := r.URL.Query()
-		seconds, _ := strconv.Atoi(q.Get("seconds"))
-		if !validChannel(q.Get("channel")) {
-			http.Error(w, "not a Twitch channel name", http.StatusBadRequest)
-			return
-		}
-		action(func() { tr.SetTwitch(q.Get("channel"), seconds) })(w, r)
-	})
-	mux.HandleFunc("/api/endvote", action(func() {
-		if tr.vote != nil {
-			tr.closeVote()
-		}
-	}))
 
 	srv := &http.Server{Addr: "127.0.0.1:" + port, Handler: mux}
 	ln, err := listen(srv.Addr)

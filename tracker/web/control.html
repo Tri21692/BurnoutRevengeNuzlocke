@@ -64,15 +64,6 @@
   footer { margin-top: 22px; color: var(--smoke); display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
   code { color: var(--chalk); background: var(--plate); padding: 4px 8px; }
   .hidden { display: none !important; }
-  footer.twitch { margin-top: 10px; }
-  footer input { font: inherit; background: var(--plate); color: var(--chalk); border: 1px solid rgba(243,234,211,.3); padding: 6px 8px; width: 170px; }
-  footer input[type=number] { width: 64px; }
-  #tw-status.ok { color: #8fd18f; }
-  .vote { margin-top: 10px; padding: 8px 12px; background: var(--plate); border-left: 4px solid var(--hazard); font-size: 14px; color: var(--smoke); }
-  .vote i { font-style: normal; font-weight: 700; font-size: 11px; letter-spacing: 1px; margin-right: 6px; color: var(--hazard); }
-  .vote .opts { display: flex; flex-wrap: wrap; gap: 2px 18px; margin: 2px 0 4px; }
-  .vote b { color: var(--chalk); font-weight: 600; }
-  .vote .lead b { color: var(--hazard); }
   .car .pool { display: flex; align-items: center; gap: 6px; margin-left: 14px; }
   .msg.achievement { background: #3a2f12; border-left: 4px solid var(--hazard); }
   .panel { margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(243,234,211,.15); }
@@ -161,7 +152,6 @@
     <div class="medals" id="medals" aria-label="Events with this car"></div>
     <div class="detail hidden" id="detail"></div>
     <div class="info" id="info"></div>
-    <div class="vote hidden" id="vote"></div>
     <div class="revive hidden" id="revive"></div>
     <details class="ach" id="ach"><summary id="achsum"></summary><ul class="achlist" id="achlist"></ul></details>
   </section>
@@ -171,13 +161,6 @@
     <code id="ovurl"></code>
     <button class="quiet" id="copy">Copy</button>
     <button class="quiet" id="restart">Start a new run</button>
-  </footer>
-  <footer class="twitch">
-    <span title="Chat votes on the next Event Roulette event (1, 2, 3) and Chaos modifier (A, B, C) after every event. Read only: no login needed.">Twitch chat votes:</span>
-    <input id="tw-channel" placeholder="your channel name" spellcheck="false" autocomplete="off">
-    <input id="tw-seconds" type="number" min="10" max="300" title="Vote length in seconds"><span>s</span>
-    <button class="quiet" id="tw-save" title="Leave the name empty to disconnect">Save</button>
-    <span id="tw-status"></span>
   </footer>
 </main>
 <script>
@@ -200,36 +183,8 @@ $('grace').onclick = () => post('/api/grace');
 $('dead-new').onclick = $('restart').onclick = () => { $('newrun').classList.remove('hidden'); $('newrun').scrollIntoView(); };
 $('copy').onclick = () => navigator.clipboard.writeText(overlayUrl).then(() => { $('copy').textContent = 'Copied'; setTimeout(() => $('copy').textContent = 'Copy', 1500); });
 
-let twFilled = false;
-$('tw-save').onclick = async () => {
-  const ch = $('tw-channel').value.trim(), sec = $('tw-seconds').value || 45;
-  const res = await fetch(`/api/twitch?channel=${encodeURIComponent(ch)}&seconds=${sec}`, { method: 'POST' });
-  if (!res.ok) alert('That isn\'t a Twitch channel name (letters, numbers and _, 3 to 25 long).');
-  refresh();
-};
-function renderTwitch(tw) {
-  if (!tw) return;
-  if (!twFilled) { $('tw-channel').value = tw.channel || ''; $('tw-seconds').value = tw.seconds; twFilled = true; }
-  const st = !tw.channel ? 'off' : tw.status === 'connected' ? `connected to #${tw.channel}` : tw.status;
-  $('tw-status').textContent = st;
-  $('tw-status').classList.toggle('ok', tw.status === 'connected');
-}
-function renderVote(v) {
-  $('vote').classList.toggle('hidden', !v);
-  if (!v) return;
-  const row = (opts, label) => {
-    const top = Math.max(...opts.map((o) => o.votes));
-    return `<div><i>${label}</i></div><div class="opts">` + opts.map((o) =>
-      `<span class="${top > 0 && o.votes === top ? 'lead' : ''}">${esc(o.key)} <b>${esc(o.name)}</b>${o.rank ? ` (R${o.rank})` : ''} · ${o.votes}</span>`).join('') + `</div>`;
-  };
-  $('vote').innerHTML = `<div><i>CHAT VOTE</i>${v.left} s left · <button class="linkish" id="endvote">end now</button></div>` +
-    (v.events ? row(v.events, 'NEXT EVENT') : '') + (v.mods ? row(v.mods, 'CHAOS') : '');
-  $('endvote').onclick = () => post('/api/endvote');
-}
-
 function render(s) {
   state = s;
-  renderTwitch(s.twitch);
   $('conn').textContent = s.connected ? 'Connected to PCSX2' : 'Waiting for PCSX2';
   $('conn').classList.toggle('ok', !!s.connected);
   const warns = [];
@@ -275,7 +230,6 @@ function render(s) {
   if (m) { $('msg').textContent = m.text; $('msg').className = `msg ${m.kind}`; }
   renderMedals(car ? car.history || [] : [], car ? car.name : '');
   renderModes(s, r);
-  renderVote(r.dead ? null : r.vote);
   renderSummary(r);
 }
 

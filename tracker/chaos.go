@@ -75,49 +75,13 @@ func (t *Tracker) rollChaos() {
 		}
 		n -= m.weight
 	}
-	t.setChaos(pick.id)
-	r.ChaosRolls++
-	t.later("Chaos: "+t.chaosText(), 15, "info")
-}
-
-// setChaos makes id the next event's modifier, with Lone Wolf's cars.
-func (t *Tracker) setChaos(id string) {
-	r := t.run()
-	r.Chaos, r.ChaosRace, r.ChaosCrash = id, "", ""
-	if id == "lone" {
+	r.Chaos, r.ChaosRace, r.ChaosCrash = pick.id, "", ""
+	if pick.id == "lone" {
 		r.ChaosRace, r.ChaosCrash = t.loneCar(false), t.loneCar(true)
 	}
+	r.ChaosRolls++
+	t.later("Chaos: "+t.chaosText(), 15, "info")
 	t.dirty = true
-}
-
-// chaosCandidates: up to n other modifiers than not, for a chat vote, weighted like a roll.
-func (t *Tracker) chaosCandidates(n int, not string) []string {
-	r := t.run()
-	var pool []chaosMod
-	for _, m := range chaosMods {
-		if r.Difficulty == "Hard" && !m.hard || m.id == not {
-			continue
-		}
-		pool = append(pool, m)
-	}
-	rng := t.pickRand()
-	var out []string
-	for len(out) < n && len(pool) > 0 {
-		total := 0
-		for _, m := range pool {
-			total += m.weight
-		}
-		k := rng.Intn(total)
-		for i, m := range pool {
-			if k < m.weight {
-				out = append(out, m.id)
-				pool = append(pool[:i], pool[i+1:]...)
-				break
-			}
-			k -= m.weight
-		}
-	}
-	return out
 }
 
 // loneCar picks Lone Wolf's car for a pool: from Limited Selection's pair when it's on.

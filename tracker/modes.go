@@ -565,39 +565,9 @@ func (t *Tracker) syncEventLock() {
 // open event, never the same one twice in a row unless it's the only one.
 func (t *Tracker) rollRoulette() {
 	r := t.run()
-	fresh := t.rouletteChoices(r.Roulette)
-	if len(fresh) == 0 {
-		return // profile not loaded yet: try again later
-	}
-	pick := fresh[t.pickRand().Intn(len(fresh))]
-	t.garageNew = false // a freebie needs a garage opened for this pick
-	region, base := t.currentText()
-	r.Roulette, r.RouletteName = pick, t.nameOf(region, base, pick)
-	t.later(fmt.Sprintf("Roulette: next up is %s (Rank %d)", r.RouletteName, eventRank(pick)), 15, "info")
-	t.dirty = true
-}
-
-// rouletteCandidates: up to n more events the roulette could have picked instead of not, for a chat vote.
-func (t *Tracker) rouletteCandidates(n int, not string) []string {
-	r := t.run()
-	var cands []string
-	for _, l := range t.rouletteChoices(r.Roulette) {
-		if l != not {
-			cands = append(cands, l)
-		}
-	}
-	rng := t.pickRand()
-	rng.Shuffle(len(cands), func(i, j int) { cands[i], cands[j] = cands[j], cands[i] })
-	return cands[:min(n, len(cands))]
-}
-
-// rouletteChoices lists the events the roulette picks from, sorted: the ones not won yet in this run
-// (all of them once every one is won), without prev unless it's the only one.
-func (t *Tracker) rouletteChoices(prev string) []string {
-	r := t.run()
 	open := t.openEvents()
 	if len(open) == 0 {
-		return nil
+		return // profile not loaded yet: try again later
 	}
 	won := map[string]bool{}
 	for _, l := range r.Freebies { // freebies count as done
@@ -620,14 +590,19 @@ func (t *Tracker) rouletteChoices(prev string) []string {
 	if len(fresh) > 1 {
 		var others []string
 		for _, l := range fresh {
-			if l != prev {
+			if l != r.Roulette {
 				others = append(others, l)
 			}
 		}
 		fresh = others
 	}
 	sort.Strings(fresh)
-	return fresh
+	pick := fresh[t.pickRand().Intn(len(fresh))]
+	t.garageNew = false // a freebie needs a garage opened for this pick
+	region, base := t.currentText()
+	r.Roulette, r.RouletteName = pick, t.nameOf(region, base, pick)
+	t.later(fmt.Sprintf("Roulette: next up is %s (Rank %d)", r.RouletteName, eventRank(pick)), 15, "info")
+	t.dirty = true
 }
 
 // checkRoulette rolls the first event once the profile is loaded, and fixes up a name read too early.
@@ -659,9 +634,7 @@ func (t *Tracker) checkRoulette() {
 // while the mode runs, nothing (every event open) otherwise.
 func (t *Tracker) syncRouletteLock() {
 	var want uint64
-	if r := t.run(); t.rouletteActive() && t.vote != nil && t.vote.events != nil {
-		want = encodeLabel("VOTING") // matches no event: everything stays locked until chat has voted
-	} else if t.rouletteActive() && r.Roulette != "" {
+	if r := t.run(); t.rouletteActive() && r.Roulette != "" {
 		want = encodeLabel(r.Roulette)
 	}
 	if t.u64(rouletteTarget) != want {
@@ -692,7 +665,7 @@ func (t *Tracker) earnReroll(label string) {
 // Reroll spends a reroll on a new roulette event.
 func (t *Tracker) Reroll() bool {
 	r := t.run()
-	if !t.rouletteActive() || r.Rerolls == 0 || r.Roulette == "" || t.vote != nil && t.vote.events != nil {
+	if !t.rouletteActive() || r.Rerolls == 0 || r.Roulette == "" {
 		return false
 	}
 	r.Rerolls--
