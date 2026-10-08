@@ -58,7 +58,7 @@ def writer(words):
     return [(WRITER_ADDR + 4 * i, w) for i, w in enumerate(code)]
 
 # The .pnach's mode markers (below the game) and where a patched ISO keeps them instead.
-MODE_MARKERS = {0x000FE130: 0x00479FF4, 0x000FE134: 0x00479FF8, 0x000FE138: 0x00479FFC}
+MODE_MARKERS = {0x000FE130: 0x00479FF4, 0x000FE134: 0x00479FF8, 0x000FE138: 0x00479FFC, 0x000FE13C: 0x00479FEC}
 
 def option_patches(g, name):
     direct, runtime = {}, []
@@ -95,7 +95,7 @@ def aggr_writer(words):
     """The Harder AI level's aggression settings, every frame; ends with j 0034A688."""
     code = store_code(words) + [0x08000000 | (AGGR_CALL_TARGET >> 2), 0]  # j 0034A688
     out = [(AGGR_WRITER + 4 * i, w) for i, w in enumerate(code)]
-    assert AGGR_WRITER + 4 * len(code) <= LEVEL_ADDR, "aggression writer runs into the level word"
+    assert AGGR_WRITER + 4 * len(code) <= 0x00479FE0, "aggression writer runs into the mode markers"
     return out
 
 def runtime_word(a):
@@ -177,7 +177,8 @@ def main():
     lines += ["", "var options = []struct {", "\tkey, name string", "\twords     []word", "}{"]
     for key, name in (("widescreen", "Widescreen 16:9"), ("fps60", "60 FPS menus and crash mode"),
                       ("limited", "Mode\\Limited Selection"), ("revive", "Mode\\Revive tokens"),
-                      ("roulette", "Mode\\Event Roulette"), ("allcars", "Mode\\Event Roulette - Unlock all cars")):
+                      ("roulette", "Mode\\Event Roulette"), ("allcars", "Mode\\Event Roulette - Unlock all cars"),
+                      ("chaos", "Mode\\Chaos modifiers")):
         lines.append(f'\t{{"{key}", "{name.split(chr(92))[-1]}", []word{{')
         for a, w in option_patches(g, "Nuzlocke\\" + name):
             lines.append(f"\t\t{{0x{a:08X}, 0x{w:08X}}},")

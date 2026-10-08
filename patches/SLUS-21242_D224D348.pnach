@@ -241,6 +241,12 @@ patch=1,EE,00134018,word,24020001
 patch=1,EE,001BB930,word,24030001
 patch=1,EE,002B101C,word,24020001
 
+[Nuzlocke\Mode\Chaos modifiers]
+author=Nuzlocke mod
+description=Every event gets a modifier rolled by the tracker: Calm, Safety Net (a loss costs no life), Second Wind (a win gives a life back), Easy Street (the requirement drops a step), Double or Nothing, Sudden Death, Gold or Bust (not on Hard) or Lone Wolf (one random car only). Shown on the control page and the overlay. Needs nuzlocke.exe V2.1.
+// Tells the tracker the mode is on.
+patch=1,EE,000FE13C,word,00000001
+
 [Nuzlocke\Harder AI\Easy]
 author=Nuzlocke mod
 description=Harder opponents, Easy level: faster and more aggressive. Enable only one Harder AI level. Corners at 0.8625 of the racing line's limit (0.9125 on aggressive stretches); far from the player, 1.5-4.5 s per section quicker than their pace schedule; catch-up from 40 m behind the player (up to +18 m/s); ease-off from 50 m ahead of the player (to 0.91 x the player's speed); speed cap 97 m/s. Opponents go for takedowns more often, from further away and sooner after the start, block you for longer and slam 15% harder. See docs/research/ai-catchup.md and ai-aggression.md.

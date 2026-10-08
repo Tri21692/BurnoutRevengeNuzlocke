@@ -1,5 +1,18 @@
 # Changelog
 
+## V2.1 (in progress)
+
+**Upgrading:** replace all three files, and remake any patched ISOs.
+
+- **Perfected events are locked on Hard.** Gold + Perfect is only awarded once, so an event you've
+  perfected can't be won again on Hard: it's now locked on the World Tour map for the rest of the run
+  instead of costing a life. Event Roulette never picks one either. The unlock check moved from the Event
+  Roulette option into **Block dead cars in garage**.
+- **Chaos modifiers mode (optional).** Every event gets a random modifier: Calm, Safety Net, Second Wind,
+  Easy Street, Double or Nothing, Sudden Death, Gold or Bust (not on Hard) or Lone Wolf. Shown on the
+  control page and the overlay. A new `.pnach` option (`Mode\Chaos modifiers`) and ISO patcher question;
+  it locks achievements like the other modes.
+
 ## V2.0.3
 
 Event Roulette freebies. **Upgrading:** replace `nuzlocke.exe` (the `.pnach` and the ISO patcher only changed

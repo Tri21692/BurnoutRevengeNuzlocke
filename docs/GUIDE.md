@@ -79,7 +79,7 @@ Every car has two separate pools. **Crash junctions** use the Crash pool; **ever
 | --- | --- |
 | The difficulty's result or better (both the medal and the rating) | Win. Your win streak goes up. |
 | Anything less, for example Bronze, or Silver + Good on Easy | The car you drove loses a life. |
-| On Hard: replaying an event you've already Gold + Perfected | The car loses a life. The game never awards Perfect twice, so a replay can't be won on Hard. On Easy and Medium a replay can win. |
+| On Hard: an event you've already Gold + Perfected | Locked on the World Tour map for the rest of the run. The game never awards Perfect twice, so it couldn't be won again on Hard (with an older patch that doesn't lock it, playing it costs a life). On Easy and Medium a replay can win, so nothing is locked. |
 
 The medal and the rating are checked separately: on Medium, Gold + Awesome and Silver + Awesome both pass, but Silver + Great doesn't. Taking Gold raises your rating one step (that's how a Perfect happens: Gold with Awesome-level driving), so Gold + Good shows as Gold + Great and passes Easy.
 
@@ -97,13 +97,13 @@ The medal and the rating are checked separately: on Medium, Gold + Awesome and S
 
 **Medals.** Under the current car, the control page and overlay show every event that car has driven, in order, as a medal: gold, silver, bronze or an empty ring for no medal. A red ribbon and slash mark a loss, a "C" marks a Crash junction, and faded medals weren't counted (Grace mode). Click a medal on the control page to see the event, its location, the result and when it was. Each result on the overlay also says where it was, for example "Crash - Dock Fight · Motor City".
 
-**Achievements.** A standard run has nine to unlock (none if you use Limited Selection, Revive tokens, Event Roulette or Unlock all cars, even for part of the run): Hot Streak, Unstoppable and Legend (5, 10 and 25 wins in a row), Perfectionist (5 Gold + Perfects), Junction King (5 Crash junctions won), Collector (15 cars of your own), Survivor (50 events in one run), Certified Insane (10 wins against Insane AI), and Last One Standing (a win with only one usable car left, out of at least three). On the control page, click **Achievements** under the current car to see them all; the overlay announces each one after the event's result.
+**Achievements.** A standard run has nine to unlock (none if you use Limited Selection, Revive tokens, Event Roulette, Unlock all cars or Chaos modifiers, even for part of the run): Hot Streak, Unstoppable and Legend (5, 10 and 25 wins in a row), Perfectionist (5 Gold + Perfects), Junction King (5 Crash junctions won), Collector (15 cars of your own), Survivor (50 events in one run), Certified Insane (10 wins against Insane AI), and Last One Standing (a win with only one usable car left, out of at least three). On the control page, click **Achievements** under the current car to see them all; the overlay announces each one after the event's result.
 
 **Run summary.** When the run ends, the control page shows the run's stats (events won, win rate, best streak, run time, Race and Crash wrecks, Gold + Perfects, Crash junctions won, cars owned, revives, difficulty, AI level and modes), how it ended, every car's events, wins and medals, and your achievements; the overlay's end card adds your best car and Gold + Perfects. The same summary is saved as `nuzlocke_summary_<date>_<time>.txt` next to `nuzlocke.exe`, ready to share.
 
 ### Modes
 
-Three optional modes are switched on in the patch, like the AI level: tick them in the Patches tab, or answer yes in the ISO patcher. While they're on, the control page shows the picks and your tokens in one line under the current car, and the overlay adds them in small type.
+Four optional modes are switched on in the patch, like the AI level: tick them in the Patches tab, or answer yes in the ISO patcher. While they're on, the control page shows the picks and your tokens in one line under the current car, and the overlay adds them in small type.
 
 **Limited Selection.** Before every event the tracker picks 2 of your usable cars for Race events and 2 for Crash junctions. Every other healthy car is blocked and shown as `[BENCHED]` (wrecked cars keep their wrecked names), so you choose between the two. A car has one name for both car selects, so the names follow the event you've chosen: in a crash junction's car select every car but the two crash picks shows `[BENCHED]`, in the garage every car but the two race picks. A new pair is picked after every event, never with a car from the last pair unless there's nothing else left; with fewer usable cars you get what's left. Backing out of the garage or restarting the tracker doesn't reroll. Burning Laps and Preview events always let you drive their car, even one you own that isn't picked, and Grace mode lifts the bench.
 
@@ -118,6 +118,21 @@ Three optional modes are switched on in the patch, like the AI level: tick them 
 Click **revive a car** next to your tokens on the control page to give a wrecked car of your own one life back in the pool it's wrecked in. If an event would end the run while you hold a token, the token is used on the car that was just wrecked, and the run goes on. Tokens can't be used once the run is over or in Grace mode.
 
 **Event Roulette.** The tracker picks the event you play next, at random from every World Tour event: ones you haven't won yet in this run first, and once you've won them all, any event. It never picks the same event twice in a row. The control page and overlay show it, for example "ROULETTE Crash - Dock Fight (Rank 1)". Every other event shows as locked on the World Tour map, so you can only play the one picked (if an event somehow gets played anyway, it counts as a loss for the car you drove). Every rank tab on the map is open. If the roulette picks a Burning Lap or Preview whose car is one of yours and wrecked, it's a freebie: no life lost, and the roulette moves on as soon as that event's garage shows the car. You earn a reroll for every 5 events you win (hold up to 3); click **reroll** on the control page to spend one. Your rank, results and cars are untouched. With the extra option **Mode\Event Roulette - Unlock all cars** (or answering yes in the ISO patcher, which only asks when Event Roulette is on), every car is unlocked from the start too, so a rank 10 event never has to be raced with starter cars; each car joins the run with full lives the first time it shows up in the garage. With Limited Selection on, only the pair for the roulette event's type is shown.
+
+**Chaos modifiers.** Every event gets a modifier, rolled by the tracker after the event before it and shown on the control page and the overlay ("CHAOS Safety Net"). Good ones are yellow, bad ones orange. The same modifier never comes twice in a row (Calm aside).
+
+| Modifier | What it does |
+| --- | --- |
+| Calm | Nothing: a normal event. |
+| Safety Net | A loss costs no life. |
+| Second Wind | A win gives a life back to your car with the fewest lives in that pool (a wrecked one first), up to the starting lives. |
+| Easy Street | The requirement drops a step: Bronze + Good on Easy, Bronze + Great on Medium, any Gold on Hard. |
+| Double or Nothing | A loss costs 2 lives; a win gives a life back like Second Wind. |
+| Sudden Death | A loss wrecks the car. |
+| Gold or Bust | Only a Gold counts (with the difficulty's rating). Not on Hard, which needs a Gold anyway. |
+| Lone Wolf | One car picked at random (from the Limited Selection pair when that's on) is the only one you can drive; the rest are `[BENCHED]`, one for Race events and one for Crash junctions. |
+
+Burning Laps and Previews still let you drive their own car under Lone Wolf.
 
 The stats are events won out of events played, cars wrecked in each pool, run time (time with the game running), your best win streak, and the difficulty and AI level.
 

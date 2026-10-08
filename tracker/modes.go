@@ -46,13 +46,15 @@ func (t *Tracker) readModes() {
 	t.limitedOn = t.u32(limitedMarker) == 1 || t.u32(limitedMarkerISO) == 1
 	t.reviveOn = t.u32(reviveMarker) == 1 || t.u32(reviveMarkerISO) == 1
 	t.rouletteOn = t.u32(rouletteMarker) == 1 || t.u32(rouletteMarkerISO) == 1
+	t.chaosOn = t.u32(chaosMarker) == 1 || t.u32(chaosMarkerISO) == 1
 	allCars := t.u32(allCarsPatch) == allCarsPatchOn // Unlock all cars: the car check is patched
 	if r := t.run(); r != nil && r.Active && !r.Dead && allCars && !r.UsedAllCars {
 		r.UsedAllCars = true
 		t.save()
 	}
 	if r := t.run(); r != nil && r.Active && !r.Dead {
-		if t.limitedOn && !r.UsedLimited || t.reviveOn && !r.UsedRevive || t.rouletteOn && !r.UsedRoulette {
+		if t.limitedOn && !r.UsedLimited || t.reviveOn && !r.UsedRevive || t.rouletteOn && !r.UsedRoulette || t.chaosOn && !r.UsedChaos {
+			r.UsedChaos = r.UsedChaos || t.chaosOn
 			r.UsedLimited = r.UsedLimited || t.limitedOn
 			r.UsedRevive = r.UsedRevive || t.reviveOn
 			r.UsedRoulette = r.UsedRoulette || t.rouletteOn
@@ -294,7 +296,7 @@ var achievementList = []struct{ id, name, text string }{
 // achievementsLocked: achievements only count in a standard run, without any of the modes.
 func (t *Tracker) achievementsLocked() bool {
 	r := t.run()
-	return r.UsedLimited || r.UsedRevive || r.UsedRoulette || r.UsedAllCars
+	return r.UsedLimited || r.UsedRevive || r.UsedRoulette || r.UsedAllCars || r.UsedChaos
 }
 
 func (t *Tracker) unlock(id string) {
@@ -405,7 +407,7 @@ func (t *Tracker) summarySnapshot() map[string]any {
 	}
 	return map[string]any{"cars": cars, "ended_by": r.EndedBy, "achievements": r.Achievements,
 		"perfects": r.Perfects, "revived": r.Revived, "tokens_earned": r.TokensEarned, "seed": r.Seed,
-		"limited": r.UsedLimited, "revive": r.UsedRevive, "roulette": r.UsedRoulette, "allcars": r.UsedAllCars,
+		"limited": r.UsedLimited, "revive": r.UsedRevive, "roulette": r.UsedRoulette, "allcars": r.UsedAllCars, "chaos": r.UsedChaos,
 		"achievements_locked": t.achievementsLocked(), "file": r.SummaryFile,
 		"crash_wins": r.CrashWins, "insane_wins": r.InsaneWins, "owned": t.ownedCars()}
 }
@@ -428,6 +430,9 @@ func (t *Tracker) writeSummary() {
 	}
 	if r.UsedAllCars {
 		modes = append(modes, "Unlock all cars")
+	}
+	if r.UsedChaos {
+		modes = append(modes, "Chaos modifiers")
 	}
 	if len(modes) > 0 {
 		fmt.Fprintf(&b, "Modes: %s\r\n", strings.Join(modes, ", "))

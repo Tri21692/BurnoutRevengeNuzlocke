@@ -4,7 +4,7 @@
 // menus (by SuperType1/remco) and the Limited Selection, Revive tokens and Event Roulette modes. The original ISO is
 // never modified.
 //
-// Usage: nuzlocke_isopatch.exe [game.iso] [easy|medium|hard|insane] [widescreen] [60fps] [limited] [revive] [roulette [allcars]]
+// Usage: nuzlocke_isopatch.exe [game.iso] [easy|medium|hard|insane] [widescreen] [60fps] [limited] [revive] [roulette [allcars]] [chaos]
 // (or drag the ISO onto the .exe and answer the questions)
 package main
 
@@ -93,12 +93,13 @@ func run(args []string, in *bufio.Reader) error {
 
 	// Extras: given on the command line, or asked for when the level was chosen interactively.
 	var extras []int
-	tags := map[string]string{"widescreen": "16-9", "fps60": "60 FPS", "limited": "Limited", "revive": "Revive", "roulette": "Roulette", "allcars": "All cars"}
+	tags := map[string]string{"widescreen": "16-9", "fps60": "60 FPS", "limited": "Limited", "revive": "Revive", "roulette": "Roulette", "allcars": "All cars", "chaos": "Chaos"}
 	about := map[string]string{
 		"limited":  " (each event you get 2 random cars; the rest are benched)",
 		"revive":   " (win streaks earn tokens that bring a wrecked car back)",
 		"roulette": " (the tracker picks your next event; every event is unlocked)",
 		"allcars":  " (every car from the start)",
+		"chaos":    " (every event gets a random modifier, good or bad)",
 	}
 	roulette := false
 	for i, o := range options {

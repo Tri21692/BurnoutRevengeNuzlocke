@@ -1304,4 +1304,7 @@ var options = []struct {
 		{0x001BB930, 0x24030001},
 		{0x002B101C, 0x24020001},
 	}},
+	{"chaos", "Chaos modifiers", []word{
+		{0x00479FEC, 0x00000001},
+	}},
 }
