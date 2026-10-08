@@ -1,4 +1,4 @@
-gametitle=Burnout Revenge (PS2) - Nuzlocke v2.0.3
+gametitle=Burnout Revenge (PS2) - Nuzlocke v2.0.4
 
 [Nuzlocke\Block dead cars in garage]
 author=Nuzlocke mod
@@ -240,12 +240,6 @@ patch=1,EE,00134018,word,24020001
 // Number of cars the garage lists: all 80 instead of the unlocked count (+0x3FC):
 patch=1,EE,001BB930,word,24030001
 patch=1,EE,002B101C,word,24020001
-
-[Nuzlocke\Mode\Chaos modifiers]
-author=Nuzlocke mod
-description=Every event gets a modifier rolled by the tracker: Calm, Safety Net (a loss costs no life), Second Wind (a win gives a life back), Easy Street (the requirement drops a step), Double or Nothing, Sudden Death, Gold or Bust (not on Hard) or Lone Wolf (one random car only). Shown on the control page and the overlay. Needs nuzlocke.exe V2.1.
-// Tells the tracker the mode is on.
-patch=1,EE,000FE13C,word,00000001
 
 [Nuzlocke\Harder AI\Easy]
 author=Nuzlocke mod

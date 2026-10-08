@@ -121,7 +121,7 @@
     <h2>2 · What goes in <i>pick exactly what you want</i></h2>
     <div class="presets">
       <button class="quiet" data-preset="nuzlocke"><span>Classic Nuzlocke</span></button>
-      <button class="quiet" data-preset="chaos"><span>Nuzlocke + Chaos</span></button>
+      <button class="quiet" data-preset="roulette"><span>Roulette run</span></button>
       <button class="quiet" data-preset="fun"><span>Just for fun</span></button>
       <button class="quiet" data-preset="none"><span>Clear all</span></button>
     </div>
@@ -177,7 +177,6 @@ const MODES = [
   ['limited', 'Limited Selection', 'Before every event you get 2 random cars for Race events and 2 for Crash junctions; the rest are benched.'],
   ['revive', 'Revive tokens', 'Win streaks earn tokens that bring a wrecked car back with one life.'],
   ['roulette', 'Event Roulette', 'The tracker picks your next event at random; every other event is locked. Every rank is open.'],
-  ['chaos', 'Chaos modifiers', 'Every event gets a random modifier: Safety Net, Sudden Death, Lone Wolf, Double or Nothing…'],
 ];
 const EXTRAS = [
   ['allcars', 'Unlock all cars', 'Every car in the garage from the start. Great with Event Roulette.'],
@@ -191,11 +190,11 @@ const LEVELS = [
   ['Hard', 'Hard', 'Fast, relentless catch-up, and every opponent attacks.'],
   ['Insane', 'Insane', 'Not meant to be fair. Full speed and near-constant attacks from everyone.'],
 ];
-const TAGS = { widescreen: '16-9', fps60: '60 FPS', limited: 'Limited', revive: 'Revive', roulette: 'Roulette', allcars: 'All cars', chaos: 'Chaos' };
-const ORDER = ['widescreen', 'fps60', 'limited', 'revive', 'roulette', 'allcars', 'chaos'];
+const TAGS = { widescreen: '16-9', fps60: '60 FPS', limited: 'Limited', revive: 'Revive', roulette: 'Roulette', allcars: 'All cars' };
+const ORDER = ['widescreen', 'fps60', 'limited', 'revive', 'roulette', 'allcars'];
 const PRESETS = {
   nuzlocke: { core: true, pause: true, level: 'Medium', options: [] },
-  chaos: { core: true, pause: true, level: 'Medium', options: ['chaos', 'roulette', 'revive'] },
+  roulette: { core: true, pause: true, level: 'Medium', options: ['roulette', 'allcars', 'revive'] },
   fun: { core: false, pause: false, level: 'Hard', options: ['allcars', 'widescreen', 'fps60'] },
   none: { core: false, pause: false, level: '', options: [] },
 };

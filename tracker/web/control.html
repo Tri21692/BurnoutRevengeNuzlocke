@@ -70,8 +70,6 @@
   .panel h3 { font-family: var(--display); font-style: italic; font-weight: 800; font-size: 20px; margin: 0 0 6px; }
   .info { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; margin-top: 12px; font-size: 14px; color: var(--smoke); }
   .info b { color: var(--chalk); font-weight: 600; }
-  .info .chaos.good b { color: var(--hazard); }
-  .info .chaos.bad b { color: var(--ember); }
   .info i { font-style: normal; font-weight: 700; font-size: 11px; letter-spacing: 1px; margin-right: 4px; }
   .tok { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--hazard); margin-right: 2px; vertical-align: -1px; }
   .tok.full { background: var(--hazard); }
@@ -256,11 +254,6 @@ function renderModes(s, r) {
       (rl.rerolls ? ` · <button class="linkish" id="rerollbtn">reroll</button> (${rl.rerolls} left)` : ' · no rerolls') +
       ` · next in ${rl.next_reroll} ${rl.next_reroll === 1 ? 'win' : 'wins'}</span>`);
   }
-  const ch = r.dead ? null : r.chaos;
-  if (ch) {
-    parts.push(`<span class="chaos ${ch.good ? 'good' : 'bad'}"><i>CHAOS</i><b>${esc(ch.name)}</b> ` +
-      (ch.id === 'lone' ? `only ${esc(ch.race_car)} (Crash: ${esc(ch.crash_car)})` : esc(ch.text)) + `</span>`);
-  }
   const picks = r.dead ? null : r.picks;
   if (picks) {
     const list = (p) => p && p.length ? p.map(esc).join(' / ') : 'none left';
@@ -291,7 +284,7 @@ function renderModes(s, r) {
     (reviveOpen = false, post(`/api/revive?car=${encodeURIComponent(b.dataset.car)}&pool=${b.dataset.pool}`)));
   const got = r.achievements || [];
   $('achsum').innerHTML = r.achievements_locked
-    ? `<b>Achievements locked</b> · only in a run without Limited Selection, Revive tokens, Event Roulette, Unlock all cars or Chaos modifiers`
+    ? `<b>Achievements locked</b> · only in a run without Limited Selection, Revive tokens, Event Roulette or Unlock all cars`
     : `<b>Achievements ${got.length}/${r.achievements_total || ACHIEVEMENTS.length}</b>` + (got.length ? ` · latest: ${esc(got[got.length - 1].name)}` : '');
   $('achlist').innerHTML = achList(got);
 }
@@ -304,7 +297,7 @@ function renderSummary(r) {
     `<tr><td class="${c.wrecked ? 'wrecked' : ''}">${esc(c.name)}${c.owned ? '' : ' (loaned)'}${c.wrecked ? ' · wrecked' : ''}</td>` +
     `<td class="num">${c.events}</td><td class="num">${c.wins}</td>` +
     `<td>${dot(MEDAL.gold, c.gold)}${dot(MEDAL.silver, c.silver)}${dot(MEDAL.bronze, c.bronze)}</td></tr>`).join('');
-  const modes = [sm.limited && 'Limited Selection', sm.revive && 'Revive tokens', sm.roulette && 'Event Roulette', sm.allcars && 'Unlock all cars', sm.chaos && 'Chaos modifiers'].filter(Boolean).join(' + ');
+  const modes = [sm.limited && 'Limited Selection', sm.revive && 'Revive tokens', sm.roulette && 'Event Roulette', sm.allcars && 'Unlock all cars'].filter(Boolean).join(' + ');
   const ai = r.ai_level && r.ai_level !== 'Off' ? `${r.ai_level} AI` : 'normal AI';
   const stat = (v, label, small) => `<div${small ? ' class="wide"' : ''}><b${small ? ' class="small"' : ''}>${v}</b><span>${label}</span></div>`;
   const stats = [

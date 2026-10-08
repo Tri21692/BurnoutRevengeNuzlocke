@@ -3,7 +3,7 @@
 Loads the patched SLUS_212.42 by its program headers, like the PS2 does, and compares the memory image
 with the original file's image plus the .pnach's changes (relocated). Needs: pip install pycdlib
 
-Run: python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard|Insane> [widescreen] [60fps] [limited] [revive] [roulette] [allcars] [chaos]
+Run: python tools/verify_isopatch.py <original SLUS_212.42> <patched ISO> <Easy|Medium|Hard|Insane> [widescreen] [60fps] [limited] [revive] [roulette] [allcars]
 """
 import io, struct, sys, os
 import pycdlib
@@ -52,8 +52,7 @@ def main(orig_path, iso_path, name, *extras):
     struct.pack_into("<I", exp, B.LEVEL_ADDR, num)
     for key, grp in (("widescreen", "Widescreen 16:9"), ("60fps", "60 FPS menus and crash mode"),
                      ("limited", "Mode\\Limited Selection"), ("revive", "Mode\\Revive tokens"),
-                     ("roulette", "Mode\\Event Roulette"), ("allcars", "Mode\\Event Roulette - Unlock all cars"),
-                     ("chaos", "Mode\\Chaos modifiers")):
+                     ("roulette", "Mode\\Event Roulette"), ("allcars", "Mode\\Event Roulette - Unlock all cars")):
         if key in extras:
             runtime = []
             for a, w in g["Nuzlocke\\" + grp]:

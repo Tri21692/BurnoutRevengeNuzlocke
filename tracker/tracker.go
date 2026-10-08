@@ -183,13 +183,8 @@ type Run struct {
 	Freebies     []string       `json:"freebies,omitempty"` // roulette events skipped: their fixed car was wrecked
 	UsedRoulette bool           `json:"used_roulette,omitempty"`
 	UsedAllCars  bool           `json:"used_all_cars,omitempty"` // Event Roulette's Unlock all cars
-	Chaos        string         `json:"chaos,omitempty"`         // Chaos modifiers: the next event's modifier
-	ChaosRace    string         `json:"chaos_race,omitempty"`    // Lone Wolf's cars
-	ChaosCrash   string         `json:"chaos_crash,omitempty"`
-	ChaosRolls   int            `json:"chaos_rolls"`
-	UsedChaos    bool           `json:"used_chaos,omitempty"`
-	EndedBy      string         `json:"ended_by,omitempty"`     // the event that ended the run
-	SummaryFile  string         `json:"summary_file,omitempty"` // the end-of-run summary written next to the state
+	EndedBy      string         `json:"ended_by,omitempty"`      // the event that ended the run
+	SummaryFile  string         `json:"summary_file,omitempty"`  // the end-of-run summary written next to the state
 	Streak       int            `json:"streak"`
 	BestStreak   int            `json:"best_streak"`
 	History      []HistoryEntry `json:"history"`
@@ -241,7 +236,6 @@ type Tracker struct {
 	garageNew         bool              // the garage list changed since the roulette's last pick
 	reviveOn          bool              // the patch has Revive tokens on
 	rouletteOn        bool              // the patch has Event Roulette on
-	chaosOn           bool              // the patch has Chaos modifiers on
 	locations         map[byte]string   // location letter in event labels -> name, learned from race events
 	lastLoss          string            // the car of your own that lost its last life in this event
 	lastLossCrash     bool              // ...in the Crash pool
@@ -457,14 +451,6 @@ func (t *Tracker) Grace() {
 	}
 }
 
-// livesText: "a Race life" or "2 Race lives".
-func livesText(n int, pool string) string {
-	if n == 1 {
-		return "a " + pool + " life"
-	}
-	return fmt.Sprintf("%d %s lives", n, pool)
-}
-
 func plural(n int, one, many string) string {
 	if n == 1 {
 		return one
@@ -641,8 +627,7 @@ func (t *Tracker) finishEvent(before []byte) {
 	if r != nil {
 		difficulty = r.Difficulty
 	}
-	mod := t.chaosNow() // the Chaos modifier this event was played with
-	won := chaosPasses(mod, difficulty, medal, shownIdx, perfectNow)
+	won := passes(difficulty, medal, shownIdx, perfectNow)
 	// Event Roulette: any other event than the one rolled counts as a loss, whatever the result
 	offRoulette := t.rouletteActive() && r.Roulette != "" && eventLabel != "" && eventLabel != r.Roulette
 	if offRoulette {
@@ -685,7 +670,6 @@ func (t *Tracker) finishEvent(before []byte) {
 		t.say(where+": "+resultText, 15, "win")
 		t.earnToken()
 		t.earnReroll(eventLabel)
-		t.chaosReward(mod, crash)
 		if difficulty == "Hard" && perfectNow && eventLabel != "" {
 			t.later(eventName+" is perfected, so it's locked on the map for the rest of the run", 12, "info")
 		}
@@ -701,29 +685,18 @@ func (t *Tracker) finishEvent(before []byte) {
 			pool, lives, lost = "Crash", &c.CrashLives, &r.CrashLost
 		}
 		wasAlive := *lives > 0
-		cost := 1
 		if wasAlive {
-			cost = chaosCost(mod, *lives)
-			*lives -= cost
+			*lives--
 		}
 		reason := resultText
 		if offRoulette {
 			reason = "not the roulette event, " + r.RouletteName
 		} else if difficulty == "Hard" && medal == 3 && rating == 3 && !perfectNow {
 			reason = "already perfected"
-		} else if mod == "easy" {
-			reason += ", needs " + easyStreetText(difficulty) + " (Easy Street)"
-		} else if req, ok := requirements[difficulty]; ok && mod == "gold" && difficulty != "Hard" {
-			reason += ", needs Gold + " + strings.SplitN(req.text, " + ", 2)[1] + " (Gold or Bust)"
-		} else if ok {
+		} else if req, ok := requirements[difficulty]; ok {
 			reason += ", needs " + req.text
 		}
-		if m := chaosByID(mod); m != nil && mod != "calm" && mod != "easy" && mod != "gold" {
-			reason += " · " + m.name
-		}
-		if mod == "safety" && (wasAlive || !c.Owned && t.loanPayer(crash) != "") {
-			t.say(fmt.Sprintf("Safety Net: %s keeps its lives (%s: %s)", carName, where, reason), 20, "info")
-		} else if !wasAlive && !c.Owned {
+		if !wasAlive && !c.Owned {
 			// a retry with a loaned car that's already wrecked: one of your own cars pays
 			if payer := t.loanPayer(crash); payer != "" {
 				pc := r.Cars[payer]
@@ -731,15 +704,14 @@ func (t *Tracker) finishEvent(before []byte) {
 				if crash {
 					plives, plost = &pc.CrashLives, &r.CrashLost
 				}
-				pcost := chaosCost(mod, *plives)
-				*plives -= pcost
+				*plives--
 				name := pc.Name
 				if *plives == 0 {
 					*plost++
 					t.lastLoss, t.lastLossCrash = payer, crash
 					t.say(fmt.Sprintf("%s (loaned) is already wrecked, so %s pays: wrecked for %s events (%s: %s)", carName, name, pool, where, reason), 25, "loss")
 				} else {
-					t.say(fmt.Sprintf("%s (loaned) is already wrecked, so %s pays %s, %d left (%s: %s)", carName, name, livesText(pcost, pool), *plives, where, reason), 20, "loss")
+					t.say(fmt.Sprintf("%s (loaned) is already wrecked, so %s pays a %s life, %d left (%s: %s)", carName, name, pool, *plives, where, reason), 20, "loss")
 				}
 			}
 		} else if *lives == 0 && !c.Owned {
@@ -752,15 +724,12 @@ func (t *Tracker) finishEvent(before []byte) {
 			}
 			t.say(fmt.Sprintf("%s is wrecked for %s events (%s: %s)", carName, pool, where, reason), 25, "loss")
 		} else {
-			t.say(fmt.Sprintf("%s lost %s, %d left (%s: %s)", carName, livesText(cost, pool), *lives, where, reason), 20, "loss")
+			t.say(fmt.Sprintf("%s lost a %s life, %d left (%s: %s)", carName, pool, *lives, where, reason), 20, "loss")
 		}
 	}
 	t.eventAchievements(won, crash, medal == 3 && shownIdx == 4, lastCar)
 	if t.limitedActive() {
 		t.rollPicks() // a new pair for the next event
-	}
-	if t.chaosActive() {
-		t.rollChaos() // and the next modifier
 	}
 	if t.rouletteActive() && !offRoulette {
 		t.rollRoulette() // and the next event
@@ -1175,7 +1144,6 @@ func (t *Tracker) slowChecks() {
 	if r != nil && r.Active {
 		t.checkPicks()
 		t.checkRoulette()
-		t.checkChaos()
 		if t.dirty {
 			t.dirty = false
 			t.save()
@@ -1186,8 +1154,6 @@ func (t *Tracker) slowChecks() {
 	raceDead, crashDead := t.deadLabels()
 	raceBench, crashBench := t.benched()
 	raceDead, crashDead = union(raceDead, raceBench), union(crashDead, crashBench)
-	raceLone, crashLone := t.chaosBenched()
-	raceDead, crashDead = union(raceDead, raceLone), union(crashDead, crashLone)
 	t.patchOld = t.u32(crashTableRef) != crashTableRefOn && t.u32(crashTableRefISO) != crashTableRefOn
 	garage := raceDead
 	if t.patchOld {
@@ -1361,7 +1327,7 @@ func (t *Tracker) Snapshot() map[string]any {
 		"patch_ok":   t.patchOK,
 		"patch_old":  t.patchOK == 1 && t.patchOld,
 		"pine":       t.mem.HasPine(),
-		"modes":      map[string]bool{"limited": t.limitedOn, "revive": t.reviveOn, "roulette": t.rouletteOn, "chaos": t.chaosOn},
+		"modes":      map[string]bool{"limited": t.limitedOn, "revive": t.reviveOn, "roulette": t.rouletteOn},
 		"ai_level":   "",
 		"run":        nil,
 	}
@@ -1415,9 +1381,6 @@ func (t *Tracker) Snapshot() map[string]any {
 	}
 	if rs := t.rouletteSnapshot(); rs != nil {
 		run["roulette"] = rs
-	}
-	if cs := t.chaosSnapshot(); cs != nil {
-		run["chaos"] = cs
 	}
 	if t.limitedActive() {
 		names := func(labels []string) []string {

@@ -12,14 +12,14 @@ type Selection struct {
 	Core    bool     `json:"core"`    // Block dead cars in garage: what nuzlocke.exe needs
 	Pause   bool     `json:"pause"`   // Block pause-menu Retry and Quit
 	Level   string   `json:"level"`   // Harder AI level, "" for the game's own AI
-	Options []string `json:"options"` // option keys: widescreen, fps60, limited, revive, roulette, allcars, chaos
+	Options []string `json:"options"` // option keys: widescreen, fps60, limited, revive, roulette, allcars
 }
 
 // needsCore: the modes are run by the tracker.
-var needsCore = map[string]bool{"limited": true, "revive": true, "roulette": true, "chaos": true}
+var needsCore = map[string]bool{"limited": true, "revive": true, "roulette": true}
 
 var tags = map[string]string{"widescreen": "16-9", "fps60": "60 FPS", "limited": "Limited", "revive": "Revive",
-	"roulette": "Roulette", "allcars": "All cars", "chaos": "Chaos"}
+	"roulette": "Roulette", "allcars": "All cars"}
 
 func (s Selection) levelIndex() int {
 	if s.Level == "" {

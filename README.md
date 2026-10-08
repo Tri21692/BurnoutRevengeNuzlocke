@@ -29,7 +29,6 @@
 | **Limited Selection** (optional) | Before every event you get 2 random cars for Race events and 2 for Crash junctions; every other healthy car is `[BENCHED]` until the next event. Never the same car twice in a row. |
 | **Revive tokens** (optional) | Win streaks earn tokens that give a wrecked car one life back: every 3 wins in a row on Easy, 5 on Medium, 8 on Hard. A held token also saves a run that would otherwise end. |
 | **Event Roulette** (optional) | After every event the tracker picks your next one at random from every World Tour event, ones you haven't won yet first; every other event is locked on the map. A reroll for every 5 wins. Every rank is open, and optionally every car. |
-| **Chaos modifiers** (optional) | Every event gets a random modifier, good or bad: Safety Net, Second Wind, Easy Street, Double or Nothing, Sudden Death, Gold or Bust, Lone Wolf, or Calm. |
 | **Perfected events locked** | On Hard, an event you've Gold + Perfected can't be won again, so it's locked on the map for the rest of the run. |
 | **Achievements** | Nine to unlock in a standard run (the modes lock them), from a 5-win streak to surviving Insane, shown on the control page and announced on the overlay. |
 | **Run summary** | When the run ends you get a summary of every car's events and medals, how it ended and your achievements, on the control page, the overlay and in a text file. |
@@ -60,7 +59,7 @@ You need the **US version of Burnout Revenge (SLUS-21242)**, **PCSX2 2.x** on Wi
 
 1. **In PCSX2, turn on PINE** (Settings → Advanced, slot 28011).
 2. **Add the patch, either:**
-   - copy `patches/SLUS-21242_D224D348.pnach` into PCSX2's `patches` folder, then in the game's Properties → Patches tick **Block dead cars in garage**, **Block pause-menu Retry and Quit**, **one** Harder AI level, and if you like **Mode\Limited Selection**, **Mode\Revive tokens**, **Mode\Event Roulette**, **Mode\Chaos modifiers**, **Widescreen 16:9** and **60 FPS menus and crash mode**; **or**
+   - copy `patches/SLUS-21242_D224D348.pnach` into PCSX2's `patches` folder, then in the game's Properties → Patches tick **Block dead cars in garage**, **Block pause-menu Retry and Quit**, **one** Harder AI level, and if you like **Mode\Limited Selection**, **Mode\Revive tokens**, **Mode\Event Roulette**, **Widescreen 16:9** and **60 FPS menus and crash mode**; **or**
    - run `bin/nuzlocke_isopatch.exe` (or drag your ISO onto it), choose your ISO and what goes in on the page it opens, click **Patch ISO**, and play the ISO it makes.
 3. **Run `bin/nuzlocke.exe`.** The control page opens at `http://localhost:8765`. Pick a difficulty to start a run.
 4. **For streaming,** add a Browser Source in OBS: `http://localhost:8765/overlay`, about 800 × 400.

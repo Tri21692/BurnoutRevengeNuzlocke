@@ -1,25 +1,20 @@
 # Changelog
 
-## V2.1 (in progress)
+## V2.0.4
 
-**Upgrading:** replace all three files, and remake any patched ISOs.
+New ISO patcher and perfected events locked. **Upgrading:** replace all three files (`nuzlocke.exe`, the
+`.pnach` and `nuzlocke_isopatch.exe`), and remake any patched ISOs. Your current run carries over.
 
-- **Perfected events are locked on Hard.** Gold + Perfect is only awarded once, so an event you've
-  perfected can't be won again on Hard: it's now locked on the World Tour map for the rest of the run
-  instead of costing a life. Event Roulette never picks one either. The unlock check moved from the Event
-  Roulette option into **Block dead cars in garage**.
-- **Chaos modifiers mode (optional).** Every event gets a random modifier: Calm, Safety Net, Second Wind,
-  Easy Street, Double or Nothing, Sudden Death, Gold or Bust (not on Hard) or Lone Wolf. Shown on the
-  control page and the overlay. A new `.pnach` option (`Mode\Chaos modifiers`) and ISO patcher question;
-  it locks achievements like the other modes.
-- **Twitch chat votes (optional).** Type your channel name on the control page and chat votes on the next
-  Event Roulette event (1, 2 or 3) and Chaos modifier (A, B or C) after every event, with live vote bars on
-  the overlay. The tracker reads chat anonymously: no login. Ties and no votes keep the tracker's pick.
 - **New ISO patcher.** It opens a page in your browser, styled like the overlay, with a button for every
   part, presets, a Windows file picker and a progress bar. Every part can now be chosen on its own: the
   Harder AI, Unlock all cars, widescreen and 60 FPS work without the Nuzlocke rules, and the AI can be left
   normal. The modes still need **Block wrecked cars**, since `nuzlocke.exe` runs them. Patched ISOs are
-  named after what's in them. The command line still works: `nuzlocke_isopatch.exe game.iso hard chaos`.
+  named after what's in them. The command line still works: `nuzlocke_isopatch.exe game.iso hard roulette`.
+- **Perfected events are locked on Hard.** Gold + Perfect is only awarded once, so an event you've
+  perfected can't be won again on Hard: it's now locked on the World Tour map for the rest of the run
+  instead of costing a life. Event Roulette never picks one either. The unlock check moved from the Event
+  Roulette option into **Block dead cars in garage**, so update the `.pnach` or remake your ISO.
+- **Unlock all cars** works without Event Roulette too.
 
 ## V2.0.3
 

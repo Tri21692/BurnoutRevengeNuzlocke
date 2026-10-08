@@ -7,14 +7,14 @@ import (
 )
 
 func TestSelection(t *testing.T) {
-	full := Selection{Core: true, Pause: true, Level: "Hard", Options: []string{"chaos", "widescreen"}}
+	full := Selection{Core: true, Pause: true, Level: "Hard", Options: []string{"roulette", "widescreen"}}
 	if err := full.Validate(); err != nil {
 		t.Fatal(err)
 	}
-	if got := full.Name(); got != "Nuzlocke, No retry, Hard AI, 16-9, Chaos" {
+	if got := full.Name(); got != "Nuzlocke, No retry, Hard AI, 16-9, Roulette" {
 		t.Fatalf("name: %q", got)
 	}
-	if got := full.OutputPath(filepath.Join("games", "Burnout.iso")); got != filepath.Join("games", "Burnout (Nuzlocke, No retry, Hard AI, 16-9, Chaos).iso") {
+	if got := full.OutputPath(filepath.Join("games", "Burnout.iso")); got != filepath.Join("games", "Burnout (Nuzlocke, No retry, Hard AI, 16-9, Roulette).iso") {
 		t.Fatalf("output: %q", got)
 	}
 	for _, bad := range []Selection{
@@ -22,7 +22,7 @@ func TestSelection(t *testing.T) {
 		{Level: "Silly"},                     // unknown level
 		{Options: []string{"roulette"}},      // a mode without the rules
 		{Core: true, Options: []string{"x"}}, // unknown option
-		{Pause: true, Options: []string{"chaos"}},
+		{Pause: true, Options: []string{"revive"}},
 	} {
 		if bad.Validate() == nil {
 			t.Fatalf("%+v should be refused", bad)

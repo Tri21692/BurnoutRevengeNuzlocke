@@ -58,7 +58,7 @@ def writer(words):
     return [(WRITER_ADDR + 4 * i, w) for i, w in enumerate(code)]
 
 # The .pnach's mode markers (below the game) and where a patched ISO keeps them instead.
-MODE_MARKERS = {0x000FE130: 0x00479FF4, 0x000FE134: 0x00479FF8, 0x000FE138: 0x00479FFC, 0x000FE13C: 0x00479FEC}
+MODE_MARKERS = {0x000FE130: 0x00479FF4, 0x000FE134: 0x00479FF8, 0x000FE138: 0x00479FFC}
 
 def option_patches(g, name):
     direct, runtime = {}, []
@@ -216,8 +216,7 @@ def main():
 
 OPTIONS = (("widescreen", "Widescreen 16:9"), ("fps60", "60 FPS menus and crash mode"),
            ("limited", "Mode\\Limited Selection"), ("revive", "Mode\\Revive tokens"),
-           ("roulette", "Mode\\Event Roulette"), ("allcars", "Mode\\Event Roulette - Unlock all cars"),
-           ("chaos", "Mode\\Chaos modifiers"))
+           ("roulette", "Mode\\Event Roulette"), ("allcars", "Mode\\Event Roulette - Unlock all cars"))
 
 if __name__ == "__main__":
     main()

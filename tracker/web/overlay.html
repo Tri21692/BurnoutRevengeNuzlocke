@@ -69,10 +69,6 @@
   .ticker.achievement { background: #1a1714; color: var(--hazard); border: 2px solid var(--hazard); }
   .picks { margin-top: 5px; font-weight: 600; font-size: 14px; color: var(--smoke); white-space: nowrap; max-width: 560px; overflow: hidden; text-overflow: ellipsis; }
   .picks b { color: var(--chalk); font-weight: 600; }
-  .chaos { margin-top: 5px; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; white-space: nowrap; max-width: 560px; overflow: hidden; text-overflow: ellipsis; color: var(--smoke); }
-  .chaos b { text-transform: uppercase; letter-spacing: 1px; }
-  .chaos.good b { color: var(--hazard); }
-  .chaos.bad b { color: var(--ember); }
   .tok { display: inline-block; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--hazard); margin-left: 3px; vertical-align: 1px; }
   .tok.full { background: var(--hazard); }
   .ticker.enter { animation: slam 420ms cubic-bezier(.2, .9, .25, 1.15); }
@@ -116,7 +112,6 @@
         </div>
         <div class="medals hidden" id="medals"></div>
         <div class="picks hidden" id="picks"></div>
-        <div class="chaos hidden" id="chaos"></div>
       </div>
     </div>
     <div class="ticker hidden" id="ticker"><span id="tickertext"></span></div>
@@ -209,13 +204,6 @@ function render(s) {
     $('picks').innerHTML = `Roulette: <b>${esc(rl.name)}</b> (R${rl.rank})` + (p ? ` · Cars: <b>${list(rl.crash ? p.crash : p.race)}</b>` : '');
   } else if (p) {
     $('picks').innerHTML = `Next: <b>${list(p.race)}</b> · Crash: <b>${list(p.crash)}</b>`;
-  }
-  const ch = r.dead ? null : r.chaos;
-  $('chaos').classList.toggle('hidden', !ch);
-  if (ch) {
-    $('chaos').className = 'chaos ' + (ch.good ? 'good' : 'bad');
-    $('chaos').innerHTML = `Chaos: <b>${esc(ch.name)}</b> · ` +
-      (ch.id === 'lone' ? `only ${esc(ch.race_car)} (Crash: ${esc(ch.crash_car)})` : esc(ch.text));
   }
   const rule = r.token_rule;
   if (rule && !r.grace) {

@@ -8,7 +8,7 @@
 // part can be chosen on its own; the modes need the Nuzlocke rules, since nuzlocke.exe runs them.
 //
 // Command line: nuzlocke_isopatch.exe game.iso <easy|medium|hard|insane|off> [widescreen] [60fps] [limited]
-// [revive] [roulette] [allcars] [chaos] makes the full Nuzlocke (dead-car and pause blocks) with that AI.
+// [revive] [roulette] [allcars] makes the full Nuzlocke (dead-car and pause blocks) with that AI.
 package main
 
 import (
