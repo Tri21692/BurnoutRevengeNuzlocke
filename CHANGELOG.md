@@ -1,5 +1,19 @@
 # Changelog
 
+## V2.1
+
+Perfected events lock right away, and Burning Laps and Previews show the right location. **Upgrading:**
+replace all three files (`nuzlocke.exe`, the `.pnach` and `nuzlocke_isopatch.exe`), and remake any
+patched ISOs. Your current run carries over.
+
+- **Fixed: a just-perfected event stayed open on Hard.** The game works out which events are unlocked
+  the moment it saves a result, before the tracker has seen it. On a Hard run the patched unlock check
+  now reads each event's saved result itself, so an event locks as soon as its Gold + Perfect is saved.
+  Keep `nuzlocke.exe` running: it tells the game the run is on Hard.
+- **Fixed: wrong locations for Burning Laps and Previews** (for example Motor City for a Sunshine Keys
+  event). The location now comes from the event's own location letter, like crash junctions; the track's
+  detailed name ("Motor City Short R") is kept when it matches.
+
 ## V2.0.4
 
 New ISO patcher and perfected events locked. **Upgrading:** replace all three files (`nuzlocke.exe`, the
