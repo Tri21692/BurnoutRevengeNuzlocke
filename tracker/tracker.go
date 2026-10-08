@@ -242,6 +242,9 @@ type Tracker struct {
 	reviveOn          bool              // the patch has Revive tokens on
 	rouletteOn        bool              // the patch has Event Roulette on
 	chaosOn           bool              // the patch has Chaos modifiers on
+	chat              *Chat             // Twitch chat (nil in tests unless set)
+	twitch            TwitchSettings    // the channel and vote length
+	vote              *chatVote         // an open chat vote on the next event and modifier
 	locations         map[byte]string   // location letter in event labels -> name, learned from race events
 	lastLoss          string            // the car of your own that lost its last life in this event
 	lastLossCrash     bool              // ...in the Crash pool
@@ -279,6 +282,7 @@ func NewTracker(mem Mem, statePath string, now func() float64) *Tracker {
 		}
 		r.Ownership = true
 	}
+	t.loadTwitch()
 	return t
 }
 
@@ -577,6 +581,7 @@ func (t *Tracker) pollConnected(now, dt float64) {
 		}
 		t.knownResults = results
 	}
+	t.tickVote()
 	if now-t.lastSlow >= 2.0 {
 		t.lastSlow = now
 		t.slowChecks()
@@ -584,6 +589,9 @@ func (t *Tracker) pollConnected(now, dt float64) {
 }
 
 func (t *Tracker) finishEvent(before []byte) {
+	if t.vote != nil {
+		t.closeVote() // an event played before the vote was over: chat's pick so far counts
+	}
 	r := t.run()
 	count := int(t.u32(eventCount))
 	after := t.read(eventResults, count)
@@ -765,6 +773,7 @@ func (t *Tracker) finishEvent(before []byte) {
 	if t.rouletteActive() && !offRoulette {
 		t.rollRoulette() // and the next event
 	}
+	t.openVote() // with Twitch chat connected, chat gets a say in both
 	// Only the cars the run had before this event (and the one just driven) count: a car this event
 	// unlocks can't save the run.
 	among := t.carsBefore
@@ -1362,6 +1371,7 @@ func (t *Tracker) Snapshot() map[string]any {
 		"patch_old":  t.patchOK == 1 && t.patchOld,
 		"pine":       t.mem.HasPine(),
 		"modes":      map[string]bool{"limited": t.limitedOn, "revive": t.reviveOn, "roulette": t.rouletteOn, "chaos": t.chaosOn},
+		"twitch":     t.twitchSnapshot(),
 		"ai_level":   "",
 		"run":        nil,
 	}
@@ -1413,11 +1423,14 @@ func (t *Tracker) Snapshot() map[string]any {
 			run["revivable"] = can
 		}
 	}
-	if rs := t.rouletteSnapshot(); rs != nil {
+	if rs := t.rouletteSnapshot(); rs != nil && (t.vote == nil || t.vote.events == nil) {
 		run["roulette"] = rs
 	}
-	if cs := t.chaosSnapshot(); cs != nil {
+	if cs := t.chaosSnapshot(); cs != nil && (t.vote == nil || t.vote.mods == nil) {
 		run["chaos"] = cs
+	}
+	if vs := t.voteSnapshot(); vs != nil {
+		run["vote"] = vs
 	}
 	if t.limitedActive() {
 		names := func(labels []string) []string {

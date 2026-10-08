@@ -30,6 +30,7 @@
 | **Revive tokens** (optional) | Win streaks earn tokens that give a wrecked car one life back: every 3 wins in a row on Easy, 5 on Medium, 8 on Hard. A held token also saves a run that would otherwise end. |
 | **Event Roulette** (optional) | After every event the tracker picks your next one at random from every World Tour event, ones you haven't won yet first; every other event is locked on the map. A reroll for every 5 wins. Every rank is open, and optionally every car. |
 | **Chaos modifiers** (optional) | Every event gets a random modifier, good or bad: Safety Net, Second Wind, Easy Street, Double or Nothing, Sudden Death, Gold or Bust, Lone Wolf, or Calm. |
+| **Twitch chat votes** (optional) | Your chat votes on the next Event Roulette event (1, 2, 3) and Chaos modifier (A, B, C) after every event, with live vote bars on the overlay. Read only: just type your channel name, no login. |
 | **Perfected events locked** | On Hard, an event you've Gold + Perfected can't be won again, so it's locked on the map for the rest of the run. |
 | **Achievements** | Nine to unlock in a standard run (the modes lock them), from a 5-win streak to surviving Insane, shown on the control page and announced on the overlay. |
 | **Run summary** | When the run ends you get a summary of every car's events and medals, how it ended and your achievements, on the control page, the overlay and in a text file. |

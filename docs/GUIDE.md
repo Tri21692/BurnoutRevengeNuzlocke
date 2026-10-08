@@ -134,6 +134,12 @@ Click **revive a car** next to your tokens on the control page to give a wrecked
 
 Burning Laps and Previews still let you drive their own car under Lone Wolf.
 
+### Twitch chat votes
+
+With Event Roulette or Chaos modifiers on, your Twitch chat can choose what comes next. At the bottom of the control page, type your channel name under **Twitch chat votes**, pick how long a vote lasts (10 to 300 seconds, 45 by default) and click **Save**; it says "connected to #yourchannel" once it's in. The tracker only reads chat, anonymously, so it needs no login or password, and the setting is saved for every run (in `nuzlocke_state_twitch.json`). Leave the name empty and click **Save** to switch it off.
+
+After every event the tracker makes its own picks as usual, then puts them to chat with two other options each: type **1**, **2** or **3** for the next event, and **A**, **B** or **C** for the next Chaos modifier. Each viewer gets one vote per question (a later message changes it). The overlay shows the options and live vote bars, and the control page shows the count with an **end now** button. When the time is up the option with the most votes wins; on a tie, or with no votes, the tracker's own pick stands. With Event Roulette, every event stays locked on the map until the vote is over, and rerolls wait until then too. With only Chaos modifiers, if you finish an event before the vote is over, the votes so far decide its modifier.
+
 The stats are events won out of events played, cars wrecked in each pool, run time (time with the game running), your best win streak, and the difficulty and AI level.
 
 ## FAQ

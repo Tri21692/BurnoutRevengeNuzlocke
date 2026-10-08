@@ -12,6 +12,9 @@
   Easy Street, Double or Nothing, Sudden Death, Gold or Bust (not on Hard) or Lone Wolf. Shown on the
   control page and the overlay. A new `.pnach` option (`Mode\Chaos modifiers`) and ISO patcher question;
   it locks achievements like the other modes.
+- **Twitch chat votes (optional).** Type your channel name on the control page and chat votes on the next
+  Event Roulette event (1, 2 or 3) and Chaos modifier (A, B or C) after every event, with live vote bars on
+  the overlay. The tracker reads chat anonymously: no login. Ties and no votes keep the tracker's pick.
 
 ## V2.0.3
 
