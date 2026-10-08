@@ -27,6 +27,8 @@ const (
 	allCarsPatch      = 0x00133FC0 // Unlock all cars changes this instruction to "load 1"
 	allCarsPatchOn    = 0x24020001
 	rouletteTarget    = 0x000FE140 // the picked event's label: the patched unlock check opens only this one (0 = all)
+	lockTable         = 0x000FE400 // 8-byte labels of events the patched unlock check locks, ending with 0
+	perfectedResult   = 0x04       // eventResults byte for Gold + Perfect
 
 	// World Tour profile (01F64F08): rank at +4, then one byte per event (event list order) at +0x1C0
 	// with the best medal won (FF = none, 3 = Gold), and the results at +0x2D3 (eventResults).
@@ -503,13 +505,55 @@ func (t *Tracker) openEvents() []string {
 	if count <= 0 || count > 400 {
 		return nil
 	}
+	locked := map[string]bool{}
+	for _, l := range t.lockedEvents() {
+		locked[l] = true
+	}
 	var out []string
 	for i := 0; i < count; i++ {
-		if l := decodeLabel(t.u64(eventIDs + uint32(i)*8)); strings.HasPrefix(l, "K_") && looksLikeLabel(l) {
+		if l := decodeLabel(t.u64(eventIDs + uint32(i)*8)); strings.HasPrefix(l, "K_") && looksLikeLabel(l) && !locked[l] {
 			out = append(out, l)
 		}
 	}
 	return out
+}
+
+// ---- Locked events ----
+
+// lockedEvents lists the events that can't be won any more in this run, which the patched unlock
+// check locks on the map: on Hard (Gold + Perfect, which the game awards only once) the ones you've
+// perfected.
+func (t *Tracker) lockedEvents() []string {
+	r := t.run()
+	if !t.counting() || r.Difficulty != "Hard" {
+		return nil
+	}
+	count := int(t.u32(eventCount))
+	if count <= 0 || count > 400 {
+		return nil
+	}
+	results := t.read(eventResults, count)
+	var out []string
+	for i, b := range results {
+		if b == perfectedResult {
+			if l := decodeLabel(t.u64(eventIDs + uint32(i)*8)); looksLikeLabel(l) {
+				out = append(out, l)
+			}
+		}
+	}
+	return out
+}
+
+// syncEventLock writes the lock table for the patched unlock check.
+func (t *Tracker) syncEventLock() {
+	labels := t.lockedEvents()
+	want := make([]byte, (len(labels)+1)*8)
+	for i, l := range labels {
+		binary.LittleEndian.PutUint64(want[i*8:], encodeLabel(l))
+	}
+	if string(t.read(lockTable, len(want))) != string(want) {
+		_ = t.mem.Write(lockTable, want)
+	}
 }
 
 // rollRoulette picks the next event: one you haven't won yet in this run if there is any, else any

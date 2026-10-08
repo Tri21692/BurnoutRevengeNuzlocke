@@ -183,3 +183,36 @@ func TestRouletteNoFreebieAfterFailedBurningLap(t *testing.T) {
 		t.Fatalf("the old garage made the new pick a freebie: %v, %q", r.Freebies, r.Roulette)
 	}
 }
+
+func TestPerfectedEventsLocked(t *testing.T) {
+	m := newModeRig(t, "Hard", []string{"HIGHUSCAR1A", "HIGHUSCAR1B"}, nil)
+	events := []string{"K_01CDSR", "K_01TFLR", "K_01DH1E"}
+	for i := 0; i < 169; i++ {
+		m.f.w64(eventIDs+uint32(8*i), 0)
+	}
+	for i, l := range events {
+		m.f.w64(eventIDs+uint32(8*i), encodeLabel(l))
+		m.f.ram[eventResults+i] = 0xFF
+	}
+	m.f.ram[eventResults+1] = perfectedResult // K_01TFLR perfected
+	m.tick()
+	table := m.f.ram[lockTable : lockTable+16]
+	if binary.LittleEndian.Uint64(table) != encodeLabel("K_01TFLR") || binary.LittleEndian.Uint64(table[8:]) != 0 {
+		t.Fatalf("lock table should hold the perfected event only: %x", table)
+	}
+	m.f.w32(rouletteMarker, 1)
+	for i := 0; i < 20; i++ {
+		m.tick()
+		if r := m.tr.run(); r.Roulette == "K_01TFLR" {
+			t.Fatal("the roulette must not pick a perfected event on Hard")
+		} else if r.Roulette != "" {
+			m.tr.rollRoulette()
+		}
+	}
+	// not on Easy, and not once the run is over
+	m.tr.Grace()
+	m.tick()
+	if binary.LittleEndian.Uint64(m.f.ram[lockTable:]) != 0 {
+		t.Fatal("grace mode should unlock everything")
+	}
+}

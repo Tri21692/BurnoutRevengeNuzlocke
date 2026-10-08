@@ -670,6 +670,9 @@ func (t *Tracker) finishEvent(before []byte) {
 		t.say(where+": "+resultText, 15, "win")
 		t.earnToken()
 		t.earnReroll(eventLabel)
+		if difficulty == "Hard" && eventLabel != "" {
+			t.later(eventName+" is perfected, so it's locked on the map for the rest of the run", 12, "info")
+		}
 	} else {
 		r.Streak = 0
 		c := r.Cars[car]
@@ -1141,12 +1144,13 @@ func (t *Tracker) slowChecks() {
 	if r != nil && r.Active {
 		t.checkPicks()
 		t.checkRoulette()
-		t.syncRouletteLock()
 		if t.dirty {
 			t.dirty = false
 			t.save()
 		}
 	}
+	t.syncRouletteLock()
+	t.syncEventLock()
 	raceDead, crashDead := t.deadLabels()
 	raceBench, crashBench := t.benched()
 	raceDead, crashDead = union(raceDead, raceBench), union(crashDead, crashBench)

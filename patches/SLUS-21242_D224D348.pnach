@@ -2,7 +2,7 @@ gametitle=Burnout Revenge (PS2) - Nuzlocke v2.0.3
 
 [Nuzlocke\Block dead cars in garage]
 author=Nuzlocke mod
-description=Blocks wrecked cars in the garage and in crash junctions, and signals every finished event to the tracker.
+description=Blocks wrecked cars in the garage and in crash junctions, locks events that can't be won any more (perfected ones on Hard), and signals every finished event to the tracker.
 // --- Part 1: block dead cars (v7) ---
 // The game's confirm check (002A64A8) is called from two places, both now go through the wrapper at
 // 000FF000: 002ACE00 (normal Select) and 002A69DC (a Select remembered while the carousel was busy).
@@ -106,6 +106,49 @@ patch=1,EE,000FF1C0,word,08063D44
 patch=1,EE,000FF1C4,word,24020C90
 patch=1,EE,0018F508,word,0803FC50
 patch=1,EE,0018F50C,word,00000000
+// --- Part 4: the event unlock check (v2) ---
+// The game's unlock check (00134568: the event's rank against yours, then the race and crash chains in
+// that rank) goes through 000FF200 first (its first test, lbu v0,0x400(s0), becomes j 000FF200):
+// - Event Roulette's pick (label at 000FE140, written by the tracker): only that event is unlocked.
+// - The lock table at 000FE400 (8-byte labels, ending with 0, written by the tracker): those events are
+//   locked. On Hard these are the events you've perfected, which can't be won any more.
+// - Event Roulette on (marker 000FE138, or 00479FFC in a patched ISO): every other event is unlocked.
+// - Otherwise the game's own check.
+patch=1,EE,000FF200,word,3C010010
+patch=1,EE,000FF204,word,DCA90018
+patch=1,EE,000FF208,word,DC28E140
+patch=1,EE,000FF20C,word,11000005
+patch=1,EE,000FF210,word,00000000
+patch=1,EE,000FF214,word,15090019
+patch=1,EE,000FF218,word,00000000
+patch=1,EE,000FF21C,word,0804D163
+patch=1,EE,000FF220,word,00000000
+patch=1,EE,000FF224,word,3C0A0010
+patch=1,EE,000FF228,word,354AE400
+patch=1,EE,000FF22C,word,DD4B0000
+patch=1,EE,000FF230,word,11600005
+patch=1,EE,000FF234,word,00000000
+patch=1,EE,000FF238,word,11690010
+patch=1,EE,000FF23C,word,654A0008
+patch=1,EE,000FF240,word,1000FFFA
+patch=1,EE,000FF244,word,00000000
+patch=1,EE,000FF248,word,8C28E138
+patch=1,EE,000FF24C,word,3C0B0048
+patch=1,EE,000FF250,word,8D6B9FFC
+patch=1,EE,000FF254,word,010B4025
+patch=1,EE,000FF258,word,15000006
+patch=1,EE,000FF25C,word,00000000
+patch=1,EE,000FF260,word,92020400
+patch=1,EE,000FF264,word,14400003
+patch=1,EE,000FF268,word,00A0882D
+patch=1,EE,000FF26C,word,0804D165
+patch=1,EE,000FF270,word,00000000
+patch=1,EE,000FF274,word,0804D163
+patch=1,EE,000FF278,word,00000000
+patch=1,EE,000FF27C,word,0804D184
+patch=1,EE,000FF280,word,0000102D
+patch=1,EE,00134580,word,0803FC80
+patch=1,EE,00134584,word,00000000
 
 [Nuzlocke\Block pause-menu Retry and Quit]
 author=Nuzlocke mod
@@ -181,23 +224,8 @@ author=Nuzlocke mod
 description=After every event the tracker picks the next one at random from every World Tour event (ones you haven't won yet first), and every other event is locked on the map until you've played it. A reroll for every 5 wins (hold up to 3). Every rank is open; your rank, results and cars are untouched. Needs nuzlocke.exe V2.
 // Tells the tracker the mode is on.
 patch=1,EE,000FE138,word,00000001
-// The game's unlock check (00134568: the event's rank against yours, then the race and crash chains in
-// that rank) is replaced: an event is unlocked if it's the one the tracker picked (its label at
-// 000FE140), or if nothing is picked (every event unlocked). Its first test, lbu v0,0x400(s0) (the
-// profile's debug "everything unlocked" byte), becomes j 000FF200.
-patch=1,EE,000FF200,word,3C010010
-patch=1,EE,000FF204,word,DC28E140
-patch=1,EE,000FF208,word,11000006
-patch=1,EE,000FF20C,word,00000000
-patch=1,EE,000FF210,word,DCA90018
-patch=1,EE,000FF214,word,11090003
-patch=1,EE,000FF218,word,00000000
-patch=1,EE,000FF21C,word,0804D184
-patch=1,EE,000FF220,word,0000102D
-patch=1,EE,000FF224,word,0804D163
-patch=1,EE,000FF228,word,00000000
-patch=1,EE,00134580,word,0803FC80
-patch=1,EE,00134584,word,00000000
+// The unlock check (part 4 of Block dead cars in garage) then opens only the tracker's pick, or every
+// event when nothing is picked.
 // Every rank tab on the map open: the tab is locked when your rank is below it (001A362C slt v0,v0,s2).
 patch=1,EE,001A362C,word,0000102D
 
