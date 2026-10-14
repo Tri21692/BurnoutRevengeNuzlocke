@@ -22,6 +22,7 @@ namespace BigWalkTeleport
         MelonPreferences_Entry<KeyCode> discoKey;
         MelonPreferences_Entry<float> discoInterval;
         MelonPreferences_Entry<bool> dpadTeleport;
+        MelonPreferences_Entry<KeyCode> godVoiceKey;
         MelonPreferences_Entry<KeyCode> lookTeleportKey;
         MelonPreferences_Entry<float> lookTeleportRange;
         readonly MelonPreferences_Entry<string>[] slots = new MelonPreferences_Entry<string>[SlotCount];
@@ -44,6 +45,7 @@ namespace BigWalkTeleport
             invisibleKey = cat.CreateEntry("InvisibleKey", KeyCode.I, "Key that toggles your player model on and off");
             showHud = cat.CreateEntry("ShowHud", false, "Show your coordinates in the corner at all times");
             discoKey = cat.CreateEntry("DiscoKey", KeyCode.O, "Key that toggles outfit disco on yourself (host only)");
+            godVoiceKey = cat.CreateEntry("GodVoiceKey", KeyCode.B, "Key that toggles voice of god (your voice at full volume for everyone, wherever they are)");
             dpadTeleport = cat.CreateEntry("DpadDownTeleport", true, "Press D-pad down on a controller to teleport where you're looking");
             lookTeleportKey = cat.CreateEntry("LookTeleportKey", KeyCode.None, "Keyboard key that teleports where you're looking (None = off)");
             lookTeleportRange = cat.CreateEntry("LookTeleportRange", 500f, "How far away (in metres) look-teleport can reach");
@@ -61,6 +63,7 @@ namespace BigWalkTeleport
             bool typing = menuOpen && GUIUtility.keyboardControl != 0;
             if (!typing && Input.GetKeyDown(invisibleKey.Value)) SetInvisible(!invisible);
             if (!typing && Input.GetKeyDown(discoKey.Value)) ToggleDisco(everyone: false);
+            if (!typing && Input.GetKeyDown(godVoiceKey.Value)) ToggleGodVoice();
             if ((dpadTeleport.Value && DpadDownPressed()) || (!typing && lookTeleportKey.Value != KeyCode.None && Input.GetKeyDown(lookTeleportKey.Value)))
                 TeleportWhereLooking();
 
@@ -305,6 +308,35 @@ namespace BigWalkTeleport
             return -1;
         }
 
+        // ---------------------------------------------------------- voice of god
+        // The game's own "2D voice" setting: when it's on, every player's game plays your voice
+        // in 2D mode with its filters bypassed, so it doesn't fade with distance or get muffled.
+        // Any player can ask for it, not just the host.
+
+        bool godVoice;
+        bool godVoiceWasOn;
+
+        void ToggleGodVoice()
+        {
+            var net = FindLocalPlayer()?.playerNetworking;
+            if (net == null) { status = "No local player found"; return; }
+
+            if (!godVoice)
+            {
+                godVoiceWasOn = net.is2DVoice;
+                net.CmdSet2DVoice(true);
+                godVoice = true;
+                status = "Voice of god ON: everyone hears you at full volume";
+            }
+            else
+            {
+                net.CmdSet2DVoice(godVoiceWasOn);
+                godVoice = false;
+                status = "Voice of god off";
+            }
+            MelonLogger.Msg(status);
+        }
+
         // ---------------------------------------------------------- outfit disco
         // Outfits are owned by the host: a guest's "change my look" request is empty in the
         // release build, so this only works while you're hosting. ServerSetLook with
@@ -460,7 +492,7 @@ namespace BigWalkTeleport
             if (!menuOpen) return;
 
             float w = 380, x0 = Screen.width - w - 20, y = 20;
-            float h = 282 + SlotCount * 28;
+            float h = 314 + SlotCount * 28;
             GUI.Box(new Rect(x0, y, w, h), "Big Walk Teleport");
             float x = x0 + 12;
             y += 28;
@@ -486,6 +518,8 @@ namespace BigWalkTeleport
             y += 32;
             if (GUI.Button(new Rect(x, y, 170, 26), discoActive && !discoEveryone ? "Stop disco (O)" : "Outfit disco: me (O)")) ToggleDisco(everyone: false);
             if (GUI.Button(new Rect(x + 186, y, 170, 26), discoActive && discoEveryone ? "Stop disco" : "Outfit disco: everyone")) ToggleDisco(everyone: true);
+            y += 32;
+            if (GUI.Button(new Rect(x, y, 356, 26), godVoice ? "Voice of god: ON (B)" : "Voice of god: off (B)")) ToggleGodVoice();
             y += 36;
 
             GUI.Label(new Rect(x, y, w - 24, 22), "Saved spots");
