@@ -19,6 +19,8 @@ namespace BigWalkTeleport
         MelonPreferences_Entry<KeyCode> invisibleKey;
         MelonPreferences_Entry<bool> showHud;
         MelonPreferences_Entry<float> groundHeightOffset;
+        MelonPreferences_Entry<KeyCode> discoKey;
+        MelonPreferences_Entry<float> discoInterval;
         readonly MelonPreferences_Entry<string>[] slots = new MelonPreferences_Entry<string>[SlotCount];
 
         bool menuOpen;
@@ -38,6 +40,8 @@ namespace BigWalkTeleport
             hudKey = cat.CreateEntry("HudKey", KeyCode.F7, "Key that toggles the coordinate readout");
             invisibleKey = cat.CreateEntry("InvisibleKey", KeyCode.I, "Key that toggles your player model on and off");
             showHud = cat.CreateEntry("ShowHud", false, "Show your coordinates in the corner at all times");
+            discoKey = cat.CreateEntry("DiscoKey", KeyCode.O, "Key that toggles outfit disco on yourself (host only)");
+            discoInterval = cat.CreateEntry("DiscoInterval", 0.6f, "Seconds between outfit changes during disco");
             groundHeightOffset = cat.CreateEntry("GroundHeightOffset", 1.5f, "How far above the ground to land when Y is left blank");
             for (int i = 0; i < SlotCount; i++)
                 slots[i] = cat.CreateEntry($"Slot{i + 1}", "", $"Saved spot {i + 1} as x,y,z");
@@ -50,6 +54,7 @@ namespace BigWalkTeleport
             // Don't let typing an "i" into a coordinate box toggle invisibility.
             bool typing = menuOpen && GUIUtility.keyboardControl != 0;
             if (!typing && Input.GetKeyDown(invisibleKey.Value)) SetInvisible(!invisible);
+            if (!typing && Input.GetKeyDown(discoKey.Value)) ToggleDisco(everyone: false);
 
             if (menuOpen)
             {
@@ -59,6 +64,9 @@ namespace BigWalkTeleport
 
             if (invisible && Time.unscaledTime >= nextRendererRefresh)
                 RefreshHiddenRenderers();
+
+            LogTeleportProgress();
+            UpdateDisco();
         }
 
         void ToggleMenu()
@@ -69,7 +77,7 @@ namespace BigWalkTeleport
                 savedLockState = Cursor.lockState;
                 savedCursorVisible = Cursor.visible;
                 var pc = FindLocalPlayer();
-                if (pc != null) FillInputs(pc.rb != null ? pc.rb.position : pc.transform.position);
+                if (pc != null) FillInputs(PlayerPosition(pc));
             }
             else
             {
@@ -85,47 +93,122 @@ namespace BigWalkTeleport
         {
             var all = PlayerCharacter.allPlayerCharacters;
             if (all == null) return null;
-            PlayerCharacter only = null;
+            PlayerCharacter owned = null, only = null;
             for (int i = 0; i < all.Count; i++)
             {
                 var pc = all[i];
                 if (pc == null) continue;
                 if (pc.isLocalPlayer) return pc;
+                if (owned == null && (pc.isOwned || (pc.houseNetworkTransform != null && pc.houseNetworkTransform.isOwned))) owned = pc;
                 only = all.Count == 1 ? pc : null;
             }
-            return only;
+            return owned ?? only;
         }
 
-        static Vector3 PlayerPosition(PlayerCharacter pc) => pc.rb != null ? pc.rb.position : pc.transform.position;
+        // The physics body ("kernal") is what PlayerMover tracks; fall back to the root if it's missing.
+        static Transform Body(PlayerCharacter pc) =>
+            pc.kernal != null ? pc.kernal : pc.rb != null ? pc.rb.transform : pc.transform;
+
+        static Vector3 PlayerPosition(PlayerCharacter pc) => Body(pc).position;
+
+        // Teleports are re-applied for a few physics steps in case the game pulls the body back.
+        const int HoldFixedSteps = 6;
+        Vector3 teleportTarget;
+        int holdStepsLeft;
+        int diagnosticFrame = -1;
 
         void Teleport(Vector3 target)
         {
             var pc = FindLocalPlayer();
-            if (pc == null) { status = "No local player found (are you in the world?)"; return; }
+            if (pc == null)
+            {
+                int count = PlayerCharacter.allPlayerCharacters?.Count ?? -1;
+                status = "No local player found (are you in the world?)";
+                MelonLogger.Warning($"{status} allPlayerCharacters.Count={count}");
+                return;
+            }
 
+            LogPlayer(pc, "before");
+            ApplyTeleport(pc, target);
+            LogPlayer(pc, "after");
+
+            teleportTarget = target;
+            holdStepsLeft = HoldFixedSteps;
+            diagnosticFrame = 0;
+            status = $"Teleported to {Format(target)}";
+            MelonLogger.Msg(status);
+        }
+
+        static void ApplyTeleport(PlayerCharacter pc, Vector3 target)
+        {
             // Positions are synced relative to whatever platform you're standing on; step off it first.
             var net = pc.houseNetworkTransform;
             if (net != null && net.stickyPlatform != null) net.stickyPlatform = null;
 
+            var root = pc.transform;
+            var body = Body(pc);
+            var delta = target - body.position;
+
+            // Shift root and body by the same amount so neither drags the other back.
+            root.position += delta;
+            if (body != root && !body.IsChildOf(root)) body.position += delta;
             var rb = pc.rb;
+            if (rb != null && rb.transform != root && rb.transform != body && !rb.transform.IsChildOf(root) && !rb.transform.IsChildOf(body))
+                rb.transform.position += delta;
+
             if (rb != null)
             {
+                rb.position = rb.transform.position;
                 rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
-                rb.position = target;
-                rb.transform.position = target;
-                // Same call the game uses to snap the character root back onto its physics body.
-                if (pc.mover != null) pc.mover.ResetPosition();
-                else pc.transform.position = target;
             }
-            else
-            {
-                pc.transform.position = target;
-            }
-            Physics.SyncTransforms();
 
-            status = $"Teleported to {Format(target)}";
-            MelonLogger.Msg(status);
+            // PlayerMover works out your speed from how far the body moved since last step;
+            // without this the jump reads as a huge velocity.
+            var mover = pc.mover;
+            if (mover != null)
+            {
+                mover.cachedKernalPos = body.position;
+                mover.localKernalVelocity = Vector3.zero;
+            }
+
+            Physics.SyncTransforms();
+        }
+
+        public override void OnFixedUpdate()
+        {
+            if (holdStepsLeft <= 0) return;
+            holdStepsLeft--;
+            var pc = FindLocalPlayer();
+            if (pc == null) { holdStepsLeft = 0; return; }
+            float drift = Vector3.Distance(PlayerPosition(pc), teleportTarget);
+            if (drift > 2f)
+            {
+                MelonLogger.Msg($"Teleport drifted {drift:0.0}m on hold step {HoldFixedSteps - holdStepsLeft}; re-applying");
+                ApplyTeleport(pc, teleportTarget);
+            }
+        }
+
+        void LogTeleportProgress()
+        {
+            if (diagnosticFrame < 0) return;
+            diagnosticFrame++;
+            if (diagnosticFrame != 1 && diagnosticFrame != 10 && diagnosticFrame != 60 && diagnosticFrame != 300) return;
+            var pc = FindLocalPlayer();
+            if (pc != null)
+                MelonLogger.Msg($"[frame {diagnosticFrame}] body {Format(PlayerPosition(pc))}, {Vector3.Distance(PlayerPosition(pc), teleportTarget):0.0}m from target");
+            if (diagnosticFrame >= 300) diagnosticFrame = -1;
+        }
+
+        static void LogPlayer(PlayerCharacter pc, string when)
+        {
+            var rb = pc.rb;
+            var body = Body(pc);
+            MelonLogger.Msg(
+                $"[{when}] '{pc.name}' local={pc.isLocalPlayer} owned={pc.isOwned} " +
+                $"root={Format(pc.transform.position)} kernal={(pc.kernal != null ? $"'{pc.kernal.name}' {Format(pc.kernal.position)} childOfRoot={pc.kernal.IsChildOf(pc.transform)}" : "null")} " +
+                $"rb={(rb != null ? $"'{rb.name}' {Format(rb.position)} kinematic={rb.isKinematic} interp={rb.interpolation}" : "null")} " +
+                $"cachedKernalPos={(pc.mover != null ? Format(pc.mover.cachedKernalPos) : "n/a")} body={Format(body.position)}");
         }
 
         bool TryGroundHeight(float x, float z, out float y)
@@ -137,6 +220,92 @@ namespace BigWalkTeleport
             }
             y = 0;
             return false;
+        }
+
+        // ---------------------------------------------------------- outfit disco
+        // Outfits are owned by the host: a guest's "change my look" request is empty in the
+        // release build, so this only works while you're hosting. ServerSetLook with
+        // saveChange=false syncs the colour to everyone (with the game's puff effect) without
+        // touching anyone's saved outfit, and the originals are put back when it stops.
+
+        bool discoActive, discoEveryone;
+        float nextDiscoTick;
+        readonly Dictionary<IntPtr, (PlayerCharacter pc, int head, int torso, int legs)> discoOriginals = new();
+        readonly System.Random discoRandom = new();
+
+        void ToggleDisco(bool everyone)
+        {
+            if (discoActive)
+            {
+                bool wasEveryone = discoEveryone;
+                StopDisco();
+                if (wasEveryone == everyone) return;
+            }
+
+            var me = FindLocalPlayer();
+            if (me == null) { status = "No local player found"; return; }
+            if (!me.isServer) { status = "Outfit disco only works when you're hosting"; MelonLogger.Msg(status); return; }
+
+            discoActive = true;
+            discoEveryone = everyone;
+            nextDiscoTick = 0;
+            status = everyone ? "Outfit disco: everyone!" : "Outfit disco!";
+            MelonLogger.Msg(status);
+        }
+
+        void StopDisco()
+        {
+            discoActive = false;
+            foreach (var o in discoOriginals.Values)
+            {
+                var net = o.pc != null ? o.pc.playerNetworking : null;
+                if (net == null) continue;
+                net.ServerSetLook(o.head, PlayerLooks.LookPart.Head, false);
+                net.ServerSetLook(o.torso, PlayerLooks.LookPart.Torso, false);
+                net.ServerSetLook(o.legs, PlayerLooks.LookPart.Legs, false);
+            }
+            discoOriginals.Clear();
+            status = "Disco over, outfits restored";
+            MelonLogger.Msg(status);
+        }
+
+        void UpdateDisco()
+        {
+            if (!discoActive || Time.unscaledTime < nextDiscoTick) return;
+            nextDiscoTick = Time.unscaledTime + Mathf.Max(0.1f, discoInterval.Value);
+
+            var me = FindLocalPlayer();
+            if (me == null || !me.isServer) { StopDisco(); return; }
+
+            if (!discoEveryone) { DiscoStep(me); return; }
+            var all = PlayerCharacter.allPlayerCharacters;
+            for (int i = 0; all != null && i < all.Count; i++)
+                if (all[i] != null) DiscoStep(all[i]);
+        }
+
+        void DiscoStep(PlayerCharacter pc)
+        {
+            var net = pc.playerNetworking;
+            var colors = pc.looks?.lookSet?.colors;
+            if (net == null || colors == null || colors.Length < 2) return;
+
+            if (!discoOriginals.ContainsKey(pc.Pointer))
+                discoOriginals[pc.Pointer] = (pc, net.lookIdHead, net.lookIdTorso, net.lookIdLegs);
+
+            net.ServerSetLook(RandomColor(colors, net.lookIdHead), PlayerLooks.LookPart.Head, false);
+            net.ServerSetLook(RandomColor(colors, net.lookIdTorso), PlayerLooks.LookPart.Torso, false);
+            net.ServerSetLook(RandomColor(colors, net.lookIdLegs), PlayerLooks.LookPart.Legs, false);
+        }
+
+        // Skips reward-only colours so the disco doesn't hand out unlocks, and avoids repeating the current one.
+        int RandomColor(Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<PlayerLookSet.LookColor> colors, int current)
+        {
+            for (int tries = 0; tries < 20; tries++)
+            {
+                int id = discoRandom.Next(colors.Length);
+                if (id != current && !colors[id].rewardOnly) return id;
+            }
+            return current;
         }
 
         // ---------------------------------------------------------- invisibility
@@ -208,7 +377,7 @@ namespace BigWalkTeleport
             if (!menuOpen) return;
 
             float w = 380, x0 = Screen.width - w - 20, y = 20;
-            float h = 250 + SlotCount * 28;
+            float h = 282 + SlotCount * 28;
             GUI.Box(new Rect(x0, y, w, h), "Big Walk Teleport");
             float x = x0 + 12;
             y += 28;
@@ -231,6 +400,9 @@ namespace BigWalkTeleport
             y += 32;
             if (GUI.Button(new Rect(x, y, 170, 26), invisible ? "Show my model (I)" : "Hide my model (I)")) SetInvisible(!invisible);
             if (GUI.Button(new Rect(x + 186, y, 170, 26), "Close (F8)")) ToggleMenu();
+            y += 32;
+            if (GUI.Button(new Rect(x, y, 170, 26), discoActive && !discoEveryone ? "Stop disco (O)" : "Outfit disco: me (O)")) ToggleDisco(everyone: false);
+            if (GUI.Button(new Rect(x + 186, y, 170, 26), discoActive && discoEveryone ? "Stop disco" : "Outfit disco: everyone")) ToggleDisco(everyone: true);
             y += 36;
 
             GUI.Label(new Rect(x, y, w - 24, 22), "Saved spots");
