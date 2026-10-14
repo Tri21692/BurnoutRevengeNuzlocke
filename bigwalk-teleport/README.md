@@ -32,7 +32,6 @@ You can change the keys, disco speed, ground offset and saved spots in `UserData
 
 - **Outfit disco only works when you host.** The host's game owns everyone's outfit, and a guest's "change my look" request is ignored in the released game. The disco never writes to anyone's saved outfit, skips reward-only colours, and puts everyone's real outfit back when you stop it.
 - **If teleporting doesn't work,** send `MelonLoader/Latest.log`. Every teleport logs what it found and where you end up 1, 10, 60 and 300 frames later.
-
 - **Hiding your model only changes your own screen.** Other players still see you, because each player's game draws everyone itself. Props you are holding are hidden too.
 - **Online:** the game syncs your position from your own client, so other players should see you move to the new spot. It hasn't been tested with friends yet.
 - While you type in the window, the game still reads the keyboard, so typing letters like W/A/S/D may move you. Numbers are safe.
