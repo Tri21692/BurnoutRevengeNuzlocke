@@ -26,6 +26,7 @@
     <Reference Include="$(InteropDir)\Assembly-CSharp.dll" Private="false" />
     <Reference Include="$(InteropDir)\Il2Cppmscorlib.dll" Private="false" />
     <Reference Include="$(InteropDir)\Il2CppMirror.dll" Private="false" />
+    <Reference Include="$(InteropDir)\Il2CppRewired_Core.dll" Private="false" />
     <Reference Include="$(InteropDir)\UnityEngine.CoreModule.dll" Private="false" />
     <Reference Include="$(InteropDir)\UnityEngine.PhysicsModule.dll" Private="false" />
     <Reference Include="$(InteropDir)\UnityEngine.IMGUIModule.dll" Private="false" />

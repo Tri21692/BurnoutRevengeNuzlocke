@@ -21,6 +21,9 @@ namespace BigWalkTeleport
         MelonPreferences_Entry<float> groundHeightOffset;
         MelonPreferences_Entry<KeyCode> discoKey;
         MelonPreferences_Entry<float> discoInterval;
+        MelonPreferences_Entry<bool> dpadTeleport;
+        MelonPreferences_Entry<KeyCode> lookTeleportKey;
+        MelonPreferences_Entry<float> lookTeleportRange;
         readonly MelonPreferences_Entry<string>[] slots = new MelonPreferences_Entry<string>[SlotCount];
 
         bool menuOpen;
@@ -41,6 +44,9 @@ namespace BigWalkTeleport
             invisibleKey = cat.CreateEntry("InvisibleKey", KeyCode.I, "Key that toggles your player model on and off");
             showHud = cat.CreateEntry("ShowHud", false, "Show your coordinates in the corner at all times");
             discoKey = cat.CreateEntry("DiscoKey", KeyCode.O, "Key that toggles outfit disco on yourself (host only)");
+            dpadTeleport = cat.CreateEntry("DpadDownTeleport", true, "Press D-pad down on a controller to teleport where you're looking");
+            lookTeleportKey = cat.CreateEntry("LookTeleportKey", KeyCode.None, "Keyboard key that teleports where you're looking (None = off)");
+            lookTeleportRange = cat.CreateEntry("LookTeleportRange", 500f, "How far away (in metres) look-teleport can reach");
             discoInterval = cat.CreateEntry("DiscoInterval", 0.6f, "Seconds between outfit changes during disco");
             groundHeightOffset = cat.CreateEntry("GroundHeightOffset", 1.5f, "How far above the ground to land when Y is left blank");
             for (int i = 0; i < SlotCount; i++)
@@ -55,6 +61,8 @@ namespace BigWalkTeleport
             bool typing = menuOpen && GUIUtility.keyboardControl != 0;
             if (!typing && Input.GetKeyDown(invisibleKey.Value)) SetInvisible(!invisible);
             if (!typing && Input.GetKeyDown(discoKey.Value)) ToggleDisco(everyone: false);
+            if ((dpadTeleport.Value && DpadDownPressed()) || (!typing && lookTeleportKey.Value != KeyCode.None && Input.GetKeyDown(lookTeleportKey.Value)))
+                TeleportWhereLooking();
 
             if (menuOpen)
             {
@@ -220,6 +228,81 @@ namespace BigWalkTeleport
             }
             y = 0;
             return false;
+        }
+
+        // ------------------------------------------------------ look teleport
+
+        void TeleportWhereLooking()
+        {
+            var pc = FindLocalPlayer();
+            if (pc == null) { status = "No local player found"; return; }
+            var cam = PlayerCamera();
+            if (cam == null) { status = "Couldn't find the camera"; MelonLogger.Warning(status); return; }
+
+            var ray = new Ray(cam.transform.position, cam.transform.forward);
+            var hits = Physics.RaycastAll(ray, lookTeleportRange.Value, ~0, QueryTriggerInteraction.Ignore);
+            RaycastHit best = default;
+            float bestDistance = float.MaxValue;
+            var root = pc.transform;
+            for (int i = 0; i < hits.Length; i++)
+            {
+                var h = hits[i];
+                var t = h.collider.transform;
+                // Skip your own body, arms and whatever you're holding.
+                if (t.IsChildOf(root) || (pc.kernal != null && t.IsChildOf(pc.kernal))) continue;
+                if (h.distance < bestDistance) { best = h; bestDistance = h.distance; }
+            }
+            if (bestDistance == float.MaxValue) { status = "Nothing in range to teleport to"; return; }
+
+            // Step back off walls so you don't land inside them, then stand on top of what you hit.
+            var target = best.point;
+            if (best.normal.y < 0.5f) target += best.normal * 0.75f;
+            target += Vector3.up * groundHeightOffset.Value;
+            Teleport(target);
+        }
+
+        static Camera PlayerCamera()
+        {
+            var main = Camera.main;
+            if (main != null) return main;
+            var refs = UnityEngine.Object.FindObjectOfType<PlayerCameraReferences>();
+            return refs != null ? refs.playerCamera : null;
+        }
+
+        // Unity's built-in input can't see the d-pad on Xbox pads, so ask Rewired (the game's own
+        // input library) for any controller button named like "D-Pad Down" / "Hat Down".
+        readonly Dictionary<int, int> dpadDownIndex = new();
+
+        bool DpadDownPressed()
+        {
+            if (!Il2CppRewired.ReInput.isReady) return false;
+            var controllers = Il2CppRewired.ReInput.controllers;
+            var joysticks = controllers.Joysticks;
+            if (joysticks == null) return false;
+            for (int i = 0; i < controllers.joystickCount; i++)
+            {
+                var js = joysticks[i];
+                if (js == null || !js.isConnected) continue;
+                if (!dpadDownIndex.TryGetValue(js.id, out int index))
+                {
+                    index = FindDpadDown(js);
+                    dpadDownIndex[js.id] = index;
+                    MelonLogger.Msg($"Controller '{js.name}': d-pad down is button {(index >= 0 ? index.ToString() : "not found")}");
+                }
+                if (index >= 0 && js.GetButtonDown(index)) return true;
+            }
+            return false;
+        }
+
+        static int FindDpadDown(Il2CppRewired.Joystick js)
+        {
+            var buttons = js.Buttons;
+            for (int i = 0; buttons != null && i < js.buttonCount; i++)
+            {
+                var name = buttons[i]?.name?.ToLowerInvariant() ?? "";
+                if (name.Contains("down") && (name.Contains("pad") || name.Contains("hat"))) return i;
+            }
+            return -1;
         }
 
         // ---------------------------------------------------------- outfit disco
