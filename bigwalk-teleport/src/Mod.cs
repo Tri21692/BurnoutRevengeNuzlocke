@@ -23,6 +23,7 @@ namespace BigWalkTeleport
         MelonPreferences_Entry<float> discoInterval;
         MelonPreferences_Entry<bool> dpadTeleport;
         MelonPreferences_Entry<KeyCode> godVoiceKey;
+        MelonPreferences_Entry<KeyCode> dumpBindsKey;
         MelonPreferences_Entry<KeyCode> lookTeleportKey;
         MelonPreferences_Entry<float> lookTeleportRange;
         readonly MelonPreferences_Entry<string>[] slots = new MelonPreferences_Entry<string>[SlotCount];
@@ -46,6 +47,7 @@ namespace BigWalkTeleport
             showHud = cat.CreateEntry("ShowHud", false, "Show your coordinates in the corner at all times");
             discoKey = cat.CreateEntry("DiscoKey", KeyCode.O, "Key that toggles outfit disco on yourself (host only)");
             godVoiceKey = cat.CreateEntry("GodVoiceKey", KeyCode.B, "Key that toggles voice of god (your voice at full volume for everyone, wherever they are)");
+            dumpBindsKey = cat.CreateEntry("DumpBindsKey", KeyCode.F9, "Key that writes every game input binding to the log");
             dpadTeleport = cat.CreateEntry("DpadDownTeleport", true, "Press D-pad down on a controller to teleport where you're looking");
             lookTeleportKey = cat.CreateEntry("LookTeleportKey", KeyCode.None, "Keyboard key that teleports where you're looking (None = off)");
             lookTeleportRange = cat.CreateEntry("LookTeleportRange", 500f, "How far away (in metres) look-teleport can reach");
@@ -64,6 +66,18 @@ namespace BigWalkTeleport
             if (!typing && Input.GetKeyDown(invisibleKey.Value)) SetInvisible(!invisible);
             if (!typing && Input.GetKeyDown(discoKey.Value)) ToggleDisco(everyone: false);
             if (!typing && Input.GetKeyDown(godVoiceKey.Value)) ToggleGodVoice();
+            if (Input.GetKeyDown(dumpBindsKey.Value)) DumpBindings();
+            if (!dumpedBindings && Time.unscaledTime >= nextAutoDump)
+            {
+                nextAutoDump = Time.unscaledTime + 5f;
+                if (Il2CppRewired.ReInput.isReady && FindLocalPlayer() != null) DumpBindings();
+            }
+            if (godVoiceCheckAt > 0 && Time.unscaledTime >= godVoiceCheckAt)
+            {
+                godVoiceCheckAt = 0;
+                var net = FindLocalPlayer()?.playerNetworking;
+                if (net != null) MelonLogger.Msg($"Voice of god check: host now has your 2D voice set to {net.is2DVoice} (wanted {godVoice})");
+            }
             bool dpad = false;
             if (dpadTeleport.Value)
             {
@@ -344,6 +358,7 @@ namespace BigWalkTeleport
 
         bool godVoice;
         bool godVoiceWasOn;
+        float godVoiceCheckAt;
 
         void ToggleGodVoice()
         {
@@ -363,7 +378,53 @@ namespace BigWalkTeleport
                 godVoice = false;
                 status = "Voice of god off";
             }
-            MelonLogger.Msg(status);
+            MelonLogger.Msg($"{status} (isServer={net.isServer})");
+            // The host's answer comes back as a synced value; check it once it's had time to arrive.
+            godVoiceCheckAt = Time.unscaledTime + 1.5f;
+        }
+
+        // ---------------------------------------------------------- bindings dump
+        // The game's controls live in its Rewired data, not its code, so ask Rewired at runtime.
+
+        bool dumpedBindings;
+        float nextAutoDump;
+
+        void DumpBindings()
+        {
+            try
+            {
+                if (!Il2CppRewired.ReInput.isReady) { MelonLogger.Msg("Bindings: Rewired isn't ready yet"); return; }
+                var player = FindLocalPlayer()?.inputPlayer ?? Il2CppRewired.ReInput.players.GetPlayer(0);
+                if (player == null) { MelonLogger.Msg("Bindings: no Rewired player found"); return; }
+                dumpedBindings = true;
+
+                var maps = new Il2CppSystem.Collections.Generic.List<Il2CppRewired.ControllerMap>();
+                player.controllers.maps.GetAllMaps(maps);
+                MelonLogger.Msg($"===== Game bindings for Rewired player '{player.name}' ({maps.Count} maps) =====");
+                for (int i = 0; i < maps.Count; i++)
+                {
+                    var map = maps[i];
+                    if (map == null) continue;
+                    string category = Il2CppRewired.ReInput.mapping.GetMapCategory(map.categoryId)?.name ?? map.categoryId.ToString();
+                    var controller = map.controller;
+                    MelonLogger.Msg($"--- {map.controllerType} '{controller?.name}' / {category}{(map.enabled ? "" : " (disabled)")}");
+                    var elements = map.ElementMaps;
+                    for (int j = 0; elements != null && j < map.elementMapCount; j++)
+                    {
+                        var aem = elements[j];
+                        if (aem == null) continue;
+                        string action = Il2CppRewired.ReInput.mapping.GetAction(aem.actionId)?.name ?? aem.actionId.ToString();
+                        string pole = aem.axisContribution == Il2CppRewired.Pole.Negative ? " (-)" : "";
+                        MelonLogger.Msg($"    {aem.elementIdentifierName,-22} -> {action}{pole}{(aem.enabled ? "" : " (disabled)")}");
+                    }
+                }
+                MelonLogger.Msg("===== end of bindings =====");
+            }
+            catch (Exception e)
+            {
+                dumpedBindings = true;
+                MelonLogger.Error($"Bindings dump failed: {e}");
+            }
         }
 
         // ---------------------------------------------------------- outfit disco

@@ -18,6 +18,7 @@ A MelonLoader mod for Big Walk that lets you teleport to coordinates, save spots
 | **I** | Hide or show your player model |
 | **O** | Outfit disco on yourself: your colours change every 0.6s for everyone to see (host only) |
 | **B** | Voice of god: everyone hears your voice at full volume, wherever they are (works as a guest) |
+| **F9** | Write all of the game's control bindings (keyboard, mouse and controller) to the log. This also happens once on its own when you enter the world |
 | **D-pad down** (controller) | Teleport to wherever you're looking, up to 500m away |
 
 In the teleport window:
