@@ -64,7 +64,14 @@ namespace BigWalkTeleport
             if (!typing && Input.GetKeyDown(invisibleKey.Value)) SetInvisible(!invisible);
             if (!typing && Input.GetKeyDown(discoKey.Value)) ToggleDisco(everyone: false);
             if (!typing && Input.GetKeyDown(godVoiceKey.Value)) ToggleGodVoice();
-            if ((dpadTeleport.Value && DpadDownPressed()) || (!typing && lookTeleportKey.Value != KeyCode.None && Input.GetKeyDown(lookTeleportKey.Value)))
+            bool dpad = false;
+            if (dpadTeleport.Value)
+            {
+                try { dpad = DpadDownPressed(); }
+                catch (Exception e) { dpadTeleport.Value = false; MelonLogger.Error($"Reading the d-pad failed, turning d-pad teleport off: {e}"); }
+            }
+            if (dpad) MelonLogger.Msg("D-pad down pressed");
+            if (dpad || (!typing && lookTeleportKey.Value != KeyCode.None && Input.GetKeyDown(lookTeleportKey.Value)))
                 TeleportWhereLooking();
 
             if (menuOpen)
@@ -238,7 +245,7 @@ namespace BigWalkTeleport
         void TeleportWhereLooking()
         {
             var pc = FindLocalPlayer();
-            if (pc == null) { status = "No local player found"; return; }
+            if (pc == null) { status = "No local player found"; MelonLogger.Warning($"Look-teleport: {status}"); return; }
             var cam = PlayerCamera();
             if (cam == null) { status = "Couldn't find the camera"; MelonLogger.Warning(status); return; }
 
@@ -255,7 +262,13 @@ namespace BigWalkTeleport
                 if (t.IsChildOf(root) || (pc.kernal != null && t.IsChildOf(pc.kernal))) continue;
                 if (h.distance < bestDistance) { best = h; bestDistance = h.distance; }
             }
-            if (bestDistance == float.MaxValue) { status = "Nothing in range to teleport to"; return; }
+            if (bestDistance == float.MaxValue)
+            {
+                status = "Nothing in range to teleport to";
+                MelonLogger.Msg($"{status} (camera '{cam.name}' at {Format(ray.origin)}, {hits.Length} hits, all on you)");
+                return;
+            }
+            MelonLogger.Msg($"Look-teleport: camera '{cam.name}' hit '{best.collider.name}' {best.distance:0.0}m away at {Format(best.point)}");
 
             // Step back off walls so you don't land inside them, then stand on top of what you hit.
             var target = best.point;
@@ -275,10 +288,16 @@ namespace BigWalkTeleport
         // Unity's built-in input can't see the d-pad on Xbox pads, so ask Rewired (the game's own
         // input library) for any controller button named like "D-Pad Down" / "Hat Down".
         readonly Dictionary<int, int> dpadDownIndex = new();
+        bool loggedJoystickCount;
 
         bool DpadDownPressed()
         {
             if (!Il2CppRewired.ReInput.isReady) return false;
+            if (!loggedJoystickCount)
+            {
+                loggedJoystickCount = true;
+                MelonLogger.Msg($"Rewired is ready: {Il2CppRewired.ReInput.controllers.joystickCount} controller(s) connected");
+            }
             var controllers = Il2CppRewired.ReInput.controllers;
             var joysticks = controllers.Joysticks;
             if (joysticks == null) return false;
@@ -291,10 +310,20 @@ namespace BigWalkTeleport
                     index = FindDpadDown(js);
                     dpadDownIndex[js.id] = index;
                     MelonLogger.Msg($"Controller '{js.name}': d-pad down is button {(index >= 0 ? index.ToString() : "not found")}");
+                    if (index < 0) MelonLogger.Msg($"  its buttons are: {ButtonNames(js)}");
                 }
                 if (index >= 0 && js.GetButtonDown(index)) return true;
             }
             return false;
+        }
+
+        static string ButtonNames(Il2CppRewired.Joystick js)
+        {
+            var names = new List<string>();
+            var buttons = js.Buttons;
+            for (int i = 0; buttons != null && i < js.buttonCount; i++)
+                names.Add($"{i}='{buttons[i]?.name}'");
+            return string.Join(", ", names);
         }
 
         static int FindDpadDown(Il2CppRewired.Joystick js)
