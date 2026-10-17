@@ -174,10 +174,12 @@ function render(s) {
   // HUD plate
   $('mode').innerHTML = r.grace
     ? `Grace mode <small>not counting</small>`
-    : `${r.difficulty} Nuzlocke <small>${r.lives_start} + ${r.lives_start} lives${aiText(s.ai_level || r.ai_level) ? ' · ' + aiText(s.ai_level || r.ai_level) : ''}</small>`;
+    : `${r.difficulty} ${r.strict ? 'Strict ' : ''}Nuzlocke <small>${r.strict ? `${r.lives_total} lives in total` : `${r.lives_start} + ${r.lives_start} lives`}${aiText(s.ai_level || r.ai_level) ? ' · ' + aiText(s.ai_level || r.ai_level) : ''}</small>`;
   $('plate').classList.toggle('grace', r.grace);
   $('won').textContent = `${r.won}/${r.played}`;
-  $('lost').textContent = `${r.cars_lost}/${r.race_cars_total ?? r.cars_total}`;
+  $('lost').textContent = r.strict ? `${r.lives}/${r.lives_total}` : `${r.cars_lost}/${r.race_cars_total ?? r.cars_total}`;
+  $('lost').nextElementSibling.textContent = r.strict ? 'lives left' : 'race wrecks';
+  $('crashlost').parentElement.classList.toggle('hidden', !!r.strict);
   $('crashlost').textContent = `${r.crash_cars_lost || 0}/${r.crash_cars_total ?? r.cars_total}`;
   $('time').textContent = r.time;
 
@@ -189,11 +191,13 @@ function render(s) {
     const canRace = car.can_race ?? true, canCrash = car.can_crash ?? true;
     const out = (!canRace || car.lives === 0) && (!canCrash || crashLives === 0);
     $('car').classList.toggle('wrecked', out && !r.grace);
-    $('racepool').classList.toggle('hidden', r.grace || !canRace);   // crash cars can't race
-    $('crashpool').classList.toggle('hidden', r.grace || !canCrash); // garage-only cars can't crash
-    $('racepool').classList.toggle('out', car.lives === 0);
+    $('racepool').classList.toggle('hidden', r.grace || (!canRace && !r.strict)); // crash cars can't race
+    $('crashpool').classList.toggle('hidden', r.grace || !canCrash || !!r.strict); // garage-only cars can't crash
+    $('racepool').firstElementChild.textContent = r.strict ? 'LIVES' : 'RACE';
+    $('racepool').classList.toggle('out', r.strict ? r.lives === 0 : car.lives === 0);
     $('crashpool').classList.toggle('out', crashLives === 0);
-    $('hearts').innerHTML = hearts(car.lives, r.lives_start);
+    // Strict: the run's shared lives
+    $('hearts').innerHTML = r.strict ? hearts(r.lives, r.lives_total) : hearts(car.lives, r.lives_start);
     $('crashhearts').innerHTML = hearts(crashLives, r.lives_start);
   }
   const p = r.dead ? null : r.picks;

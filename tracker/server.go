@@ -69,7 +69,7 @@ func startServer(tr *Tracker, game *Game) (*http.Server, error) {
 		}
 	}
 	mux.HandleFunc("/api/newrun", func(w http.ResponseWriter, r *http.Request) {
-		action(func() { tr.StartRun(r.URL.Query().Get("difficulty")) })(w, r)
+		action(func() { tr.StartRunStrict(r.URL.Query().Get("difficulty"), r.URL.Query().Get("strict") == "1") })(w, r)
 	})
 	mux.HandleFunc("/api/grace", action(tr.Grace))
 	mux.HandleFunc("/api/reroll", action(func() { tr.Reroll() }))

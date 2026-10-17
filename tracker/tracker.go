@@ -61,6 +61,9 @@ var isoHooks = map[uint32]uint32{0x002ACE00: 0x0C11E740, 0x002A69DC: 0x0C11E740,
 	0x0018F508: 0x0811E774}
 var difficulties = map[string]int{"Easy": 3, "Medium": 2, "Hard": 1}
 
+// strictLives: Strict Nuzlocke's lives for the whole run, shared by every car.
+var strictLives = map[string]int{"Easy": 10, "Medium": 7, "Hard": 5}
+
 // requirements: the least an event needs on each difficulty (medal, rating shown on the results screen).
 // Hard is Gold + Perfect, which the game only awards the first time.
 var requirements = map[string]struct {
@@ -149,6 +152,9 @@ type Run struct {
 	Active       bool            `json:"active"`
 	Difficulty   string          `json:"difficulty"`
 	LivesStart   int             `json:"lives_start"`
+	Strict       bool            `json:"strict,omitempty"` // Strict Nuzlocke: one pool of lives for the whole run
+	Lives        int             `json:"lives,omitempty"`  // Strict Nuzlocke: the lives left
+	LivesTotal   int             `json:"lives_total,omitempty"`
 	Started      string          `json:"started"`
 	PlaySeconds  float64         `json:"play_seconds"`
 	Grace        bool            `json:"grace"`
@@ -449,7 +455,10 @@ func (t *Tracker) currentText() ([]byte, uint32) {
 }
 
 // ---- run control ----
-func (t *Tracker) StartRun(difficulty string) {
+func (t *Tracker) StartRun(difficulty string) { t.StartRunStrict(difficulty, false) }
+
+// StartRunStrict starts a run; a strict one has one pool of lives for every car instead of lives per car.
+func (t *Tracker) StartRunStrict(difficulty string, strict bool) {
 	lives, ok := difficulties[difficulty]
 	if !ok {
 		return
@@ -461,6 +470,13 @@ func (t *Tracker) StartRun(difficulty string) {
 		Started: time.Now().Format("2006-01-02 15:04:05"), Cars: map[string]*Car{},
 		Seed: fmt.Sprintf("%08X", uint32(time.Now().UnixNano()))}
 	t.originals = map[string]string{}
+	if strict {
+		r := t.state.Run
+		r.Strict, r.Lives, r.LivesTotal = true, strictLives[difficulty], strictLives[difficulty]
+		t.save()
+		t.say(fmt.Sprintf("New Strict %s run: %d lives in total, shared by every car.", difficulty, r.Lives), 15, "info")
+		return
+	}
 	t.save()
 	t.say(fmt.Sprintf("New %s run: %d Race and %d Crash %s per car.", difficulty, lives, lives, plural(lives, "life", "lives")), 15, "info")
 }
@@ -712,6 +728,26 @@ func (t *Tracker) finishEvent(before []byte) {
 		}
 	} else {
 		r.Streak = 0
+	}
+	if !won && r.Strict {
+		// Strict Nuzlocke: the run loses a life, whichever car it was; cars are never wrecked on their own
+		if r.Lives > 0 {
+			r.Lives--
+		}
+		reason := resultText
+		if offRoulette {
+			reason = "not the roulette event, " + r.RouletteName
+		} else if difficulty == "Hard" && medal == 3 && rating == 3 && !perfectNow {
+			reason = "already perfected"
+		} else if req, ok := requirements[difficulty]; ok {
+			reason += ", needs " + req.text
+		}
+		if r.Lives == 0 {
+			t.say(fmt.Sprintf("%s: the last life is gone (%s: %s)", carName, where, reason), 25, "loss")
+		} else {
+			t.say(fmt.Sprintf("%s lost a life: %d of %d left (%s: %s)", carName, r.Lives, r.LivesTotal, where, reason), 20, "loss")
+		}
+	} else if !won {
 		c := r.Cars[car]
 		if c == nil { // not a car label (shouldn't happen): don't crash
 			t.save()
@@ -931,6 +967,9 @@ func (t *Tracker) allDead() bool { return t.allDeadAmong(nil) }
 // allDeadAmong is allDead counting only the cars in among (all cars when among is nil).
 func (t *Tracker) allDeadAmong(among map[string]bool) bool {
 	r := t.run()
+	if r != nil && r.Strict {
+		return r.Lives <= 0 // Strict Nuzlocke: the run's own lives
+	}
 	if r == nil || len(r.Cars) == 0 {
 		return false
 	}
@@ -1407,7 +1446,7 @@ func (t *Tracker) Snapshot() map[string]any {
 		}
 	}
 	snap["run"] = map[string]any{
-		"difficulty": r.Difficulty, "requirement": requirements[r.Difficulty].text, "lives_start": r.LivesStart, "grace": r.Grace, "dead": r.Dead,
+		"difficulty": r.Difficulty, "requirement": requirements[r.Difficulty].text, "lives_start": r.LivesStart, "strict": r.Strict, "lives": r.Lives, "lives_total": r.LivesTotal, "grace": r.Grace, "dead": r.Dead,
 		"won": r.EventsWon, "played": r.EventsPlayed, "cars_total": len(r.Cars), "cars_lost": r.CarsLost,
 		"crash_cars_lost": r.CrashLost, "race_cars_total": raceCars, "crash_cars_total": crashCars,
 		"time": fmtTime(r.PlaySeconds), "best_streak": r.BestStreak, "streak": r.Streak, "started": r.Started,

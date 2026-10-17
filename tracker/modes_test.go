@@ -418,3 +418,49 @@ func TestReplaysCountOnce(t *testing.T) {
 		t.Fatalf("old run recounted: %d/%d", r2.EventsWon, r2.EventsPlayed)
 	}
 }
+
+// Strict Nuzlocke: one pool of lives for the whole run; cars are never wrecked on their own.
+func TestStrictNuzlocke(t *testing.T) {
+	m := newModeRig(t, "Medium", []string{"HIGHUSCAR1A", "HIGHUSCAR1B"}, nil)
+	m.tr.StartRunStrict("Medium", true)
+	m.list(carouselList, []string{"HIGHUSCAR1A", "HIGHUSCAR1B"})
+	m.tick()
+	r := m.tr.run()
+	if !r.Strict || r.Lives != 7 || r.LivesTotal != 7 || !m.tr.achievementsLocked() {
+		t.Fatalf("Medium strict: 7 lives in total, achievements locked: %+v", r)
+	}
+	for i := 0; i < 6; i++ {
+		m.finish("HIGHUSCAR1A", false, false)
+	}
+	a := r.Cars["HIGHUSCAR1A"]
+	if r.Lives != 1 || a.Lives != 2 || r.CarsLost != 0 || r.Dead || len(m.table(deadTable)) != 0 {
+		t.Fatalf("6 losses: 1 life left, the car isn't wrecked or blocked: %d, car %d, blocked %v", r.Lives, a.Lives, m.table(deadTable))
+	}
+	m.finish("HIGHUSCAR1B", false, true) // a win doesn't give one back
+	if r.Lives != 1 {
+		t.Fatalf("a win keeps the lives: %d", r.Lives)
+	}
+	m.finish("HIGHUSCAR1B", true, false) // a crash junction loss takes from the same pool
+	if r.Lives != 0 || !r.Dead {
+		t.Fatalf("the last life gone: the run is dead (%d, %v)", r.Lives, r.Dead)
+	}
+	if !m.table(deadTable)["HIGHUSCAR1A"] {
+		t.Fatal("a dead run blocks every car")
+	}
+	// a revive token saves it with one life
+	m.tr.StartRunStrict("Easy", true)
+	r = m.tr.run()
+	m.f.w32(reviveMarker, 1)
+	m.tick()
+	if r.Lives != 10 {
+		t.Fatalf("Easy strict: 10 lives, got %d", r.Lives)
+	}
+	r.Lives, r.Tokens = 1, 1
+	m.finish("HIGHUSCAR1A", false, false)
+	if r.Dead || r.Lives != 1 || r.Tokens != 0 || r.Revived != 1 {
+		t.Fatalf("the token should save the run: %d lives, %d tokens, dead %v", r.Lives, r.Tokens, r.Dead)
+	}
+	if strictLives["Hard"] != 5 {
+		t.Fatal("Hard strict: 5 lives")
+	}
+}

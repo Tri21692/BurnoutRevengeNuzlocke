@@ -26,6 +26,7 @@
 | **Wrecked** | A car out of Race lives can't be selected in the garage (`[RACE X]`); out of Crash lives, it can't be picked in crash junctions (`[CRASH X]`); out of both, it's `[WRECKED]`. |
 | **No escape** | Retry and Quit in the pause menu don't work, so you can't bail out of an event to save a life, and Retry on the results screen just continues. |
 | **Harder AI** | Opponents corner faster, keep their pace, come back hard when they fall behind, and go for takedowns more often and harder. |
+| **Strict Nuzlocke** (optional) | Lives for the whole run instead of per car: 10 on Easy, 7 on Medium, 5 on Hard. Every loss costs one, whichever car you drove. Ticked on the control page when you start a run. |
 | **Limited Selection** (optional) | Before every event you get 2 random cars for Race events and 2 for Crash junctions; every other healthy car is `[BENCHED]` until the next event. Never the same car twice in a row. |
 | **Revive tokens** (optional) | Win streaks earn tokens that give a wrecked car one life back: every 3 wins in a row on Easy, 5 on Medium, 8 on Hard. A held token also saves a run that would otherwise end. |
 | **Event Roulette** (optional) | After every event the tracker picks your next one at random from every World Tour event, ones you haven't won yet first; every other event is locked on the map. A reroll for every 5 wins. Every rank is open, and optionally every car. |

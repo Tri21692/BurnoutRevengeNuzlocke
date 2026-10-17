@@ -261,6 +261,17 @@ func (t *Tracker) Revive(label string, crash bool) bool {
 // its last life in this event.
 func (t *Tracker) autoRevive() bool {
 	r := t.run()
+	if r.Strict { // Strict Nuzlocke: a token gives the run one life back
+		if !t.reviveOn || r.Tokens == 0 || r.Lives > 0 {
+			return false
+		}
+		r.Tokens--
+		r.Revived++
+		r.Lives = 1
+		t.later("Last chance: a revive token saved the run (1 life)", 25, "win")
+		t.save()
+		return true
+	}
 	if !t.reviveOn || r.Tokens == 0 || t.lastLoss == "" {
 		return false
 	}
@@ -295,7 +306,7 @@ var achievementList = []struct{ id, name, text string }{
 // achievementsLocked: achievements only count in a standard run, without any of the modes.
 func (t *Tracker) achievementsLocked() bool {
 	r := t.run()
-	return r.UsedLimited || r.UsedRevive || r.UsedRoulette || r.UsedAllCars
+	return r.UsedLimited || r.UsedRevive || r.UsedRoulette || r.UsedAllCars || r.Strict
 }
 
 func (t *Tracker) unlock(id string) {
@@ -406,7 +417,7 @@ func (t *Tracker) summarySnapshot() map[string]any {
 	}
 	return map[string]any{"cars": cars, "ended_by": r.EndedBy, "achievements": r.Achievements,
 		"perfects": r.Perfects, "revived": r.Revived, "tokens_earned": r.TokensEarned, "seed": r.Seed,
-		"limited": r.UsedLimited, "revive": r.UsedRevive, "roulette": r.UsedRoulette, "allcars": r.UsedAllCars,
+		"limited": r.UsedLimited, "revive": r.UsedRevive, "roulette": r.UsedRoulette, "allcars": r.UsedAllCars, "strict": r.Strict,
 		"achievements_locked": t.achievementsLocked(), "file": r.SummaryFile,
 		"crash_wins": r.CrashWins, "insane_wins": r.InsaneWins, "owned": t.ownedCars()}
 }
@@ -416,8 +427,15 @@ func (t *Tracker) writeSummary() {
 	r := t.run()
 	var b strings.Builder
 	fmt.Fprintf(&b, "BURNOUT REVENGE NUZLOCKE - RUN SUMMARY\r\n\r\n")
-	fmt.Fprintf(&b, "%s run, %d + %d lives per car, AI %s\r\n", r.Difficulty, r.LivesStart, r.LivesStart, orDash(r.AILevel))
+	if r.Strict {
+		fmt.Fprintf(&b, "%s Strict run, %d lives in total (%d left), AI %s\r\n", r.Difficulty, r.LivesTotal, r.Lives, orDash(r.AILevel))
+	} else {
+		fmt.Fprintf(&b, "%s run, %d + %d lives per car, AI %s\r\n", r.Difficulty, r.LivesStart, r.LivesStart, orDash(r.AILevel))
+	}
 	var modes []string
+	if r.Strict {
+		modes = append(modes, fmt.Sprintf("Strict Nuzlocke (%d lives in total)", r.LivesTotal))
+	}
 	if r.UsedLimited {
 		modes = append(modes, "Limited Selection")
 	}

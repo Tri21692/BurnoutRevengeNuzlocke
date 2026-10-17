@@ -5,6 +5,10 @@
 - **Fixed: replays added to the event totals.** Retrying an event you failed (or replaying one you've
   won) counted it again, so the totals could go past the game's 169 events. Each event now counts once
   in events played and events won; the history still lists every attempt. A run in progress is recounted.
+- **Strict Nuzlocke (optional).** Tick it on the control page when you start a run: instead of lives per
+  car, the whole run has 10 lives on Easy, 7 on Medium and 5 on Hard. Every loss costs one, whichever car
+  you drove; cars are never wrecked on their own, and the run ends when the lives are gone. A revive token
+  gives the run one life back. Shown as hearts on the control page and the overlay. Locks achievements.
 
 ## V2.1
 
