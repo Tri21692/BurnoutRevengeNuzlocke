@@ -298,7 +298,7 @@ function renderModes(s, r) {
     (reviveOpen = false, post(`/api/revive?car=${encodeURIComponent(b.dataset.car)}&pool=${b.dataset.pool}`)));
   const got = r.achievements || [];
   $('achsum').innerHTML = r.achievements_locked
-    ? `<b>Achievements locked</b> · only in a run without Strict Nuzlocke, Limited Selection, Revive tokens, Event Roulette or Unlock all cars`
+    ? `<b>Achievements locked</b> · only in a run without Limited Selection, Revive tokens, Event Roulette or Unlock all cars`
     : `<b>Achievements ${got.length}/${r.achievements_total || ACHIEVEMENTS.length}</b>` + (got.length ? ` · latest: ${esc(got[got.length - 1].name)}` : '');
   $('achlist').innerHTML = achList(got);
 }

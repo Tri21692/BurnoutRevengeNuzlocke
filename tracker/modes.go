@@ -306,7 +306,7 @@ var achievementList = []struct{ id, name, text string }{
 // achievementsLocked: achievements only count in a standard run, without any of the modes.
 func (t *Tracker) achievementsLocked() bool {
 	r := t.run()
-	return r.UsedLimited || r.UsedRevive || r.UsedRoulette || r.UsedAllCars || r.Strict
+	return r.UsedLimited || r.UsedRevive || r.UsedRoulette || r.UsedAllCars
 }
 
 func (t *Tracker) unlock(id string) {

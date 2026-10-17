@@ -428,8 +428,8 @@ func TestStrictNuzlocke(t *testing.T) {
 	m.list(carouselList, []string{"HIGHUSCAR1A", "HIGHUSCAR1B"})
 	m.tick()
 	r := m.tr.run()
-	if !r.Strict || r.Lives != 7 || r.LivesTotal != 7 || !m.tr.achievementsLocked() {
-		t.Fatalf("Medium strict: 7 lives in total, achievements locked: %+v", r)
+	if !r.Strict || r.Lives != 7 || r.LivesTotal != 7 || m.tr.achievementsLocked() {
+		t.Fatalf("Medium strict: 7 lives in total, achievements still count: %+v", r)
 	}
 	for i := 0; i < 6; i++ {
 		m.finish("HIGHUSCAR1A", false, false)

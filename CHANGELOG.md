@@ -10,7 +10,7 @@
 - **Strict Nuzlocke (optional).** Tick it on the control page when you start a run: instead of lives per
   car, the whole run has 10 lives on Easy, 7 on Medium and 5 on Hard. Every loss costs one, whichever car
   you drove; cars are never wrecked on their own, and the run ends when the lives are gone. A revive token
-  gives the run one life back. Shown as hearts on the control page and the overlay. Locks achievements.
+  gives the run one life back. Shown as hearts on the control page and the overlay. Achievements still count.
 - **Harder AI: opponents are harder to catch and come back a little harder,** on every level. A leader
   now only eases off further ahead of you and slows down less (Easy 70 m and 94% of your speed, Medium
   105 m and 97%, Hard 140 m and 99%, Insane 150 m and 99.5%), and opponents behind you start catching up
