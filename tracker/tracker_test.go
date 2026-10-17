@@ -351,6 +351,7 @@ func TestPatchDetection(t *testing.T) {
 // Race events use the Race pool, replays are named from the game's current event, and the car names
 // show which pool a car is wrecked in.
 func TestPoolsAndReplayNames(t *testing.T) {
+	testLives(t, 3, 2, 1)
 	f := &fakeMem{ram: make([]byte, 0x2000000)}
 	f.w32(eventCount, 169)
 	for i := 0; i < 169; i++ {
@@ -857,5 +858,19 @@ func TestLocationFromLetter(t *testing.T) {
 	}
 	if w := finish("K_01TDLR"); w != "MOTOR CITY SHORT R" {
 		t.Fatalf("a Burning Lap in Motor City keeps the track's name: %q", w)
+	}
+}
+
+// testLives makes a test use these lives per car (Easy, Medium, Hard), whatever the game's current
+// values are: the tests check how lives are spent, not the difficulties' numbers.
+func testLives(t *testing.T, easy, medium, hard int) {
+	saved := difficulties
+	difficulties = map[string]int{"Easy": easy, "Medium": medium, "Hard": hard}
+	t.Cleanup(func() { difficulties = saved })
+}
+
+func TestDifficultyLives(t *testing.T) {
+	if difficulties["Easy"] != 2 || difficulties["Medium"] != 1 || difficulties["Hard"] != 1 {
+		t.Fatalf("lives per car: Easy 2, Medium 1, Hard 1, got %v", difficulties)
 	}
 }

@@ -282,6 +282,7 @@ func TestTokensNeedTheMode(t *testing.T) {
 }
 
 func TestAchievementsAndSummary(t *testing.T) {
+	testLives(t, 3, 2, 1)
 	m := newModeRig(t, "Medium", []string{"HIGHUSCAR1A", "HIGHUSCAR1B"}, nil)
 	r := m.tr.run()
 	for i := 0; i < 5; i++ {
@@ -421,6 +422,7 @@ func TestReplaysCountOnce(t *testing.T) {
 
 // Strict Nuzlocke: one pool of lives for the whole run; cars are never wrecked on their own.
 func TestStrictNuzlocke(t *testing.T) {
+	testLives(t, 3, 2, 1)
 	m := newModeRig(t, "Medium", []string{"HIGHUSCAR1A", "HIGHUSCAR1B"}, nil)
 	m.tr.StartRunStrict("Medium", true)
 	m.list(carouselList, []string{"HIGHUSCAR1A", "HIGHUSCAR1B"})

@@ -21,7 +21,7 @@
 
 | | |
 |---|---|
-| **Lives** | Every car has two pools of lives, one for **Race** events (everything except Crash junctions) and one for **Crash** junctions: **3 + 3** on Easy, **2 + 2** on Medium, **1 + 1** on Hard. Crash cars only have the Crash pool, since they can't race. |
+| **Lives** | Every car has two pools of lives, one for **Race** events (everything except Crash junctions) and one for **Crash** junctions: **2 + 2** on Easy, **1 + 1** on Medium and Hard. Crash cars only have the Crash pool, since they can't race. |
 | **Winning** | Every event must reach the difficulty's mark: at least **Silver + Great** on Easy, **Silver + Awesome** on Medium, **Gold + Perfect** on Hard. Anything less costs the car you drove a life. Crash junctions and Preview events count too. |
 | **Wrecked** | A car out of Race lives can't be selected in the garage (`[RACE X]`); out of Crash lives, it can't be picked in crash junctions (`[CRASH X]`); out of both, it's `[WRECKED]`. |
 | **No escape** | Retry and Quit in the pause menu don't work, so you can't bail out of an event to save a life, and Retry on the results screen just continues. |
@@ -71,8 +71,8 @@ There are two separate settings: lives are chosen in the tracker when you start 
 
 | Lives (tracker) | | Harder AI (patch) | Cornering | Pace when out of sight | Speed limit | Catch-up | Eases off |
 |---|---|---|---|---|---|---|---|
-| **Easy** | 3 + 3 per car | **Easy** | 86.25% of the line's limit | 1.5–4.5 s per section quicker | 217 mph | from 35 m behind, up to +45 mph | 70 m ahead: 94% of your speed |
-| **Medium** | 2 + 2 per car | **Medium** | 91.25% | 3.5–6.5 s quicker | 239 mph | from 22 m behind, up to +67 mph | 105 m ahead: 97% |
+| **Easy** | 2 + 2 per car | **Easy** | 86.25% of the line's limit | 1.5–4.5 s per section quicker | 217 mph | from 35 m behind, up to +45 mph | 70 m ahead: 94% of your speed |
+| **Medium** | 1 + 1 per car | **Medium** | 91.25% | 3.5–6.5 s quicker | 239 mph | from 22 m behind, up to +67 mph | 105 m ahead: 97% |
 | **Hard** | 1 + 1 per car | **Hard** | 96.25% | 5.5–8.5 s quicker | 251 mph | from 8 m behind, up to +87 mph | 140 m ahead: 99% |
 | | | ⚠️ **Insane** | 97.5% | 6–9 s quicker | 257 mph | from 6 m behind, up to +98 mph | 150 m ahead: 99.5% |
 

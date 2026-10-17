@@ -59,7 +59,7 @@ var patchHooks = map[uint32]uint32{0x002ACE00: 0x0C03FC00, 0x002A69DC: 0x0C03FC0
 	0x0018F508: 0x0803FC50} // crash junction car select
 var isoHooks = map[uint32]uint32{0x002ACE00: 0x0C11E740, 0x002A69DC: 0x0C11E740, finishHook: finishHookISO,
 	0x0018F508: 0x0811E774}
-var difficulties = map[string]int{"Easy": 3, "Medium": 2, "Hard": 1}
+var difficulties = map[string]int{"Easy": 2, "Medium": 1, "Hard": 1}
 
 // strictLives: Strict Nuzlocke's lives for the whole run, shared by every car.
 var strictLives = map[string]int{"Easy": 10, "Medium": 7, "Hard": 5}

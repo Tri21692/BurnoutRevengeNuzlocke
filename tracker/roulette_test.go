@@ -25,6 +25,7 @@ func (m *modeRig) playEvent(car, event string, win bool) {
 }
 
 func TestEventRoulette(t *testing.T) {
+	testLives(t, 3, 2, 1)
 	m := newModeRig(t, "Easy", []string{"HIGHUSCAR1A", "HIGHUSCAR1B"}, nil)
 	events := []string{"K_01CDSR", "K_01TFLR", "K_01DH1E", "K_02CRLF", "K_02RH5E", "K_03THLF"}
 	for i := 0; i < 169; i++ { // the rest of the list stays empty

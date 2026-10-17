@@ -76,8 +76,8 @@ Every event must reach the difficulty's result (from Silver + Great on Easy up t
 
 | Difficulty | Race lives per car | Crash lives per car | Each event needs at least |
 | --- | --- | --- | --- |
-| Easy | 3 | 3 | Silver + Great |
-| Medium | 2 | 2 | Silver + Awesome |
+| Easy | 2 | 2 | Silver + Great |
+| Medium | 1 | 1 | Silver + Awesome |
 | Hard | 1 | 1 | Gold + Perfect (first time) |
 
 Every car has two separate pools. **Crash junctions** use the Crash pool; **every other event** (races, Grand Prix, Eliminator, Burning Lap, Road Rage, Traffic Attack, Preview) uses the Race pool. Each car gets its pools in full the first time it appears. Cars only get the pools they can use: the tracker notes whether a car shows up in the garage (it can race) and in a crash junction's car select (it can crash). Crash cars, which only appear in crash junctions, have no Race pool, and the overlay only shows the hearts a car actually has. The opponents' AI level is separate: it comes from the patch or ISO you chose, and the control page and overlay show it.
