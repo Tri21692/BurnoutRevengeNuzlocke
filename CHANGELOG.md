@@ -9,6 +9,11 @@
   car, the whole run has 10 lives on Easy, 7 on Medium and 5 on Hard. Every loss costs one, whichever car
   you drove; cars are never wrecked on their own, and the run ends when the lives are gone. A revive token
   gives the run one life back. Shown as hearts on the control page and the overlay. Locks achievements.
+- **Harder AI: opponents are harder to catch and come back a little harder,** on every level. A leader
+  now only eases off further ahead of you and slows down less (Easy 70 m and 94% of your speed, Medium
+  105 m and 97%, Hard 140 m and 99%, Insane 150 m and 99.5%), and opponents behind you start catching up
+  a little sooner with a slightly bigger boost (Easy +45 mph, Medium +67, Hard +87, Insane +98). Their
+  cornering, pace and aggression are unchanged.
 
 ## V2.1
 
