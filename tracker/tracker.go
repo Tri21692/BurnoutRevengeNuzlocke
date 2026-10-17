@@ -155,8 +155,11 @@ type Run struct {
 	AILevel      string          `json:"ai_level,omitempty"` // last Harder AI level seen during the run
 	Dead         bool            `json:"dead"`
 	Cars         map[string]*Car `json:"cars"`
-	EventsPlayed int             `json:"events_played"`
-	EventsWon    int             `json:"events_won"`
+	EventsPlayed int             `json:"events_played"` // different events played: a replay doesn't add one
+	EventsWon    int             `json:"events_won"`    // different events won
+	PlayedIDs    []string        `json:"played_ids,omitempty"`
+	WonIDs       []string        `json:"won_ids,omitempty"`
+	UniqueCounts bool            `json:"unique_counts"`           // false for runs that counted every attempt
 	CarsLost     int             `json:"cars_lost"`               // wrecked in the Race pool
 	CrashLost    int             `json:"crash_cars_lost"`         // wrecked in the Crash pool
 	Pools        bool            `json:"pools"`                   // false for runs saved before the two pools
@@ -265,6 +268,26 @@ func NewTracker(mem Mem, statePath string, now func() float64) *Tracker {
 	}
 	if r := t.state.Run; r != nil && r.Seed == "" {
 		r.Seed = r.Started // runs from before V2
+	}
+	if r := t.state.Run; r != nil && !r.UniqueCounts {
+		// runs that counted every attempt: count each event once, from the history
+		played, won := map[string]bool{}, map[string]bool{}
+		for _, h := range r.History {
+			if h.Counted && h.EventID != "" {
+				if !played[h.EventID] {
+					played[h.EventID] = true
+					r.PlayedIDs = append(r.PlayedIDs, h.EventID)
+				}
+				if h.Won && !won[h.EventID] {
+					won[h.EventID] = true
+					r.WonIDs = append(r.WonIDs, h.EventID)
+				}
+			}
+		}
+		if len(r.History) < 200 { // the whole run is in the history
+			r.EventsPlayed, r.EventsWon = len(r.PlayedIDs), len(r.WonIDs)
+		}
+		r.UniqueCounts = true
 	}
 	if r := t.state.Run; r != nil && !r.Ownership {
 		// runs from before loaned cars were told apart: every car so far counts as owned
@@ -434,7 +457,7 @@ func (t *Tracker) StartRun(difficulty string) {
 	if t.run() != nil {
 		t.restoreNames(nil, 0, true)
 	}
-	t.state.Run = &Run{Active: true, Difficulty: difficulty, LivesStart: lives, Pools: true, Ownership: true,
+	t.state.Run = &Run{Active: true, Difficulty: difficulty, LivesStart: lives, Pools: true, Ownership: true, UniqueCounts: true,
 		Started: time.Now().Format("2006-01-02 15:04:05"), Cars: map[string]*Car{},
 		Seed: fmt.Sprintf("%08X", uint32(time.Now().UnixNano()))}
 	t.originals = map[string]string{}
@@ -663,9 +686,20 @@ func (t *Tracker) finishEvent(before []byte) {
 	if c := r.Cars[car]; c != nil && c.Owned && !crash {
 		r.LastRaceCar = car
 	}
-	r.EventsPlayed++
-	if won {
+	// the totals count each event once: a replay of an event already played (or won) doesn't add to them
+	if eventLabel == "" || !contains(r.PlayedIDs, eventLabel) {
+		r.EventsPlayed++
+		if eventLabel != "" {
+			r.PlayedIDs = append(r.PlayedIDs, eventLabel)
+		}
+	}
+	if won && (eventLabel == "" || !contains(r.WonIDs, eventLabel)) {
 		r.EventsWon++
+		if eventLabel != "" {
+			r.WonIDs = append(r.WonIDs, eventLabel)
+		}
+	}
+	if won {
 		r.Streak++
 		if r.Streak > r.BestStreak {
 			r.BestStreak = r.Streak

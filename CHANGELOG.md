@@ -1,5 +1,11 @@
 # Changelog
 
+## V2.2 (in progress)
+
+- **Fixed: replays added to the event totals.** Retrying an event you failed (or replaying one you've
+  won) counted it again, so the totals could go past the game's 169 events. Each event now counts once
+  in events played and events won; the history still lists every attempt. A run in progress is recounted.
+
 ## V2.1
 
 Perfected events lock right away, and Burning Laps and Previews show the right location. **Upgrading:**

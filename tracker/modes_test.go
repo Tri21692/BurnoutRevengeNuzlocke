@@ -394,3 +394,27 @@ func TestLimitedSelectionFixedCar(t *testing.T) {
 		t.Fatalf("%s should be benched again", other)
 	}
 }
+
+// A replayed event counts once in the totals: retrying a failed event doesn't add to them.
+func TestReplaysCountOnce(t *testing.T) {
+	m := newModeRig(t, "Easy", []string{"HIGHUSCAR1A", "HIGHUSCAR1B"}, nil)
+	r := m.tr.run()
+	m.finish("HIGHUSCAR1A", false, false) // K_01RDSF lost
+	m.finish("HIGHUSCAR1A", false, false) // and lost again
+	m.finish("HIGHUSCAR1B", false, true)  // then won
+	m.finish("HIGHUSCAR1B", false, true)  // and replayed
+	if r.EventsPlayed != 1 || r.EventsWon != 1 || len(r.History) != 4 {
+		t.Fatalf("one event played and won, 4 attempts in the history: %d/%d, %d", r.EventsWon, r.EventsPlayed, len(r.History))
+	}
+	m.finish("HIGHUSCAR1B", true, false) // a crash junction is another event
+	if r.EventsPlayed != 2 || r.EventsWon != 1 {
+		t.Fatalf("2 events played, 1 won: %d/%d", r.EventsWon, r.EventsPlayed)
+	}
+	// a run saved before: its totals are recounted from the history
+	r.UniqueCounts, r.PlayedIDs, r.WonIDs, r.EventsPlayed, r.EventsWon = false, nil, nil, 5, 2
+	m.tr.save()
+	tr := NewTracker(m.f, filepath.Join(m.dir, "s.json"), func() float64 { return m.clock })
+	if r2 := tr.run(); r2.EventsPlayed != 2 || r2.EventsWon != 1 || !r2.UniqueCounts {
+		t.Fatalf("old run recounted: %d/%d", r2.EventsWon, r2.EventsPlayed)
+	}
+}
