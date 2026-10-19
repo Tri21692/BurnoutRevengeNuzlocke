@@ -10,8 +10,9 @@ using UnityEngine;
 
 namespace BigWalkTeleport
 {
-    public class Mod : MelonMod
+    public partial class Mod : MelonMod
     {
+        internal static Mod Instance;
         const int SlotCount = 5;
 
         MelonPreferences_Entry<KeyCode> menuKey;
@@ -55,7 +56,20 @@ namespace BigWalkTeleport
             groundHeightOffset = cat.CreateEntry("GroundHeightOffset", 1.5f, "How far above the ground to land when Y is left blank");
             for (int i = 0; i < SlotCount; i++)
                 slots[i] = cat.CreateEntry($"Slot{i + 1}", "", $"Saved spot {i + 1} as x,y,z");
+            CreateMovementPrefs(cat);
+            CreateTrollPrefs(cat);
+            CreateHelperPrefs(cat);
+            Instance = this;
         }
+
+        void Report(string message)
+        {
+            status = message;
+            MelonLogger.Msg(message);
+        }
+
+        static bool Toggle(float x, float y, float w, bool on, string label) =>
+            GUI.Button(new Rect(x, y, w, 26), $"{(on ? "[ON]  " : "[off]  ")}{label}");
 
         public override void OnUpdate()
         {
@@ -99,6 +113,9 @@ namespace BigWalkTeleport
 
             LogTeleportProgress();
             UpdateDisco();
+            UpdateMovementKeys(typing);
+            UpdateTroll();
+            UpdateHelper(typing);
         }
 
         void ToggleMenu()
@@ -579,57 +596,90 @@ namespace BigWalkTeleport
                 GUI.Label(new Rect(18, 13, 270, 22), $"X {pos.x:0.00}   Y {pos.y:0.00}   Z {pos.z:0.00}");
             }
 
+            DrawFriendMarkers();
+
             if (!menuOpen) return;
 
-            float w = 380, x0 = Screen.width - w - 20, y = 20;
-            float h = 314 + SlotCount * 28;
-            GUI.Box(new Rect(x0, y, w, h), "Big Walk Teleport");
-            float x = x0 + 12;
+            float w = 400, x0 = Screen.width - w - 20, y0 = 20;
+            float x = x0 + 12, cw = w - 24;
+            GUI.Box(new Rect(x0, y0, w, menuHeight), "Big Walk Teleport");
+            float y = y0 + 26;
+
+            float tabW = (cw - 4 * 4) / 5;
+            for (int i = 0; i < TabNames.Length; i++)
+                if (GUI.Button(new Rect(x + i * (tabW + 4), y, tabW, 24), i == tab ? $"> {TabNames[i]}" : TabNames[i])) tab = i;
+            y += 32;
+
+            switch (tab)
+            {
+                case 0: y = DrawTeleportTab(pc, x, y, cw); break;
+                case 1: y = DrawFunTab(x, y, cw); break;
+                case 2: y = DrawTrollTab(x, y, cw); break;
+                case 3: y = DrawMovementTab(x, y, cw); break;
+                case 4: y = DrawHelperTab(x, y, cw); break;
+            }
+
+            if (GUI.Button(new Rect(x, y, cw, 24), $"Close ({menuKey.Value})")) ToggleMenu();
+            y += 28;
+            if (status.Length > 0) { GUI.Label(new Rect(x, y, cw, 40), status); y += 40; }
+            // Size the box to whatever this tab drew (applies from the next frame).
+            menuHeight = y - y0 + 6;
+        }
+
+        static readonly string[] TabNames = { "Teleport", "Fun", "Troll", "Move", "Helper" };
+        int tab;
+        float menuHeight = 400;
+
+        float DrawTeleportTab(PlayerCharacter pc, float x, float y, float w)
+        {
+            GUI.Label(new Rect(x, y, w, 22), pc != null ? $"You are at  {Format(PlayerPosition(pc))}" : "Not in a world yet");
             y += 28;
 
-            GUI.Label(new Rect(x, y, w - 24, 22), pc != null ? $"You are at  {Format(PlayerPosition(pc))}" : "Not in a world yet");
-            y += 28;
-
+            float box = (w - 3 * 20) / 3;
             GUI.Label(new Rect(x, y, 20, 22), "X");
-            inputX = GUI.TextField(new Rect(x + 18, y, 95, 22), inputX);
-            GUI.Label(new Rect(x + 120, y, 20, 22), "Y");
-            inputY = GUI.TextField(new Rect(x + 138, y, 95, 22), inputY);
-            GUI.Label(new Rect(x + 240, y, 20, 22), "Z");
-            inputZ = GUI.TextField(new Rect(x + 258, y, 95, 22), inputZ);
+            inputX = GUI.TextField(new Rect(x + 18, y, box, 22), inputX);
+            GUI.Label(new Rect(x + 24 + box, y, 20, 22), "Y");
+            inputY = GUI.TextField(new Rect(x + 42 + box, y, box, 22), inputY);
+            GUI.Label(new Rect(x + 48 + 2 * box, y, 20, 22), "Z");
+            inputZ = GUI.TextField(new Rect(x + 66 + 2 * box, y, box - 8, 22), inputZ);
             y += 26;
-            GUI.Label(new Rect(x, y, w - 24, 22), "Leave Y blank to land on the ground. You can paste \"x, y, z\" into X.");
+            GUI.Label(new Rect(x, y, w, 22), "Leave Y blank to land on the ground. You can paste \"x, y, z\" into X.");
             y += 28;
 
-            if (GUI.Button(new Rect(x, y, 170, 26), "Teleport")) TeleportFromInputs();
-            if (GUI.Button(new Rect(x + 186, y, 170, 26), "Use my position") && pc != null) FillInputs(PlayerPosition(pc));
-            y += 32;
-            if (GUI.Button(new Rect(x, y, 170, 26), invisible ? "Show my model (I)" : "Hide my model (I)")) SetInvisible(!invisible);
-            if (GUI.Button(new Rect(x + 186, y, 170, 26), "Close (F8)")) ToggleMenu();
-            y += 32;
-            if (GUI.Button(new Rect(x, y, 170, 26), discoActive && !discoEveryone ? "Stop disco (O)" : "Outfit disco: me (O)")) ToggleDisco(everyone: false);
-            if (GUI.Button(new Rect(x + 186, y, 170, 26), discoActive && discoEveryone ? "Stop disco" : "Outfit disco: everyone")) ToggleDisco(everyone: true);
-            y += 32;
-            if (GUI.Button(new Rect(x, y, 356, 26), godVoice ? "Voice of god: ON (B)" : "Voice of god: off (B)")) ToggleGodVoice();
-            y += 36;
+            float half = (w - 8) / 2;
+            if (GUI.Button(new Rect(x, y, half, 26), "Teleport")) TeleportFromInputs();
+            if (GUI.Button(new Rect(x + half + 8, y, half, 26), "Use my position") && pc != null) FillInputs(PlayerPosition(pc));
+            y += 34;
 
-            GUI.Label(new Rect(x, y, w - 24, 22), "Saved spots");
+            GUI.Label(new Rect(x, y, w, 22), "Saved spots");
             y += 24;
             for (int i = 0; i < SlotCount; i++)
             {
                 bool has = TryParseVector(slots[i].Value, out var saved);
-                GUI.Label(new Rect(x, y, 190, 22), $"{i + 1}.  {(has ? Format(saved) : "(empty)")}");
-                if (GUI.Button(new Rect(x + 196, y, 50, 22), "Save") && pc != null)
+                GUI.Label(new Rect(x, y, w - 170, 22), $"{i + 1}.  {(has ? Format(saved) : "(empty)")}");
+                if (GUI.Button(new Rect(x + w - 164, y, 52, 22), "Save") && pc != null)
                 {
                     slots[i].Value = Serialize(PlayerPosition(pc));
                     MelonPreferences.Save();
                     status = $"Saved spot {i + 1}";
                 }
-                if (has && GUI.Button(new Rect(x + 250, y, 50, 22), "Go")) Teleport(saved);
-                if (has && GUI.Button(new Rect(x + 304, y, 50, 22), "Load")) FillInputs(saved);
+                if (has && GUI.Button(new Rect(x + w - 108, y, 52, 22), "Go")) Teleport(saved);
+                if (has && GUI.Button(new Rect(x + w - 52, y, 52, 22), "Load")) FillInputs(saved);
                 y += 28;
             }
+            return y + 4;
+        }
 
-            if (status.Length > 0) GUI.Label(new Rect(x, y + 4, w - 24, 22), status);
+        float DrawFunTab(float x, float y, float w)
+        {
+            if (Toggle(x, y, w, invisible, $"Hide my model, only on my screen ({invisibleKey.Value})")) SetInvisible(!invisible);
+            y += 30;
+            if (Toggle(x, y, w, godVoice, $"Voice of god ({godVoiceKey.Value})")) ToggleGodVoice();
+            y += 30;
+            if (Toggle(x, y, w, discoActive && !discoEveryone, $"Outfit disco: me ({discoKey.Value}, host only)")) ToggleDisco(everyone: false);
+            y += 30;
+            if (Toggle(x, y, w, discoActive && discoEveryone, "Outfit disco: everyone (host only)")) ToggleDisco(everyone: true);
+            return y + 34;
         }
 
         void TeleportFromInputs()
