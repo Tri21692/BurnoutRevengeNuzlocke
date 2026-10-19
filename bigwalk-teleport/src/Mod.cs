@@ -23,6 +23,7 @@ namespace BigWalkTeleport
         MelonPreferences_Entry<KeyCode> discoKey;
         MelonPreferences_Entry<float> discoInterval;
         MelonPreferences_Entry<bool> dpadTeleport;
+        MelonPreferences_Entry<bool> dpadGoBack;
         MelonPreferences_Entry<KeyCode> godVoiceKey;
         MelonPreferences_Entry<KeyCode> dumpBindsKey;
         MelonPreferences_Entry<KeyCode> lookTeleportKey;
@@ -49,7 +50,8 @@ namespace BigWalkTeleport
             discoKey = cat.CreateEntry("DiscoKey", KeyCode.O, "Key that toggles outfit disco on yourself (host only)");
             godVoiceKey = cat.CreateEntry("GodVoiceKey", KeyCode.B, "Key that toggles voice of god (your voice at full volume for everyone, wherever they are)");
             dumpBindsKey = cat.CreateEntry("DumpBindsKey", KeyCode.F9, "Key that writes every game input binding to the log");
-            dpadTeleport = cat.CreateEntry("DpadDownTeleport", true, "Press D-pad down on a controller to teleport where you're looking");
+            dpadTeleport = cat.CreateEntry("DpadDownTeleport", true, "D-pad down (or , on the keyboard) teleports you where you're looking");
+            dpadGoBack = cat.CreateEntry("DpadUpGoBack", true, "D-pad up (or . on the keyboard) takes you back to where you were before your last teleport");
             lookTeleportKey = cat.CreateEntry("LookTeleportKey", KeyCode.None, "Keyboard key that teleports where you're looking (None = off)");
             lookTeleportRange = cat.CreateEntry("LookTeleportRange", 500f, "How far away (in metres) look-teleport can reach");
             discoInterval = cat.CreateEntry("DiscoInterval", 0.6f, "Seconds between outfit changes during disco");
@@ -92,14 +94,16 @@ namespace BigWalkTeleport
                 var net = FindLocalPlayer()?.playerNetworking;
                 if (net != null) MelonLogger.Msg($"Voice of god check: host now has your 2D voice set to {net.is2DVoice} (wanted {godVoice})");
             }
-            bool dpad = false;
-            if (dpadTeleport.Value)
+            // The game ships with its developer "Dev" control map still switched on: d-pad down / ","
+            // fire TeleportDown and d-pad up / "." fire TeleportUp, and nothing in the released game
+            // uses them. Listening for those actions works on any controller.
+            var input = FindLocalPlayer()?.inputPlayer;
+            if (input != null && !typing)
             {
-                try { dpad = DpadDownPressed(); }
-                catch (Exception e) { dpadTeleport.Value = false; MelonLogger.Error($"Reading the d-pad failed, turning d-pad teleport off: {e}"); }
+                if (dpadTeleport.Value && input.GetButtonDown(RewiredActionTeleportDown)) { MelonLogger.Msg("D-pad down pressed"); TeleportWhereLooking(); }
+                if (dpadGoBack.Value && input.GetButtonDown(RewiredActionTeleportUp)) { MelonLogger.Msg("D-pad up pressed"); GoBack(); }
             }
-            if (dpad) MelonLogger.Msg("D-pad down pressed");
-            if (dpad || (!typing && lookTeleportKey.Value != KeyCode.None && Input.GetKeyDown(lookTeleportKey.Value)))
+            if (!typing && lookTeleportKey.Value != KeyCode.None && Input.GetKeyDown(lookTeleportKey.Value))
                 TeleportWhereLooking();
 
             if (menuOpen)
@@ -178,6 +182,7 @@ namespace BigWalkTeleport
             }
 
             LogPlayer(pc, "before");
+            positionBeforeTeleport = PlayerPosition(pc);
             ApplyTeleport(pc, target);
             LogPlayer(pc, "after");
 
@@ -316,56 +321,16 @@ namespace BigWalkTeleport
             return refs != null ? refs.playerCamera : null;
         }
 
-        // Unity's built-in input can't see the d-pad on Xbox pads, so ask Rewired (the game's own
-        // input library) for any controller button named like "D-Pad Down" / "Hat Down".
-        readonly Dictionary<int, int> dpadDownIndex = new();
-        bool loggedJoystickCount;
+        const int RewiredActionTeleportUp = 21, RewiredActionTeleportDown = 22;
 
-        bool DpadDownPressed()
-        {
-            if (!Il2CppRewired.ReInput.isReady) return false;
-            if (!loggedJoystickCount)
-            {
-                loggedJoystickCount = true;
-                MelonLogger.Msg($"Rewired is ready: {Il2CppRewired.ReInput.controllers.joystickCount} controller(s) connected");
-            }
-            var controllers = Il2CppRewired.ReInput.controllers;
-            var joysticks = controllers.Joysticks;
-            if (joysticks == null) return false;
-            for (int i = 0; i < controllers.joystickCount; i++)
-            {
-                var js = joysticks[i];
-                if (js == null || !js.isConnected) continue;
-                if (!dpadDownIndex.TryGetValue(js.id, out int index))
-                {
-                    index = FindDpadDown(js);
-                    dpadDownIndex[js.id] = index;
-                    MelonLogger.Msg($"Controller '{js.name}': d-pad down is button {(index >= 0 ? index.ToString() : "not found")}");
-                    if (index < 0) MelonLogger.Msg($"  its buttons are: {ButtonNames(js)}");
-                }
-                if (index >= 0 && js.GetButtonDown(index)) return true;
-            }
-            return false;
-        }
+        // Where you were before the last teleport, for "go back". Going back records the spot you
+        // left, so pressing it again takes you back and forth.
+        Vector3? positionBeforeTeleport;
 
-        static string ButtonNames(Il2CppRewired.Joystick js)
+        void GoBack()
         {
-            var names = new List<string>();
-            var buttons = js.Buttons;
-            for (int i = 0; buttons != null && i < js.buttonCount; i++)
-                names.Add($"{i}='{buttons[i]?.name}'");
-            return string.Join(", ", names);
-        }
-
-        static int FindDpadDown(Il2CppRewired.Joystick js)
-        {
-            var buttons = js.Buttons;
-            for (int i = 0; buttons != null && i < js.buttonCount; i++)
-            {
-                var name = buttons[i]?.name?.ToLowerInvariant() ?? "";
-                if (name.Contains("down") && (name.Contains("pad") || name.Contains("hat"))) return i;
-            }
-            return -1;
+            if (positionBeforeTeleport == null) { Report("Nowhere to go back to yet"); return; }
+            Teleport(positionBeforeTeleport.Value);
         }
 
         // ---------------------------------------------------------- voice of god
@@ -649,6 +614,8 @@ namespace BigWalkTeleport
             float half = (w - 8) / 2;
             if (GUI.Button(new Rect(x, y, half, 26), "Teleport")) TeleportFromInputs();
             if (GUI.Button(new Rect(x + half + 8, y, half, 26), "Use my position") && pc != null) FillInputs(PlayerPosition(pc));
+            y += 30;
+            if (GUI.Button(new Rect(x, y, w, 26), "Go back to before my last teleport (D-pad up)")) GoBack();
             y += 34;
 
             GUI.Label(new Rect(x, y, w, 22), "Saved spots");
