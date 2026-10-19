@@ -1,5 +1,3 @@
-using Il2Cpp;
-using MelonLoader;
 using UnityEngine;
 
 namespace BigWalkTeleport
@@ -9,7 +7,7 @@ namespace BigWalkTeleport
     // so it works as a guest.
     public partial class Mod
     {
-        MelonPreferences_Entry<float> napMinGap, napMaxGap, napMinLength, napMaxLength, swivelAmount, swivelSpeed;
+        Setting<float> napMinGap, napMaxGap, napMinLength, napMaxLength, swivelAmount, swivelSpeed;
 
         readonly System.Random trollRandom = new();
 
@@ -20,7 +18,7 @@ namespace BigWalkTeleport
         bool napping;
         float nextNapChange;
 
-        void CreateTrollPrefs(MelonPreferences_Category cat)
+        void CreateTrollPrefs(SettingsCategory cat)
         {
             napMinGap = cat.CreateEntry("NapMinGap", 40f, "Narcolepsy: shortest time awake between naps (seconds)");
             napMaxGap = cat.CreateEntry("NapMaxGap", 120f, "Narcolepsy: longest time awake between naps (seconds)");
@@ -54,7 +52,7 @@ namespace BigWalkTeleport
             nextNapChange = Time.time + (napping
                 ? RandomRange(napMinLength.Value, napMaxLength.Value)
                 : RandomRange(napMinGap.Value, napMaxGap.Value));
-            MelonLogger.Msg(napping ? "Narcolepsy: zzz" : "Narcolepsy: awake");
+            ModLog.Msg(napping ? "Narcolepsy: zzz" : "Narcolepsy: awake");
         }
 
         // ---------------------------------------------------------- phantom typist
@@ -130,7 +128,7 @@ namespace BigWalkTeleport
             if (!loggedHeadState)
             {
                 loggedHeadState = true;
-                MelonLogger.Msg($"Head swivel: your real head state is {real} (if the swing looks wrong, tell me this number)");
+                ModLog.Msg($"Head swivel: your real head state is {real} (if the swing looks wrong, tell me this number)");
             }
             float swing = Mathf.Sin(Time.time * swivelSpeed.Value * Mathf.PI * 2f) * swivelAmount.Value;
             return new Vector2(real.x + swing, real.y);

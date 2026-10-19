@@ -1,0 +1,7 @@
+{
+  "name": "BigWalkTeleport",
+  "version_number": "1.1.0",
+  "website_url": "https://github.com/tri21692/BurnoutRevengeNuzlocke/tree/claude/zealous-newton-1njf4n/bigwalk-teleport",
+  "description": "Teleport to coordinates or where you look, saved spots, flight, moon jumps, friend markers, auto-walk, and harmless pranks. Works as a guest.",
+  "dependencies": []
+}

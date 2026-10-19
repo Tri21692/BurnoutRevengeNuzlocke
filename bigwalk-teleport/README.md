@@ -4,10 +4,25 @@ A MelonLoader mod for Big Walk: teleporting and saved spots, plus three solo pac
 
 ## Install
 
+There are two builds of the same mod. Use one or the other, not both.
+
+### With Gale (BepInEx)
+
+1. In Gale, pick **Big Walk** and make or open a profile. If the profile doesn't have BepInEx yet, install the **BepInExPack** from Gale's mod browser.
+2. Launch the game once from Gale and wait until you reach the menu. The first launch takes a few minutes while BepInEx reads the game.
+3. Close the game. In Gale's menu bar, choose **Import → ...local mod** and pick `release/BigWalkTeleport-Gale.zip`.
+4. Launch from Gale. The BepInEx console should show `Big Walk Teleport 1.1.0 loaded`.
+
+Settings live in `BepInEx/config/tri21692.BigWalkTeleport.cfg`, which Gale's config editor can open.
+
+### With MelonLoader
+
 1. Install **MelonLoader 0.7.3 or newer** into Big Walk with the [MelonLoader installer](https://github.com/LavaGang/MelonLoader.Installer/releases). Point it at the Big Walk `.exe`.
 2. Start the game once and wait. The first launch takes a few minutes while MelonLoader reads the game and builds `MelonLoader/Il2CppAssemblies`. Close the game when you reach the menu.
 3. Copy `release/BigWalkTeleport.dll` into the game's `Mods` folder (next to the `.exe`).
-4. Start the game. The MelonLoader console should show `Big Walk Teleport v1.0.0` loading.
+4. Start the game. The MelonLoader console should show `Big Walk Teleport v1.1.0` loading.
+
+Settings live in `UserData/MelonPreferences.cfg` under `[BigWalkTeleport]`.
 
 ## Controls
 
@@ -58,12 +73,12 @@ The F7 window has five tabs.
 - **Auto-walk**: walks forward for you. Pull back on movement to stop.
 - **Teleport to a friend**: a **Go** button for each player lands you just behind them.
 
-You can change every key (the window key is `WindowKey`, the coordinates key is `CoordsKey`), plus flight, moon, sonic and rocket strengths, nap timing, head-swivel size, disco speed, look-teleport range, ground offset and saved spots, in `UserData/MelonPreferences.cfg` under `[BigWalkTeleport]`.
+You can change every key (the window key is `WindowKey`, the coordinates key is `CoordsKey`), plus flight, moon, sonic and rocket strengths, nap timing, head-swivel size, disco speed, look-teleport range, ground offset and saved spots, in the settings file for your loader (see **Install**).
 
 ## Things to know
 
 - **Outfit disco only works when you host.** The host's game owns everyone's outfit, and a guest's "change my look" request is ignored in the released game. The disco never writes to anyone's saved outfit, skips reward-only colours, and puts everyone's real outfit back when you stop it.
-- **If teleporting doesn't work,** send `MelonLoader/Latest.log`. Every teleport logs what it found and where you end up 1, 10, 60 and 300 frames later.
+- **If teleporting doesn't work,** send the log (`MelonLoader/Latest.log`, or `BepInEx/LogOutput.log` with Gale). Every teleport logs what it found and where you end up 1, 10, 60 and 300 frames later.
 - **Voice of god** switches on the game's own "2D voice" setting, which any player can use. Every player's game then plays your voice without distance fade or muffling. If the game only sends voice to players within some range, people far away still won't hear you. Press **B** again to turn it off.
 - **Movement mods are tuned blind.** The numbers are guesses until someone tries them, so adjust `FlySpeed`, `MoonGravity`, `SonicMultiplier` and the rest in the config if they feel wrong. Other players see the results because your own game controls where you are.
 - **Head swivel** logs your real head direction the first time you use it. If the swing looks too small, too big or sideways, send me that log line and I'll calibrate it.
@@ -75,9 +90,21 @@ You can change every key (the window key is `WindowKey`, the coordinates key is 
 
 ## Building from source
 
+One codebase builds both versions. `Platform.cs` and `Entry.cs` hold the parts that differ.
+
+MelonLoader (needs `MelonLoader\Il2CppAssemblies` from the first launch):
+
 ```
 cd src
 dotnet build -c Release -p:GameDir="C:\Program Files (x86)\Steam\steamapps\common\Big Walk"
 ```
 
-`GameDir` must already contain `MelonLoader\Il2CppAssemblies` (from step 2 above). You can also pass `-p:InteropDir=<folder>` to point straight at a folder of interop assemblies.
+BepInEx / Gale (needs `BepInEx\interop` and `BepInEx\core` from the first launch, so point `GameDir` at the Gale profile folder):
+
+```
+cd src
+dotnet build -c Release -p:Loader=BepInEx -p:GameDir="<Gale profile folder>"
+../thunderstore/package.sh bin/BepInEx/Release/net6.0/BigWalkTeleport.dll
+```
+
+You can also pass `-p:InteropDir=<folder>` (and `-p:BepInExCoreDir=<folder>` for BepInEx) to point straight at those folders.

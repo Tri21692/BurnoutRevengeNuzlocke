@@ -1,5 +1,3 @@
-using Il2Cpp;
-using MelonLoader;
 using UnityEngine;
 
 namespace BigWalkTeleport
@@ -7,14 +5,14 @@ namespace BigWalkTeleport
     // Helper pack: friend markers, teleport to a friend, and auto-walk.
     public partial class Mod
     {
-        MelonPreferences_Entry<KeyCode> markersKey, autoWalkKey;
-        MelonPreferences_Entry<bool> showMarkers;
+        Setting<KeyCode> markersKey, autoWalkKey;
+        Setting<bool> showMarkers;
 
         bool autoWalk;
         // Rewired player the game reads your movement from; the auto-walk patch only touches this one.
         internal System.IntPtr localInputPlayer;
 
-        void CreateHelperPrefs(MelonPreferences_Category cat)
+        void CreateHelperPrefs(SettingsCategory cat)
         {
             markersKey = cat.CreateEntry("MarkersKey", KeyCode.F6, "Toggle friend markers (name and distance, through walls)");
             autoWalkKey = cat.CreateEntry("AutoWalkKey", KeyCode.F10, "Toggle auto-walk (walk forward hands-free; pull back to stop)");

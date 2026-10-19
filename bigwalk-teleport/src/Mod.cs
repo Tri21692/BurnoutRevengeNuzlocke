@@ -1,34 +1,29 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using Il2Cpp;
-using MelonLoader;
 using UnityEngine;
-
-[assembly: MelonInfo(typeof(BigWalkTeleport.Mod), "Big Walk Teleport", "1.0.0", "tri21692")]
-[assembly: MelonGame] // any game: Big Walk's exact company/product strings aren't known
 
 namespace BigWalkTeleport
 {
-    public partial class Mod : MelonMod
+    public partial class Mod
     {
         internal static Mod Instance;
         const int SlotCount = 5;
 
-        MelonPreferences_Entry<KeyCode> menuKey;
-        MelonPreferences_Entry<KeyCode> hudKey;
-        MelonPreferences_Entry<KeyCode> invisibleKey;
-        MelonPreferences_Entry<bool> showHud;
-        MelonPreferences_Entry<float> groundHeightOffset;
-        MelonPreferences_Entry<KeyCode> discoKey;
-        MelonPreferences_Entry<float> discoInterval;
-        MelonPreferences_Entry<bool> dpadTeleport;
-        MelonPreferences_Entry<bool> dpadGoBack;
-        MelonPreferences_Entry<KeyCode> godVoiceKey;
-        MelonPreferences_Entry<KeyCode> dumpBindsKey;
-        MelonPreferences_Entry<KeyCode> lookTeleportKey;
-        MelonPreferences_Entry<float> lookTeleportRange;
-        readonly MelonPreferences_Entry<string>[] slots = new MelonPreferences_Entry<string>[SlotCount];
+        Setting<KeyCode> menuKey;
+        Setting<KeyCode> hudKey;
+        Setting<KeyCode> invisibleKey;
+        Setting<bool> showHud;
+        Setting<float> groundHeightOffset;
+        Setting<KeyCode> discoKey;
+        Setting<float> discoInterval;
+        Setting<bool> dpadTeleport;
+        Setting<bool> dpadGoBack;
+        Setting<KeyCode> godVoiceKey;
+        Setting<KeyCode> dumpBindsKey;
+        Setting<KeyCode> lookTeleportKey;
+        Setting<float> lookTeleportRange;
+        readonly Setting<string>[] slots = new Setting<string>[SlotCount];
 
         bool menuOpen;
         string inputX = "", inputY = "", inputZ = "";
@@ -40,9 +35,9 @@ namespace BigWalkTeleport
         float nextRendererRefresh;
         readonly Dictionary<int, Renderer> hiddenRenderers = new();
 
-        public override void OnInitializeMelon()
+        // Called once by the loader entry point (MelonEntry or BepInExPlugin).
+        internal void Init(SettingsCategory cat)
         {
-            var cat = MelonPreferences.CreateCategory("BigWalkTeleport", "Big Walk Teleport");
             // New names (were MenuKey = F8 / HudKey = F7) so the new defaults apply over saved configs.
             menuKey = cat.CreateEntry("WindowKey", KeyCode.F7, "Key that opens the mod window");
             hudKey = cat.CreateEntry("CoordsKey", KeyCode.F5, "Key that toggles the coordinate readout");
@@ -68,13 +63,13 @@ namespace BigWalkTeleport
         void Report(string message)
         {
             status = message;
-            MelonLogger.Msg(message);
+            ModLog.Msg(message);
         }
 
         static bool Toggle(float x, float y, float w, bool on, string label) =>
             GUI.Button(new Rect(x, y, w, 26), $"{(on ? "[ON]  " : "[off]  ")}{label}");
 
-        public override void OnUpdate()
+        internal void Update()
         {
             if (Input.GetKeyDown(menuKey.Value)) ToggleMenu();
             if (Input.GetKeyDown(hudKey.Value)) showHud.Value = !showHud.Value;
@@ -87,13 +82,13 @@ namespace BigWalkTeleport
             if (!dumpedBindings && Time.unscaledTime >= nextAutoDump)
             {
                 nextAutoDump = Time.unscaledTime + 5f;
-                if (Il2CppRewired.ReInput.isReady && FindLocalPlayer() != null) DumpBindings();
+                if (RW.ReInput.isReady && FindLocalPlayer() != null) DumpBindings();
             }
             if (godVoiceCheckAt > 0 && Time.unscaledTime >= godVoiceCheckAt)
             {
                 godVoiceCheckAt = 0;
                 var net = FindLocalPlayer()?.playerNetworking;
-                if (net != null) MelonLogger.Msg($"Voice of god check: host now has your 2D voice set to {net.is2DVoice} (wanted {godVoice})");
+                if (net != null) ModLog.Msg($"Voice of god check: host now has your 2D voice set to {net.is2DVoice} (wanted {godVoice})");
             }
             // The game ships with its developer "Dev" control map still switched on: d-pad down / ","
             // fire TeleportDown and d-pad up / "." fire TeleportUp, and nothing in the released game
@@ -101,8 +96,8 @@ namespace BigWalkTeleport
             var input = FindLocalPlayer()?.inputPlayer;
             if (input != null && !typing)
             {
-                if (dpadTeleport.Value && input.GetButtonDown(RewiredActionTeleportDown)) { MelonLogger.Msg("D-pad down pressed"); TeleportWhereLooking(); }
-                if (dpadGoBack.Value && input.GetButtonDown(RewiredActionTeleportUp)) { MelonLogger.Msg("D-pad up pressed"); GoBack(); }
+                if (dpadTeleport.Value && input.GetButtonDown(RewiredActionTeleportDown)) { ModLog.Msg("D-pad down pressed"); TeleportWhereLooking(); }
+                if (dpadGoBack.Value && input.GetButtonDown(RewiredActionTeleportUp)) { ModLog.Msg("D-pad up pressed"); GoBack(); }
             }
             if (!typing && lookTeleportKey.Value != KeyCode.None && Input.GetKeyDown(lookTeleportKey.Value))
                 TeleportWhereLooking();
@@ -178,7 +173,7 @@ namespace BigWalkTeleport
             {
                 int count = PlayerCharacter.allPlayerCharacters?.Count ?? -1;
                 status = "No local player found (are you in the world?)";
-                MelonLogger.Warning($"{status} allPlayerCharacters.Count={count}");
+                ModLog.Warning($"{status} allPlayerCharacters.Count={count}");
                 return;
             }
 
@@ -191,7 +186,7 @@ namespace BigWalkTeleport
             holdStepsLeft = HoldFixedSteps;
             diagnosticFrame = 0;
             status = $"Teleported to {Format(target)}";
-            MelonLogger.Msg(status);
+            ModLog.Msg(status);
         }
 
         static void ApplyTeleport(PlayerCharacter pc, Vector3 target)
@@ -230,7 +225,7 @@ namespace BigWalkTeleport
             Physics.SyncTransforms();
         }
 
-        public override void OnFixedUpdate()
+        internal void FixedUpdate()
         {
             if (holdStepsLeft <= 0) return;
             holdStepsLeft--;
@@ -239,7 +234,7 @@ namespace BigWalkTeleport
             float drift = Vector3.Distance(PlayerPosition(pc), teleportTarget);
             if (drift > 2f)
             {
-                MelonLogger.Msg($"Teleport drifted {drift:0.0}m on hold step {HoldFixedSteps - holdStepsLeft}; re-applying");
+                ModLog.Msg($"Teleport drifted {drift:0.0}m on hold step {HoldFixedSteps - holdStepsLeft}; re-applying");
                 ApplyTeleport(pc, teleportTarget);
             }
         }
@@ -251,7 +246,7 @@ namespace BigWalkTeleport
             if (diagnosticFrame != 1 && diagnosticFrame != 10 && diagnosticFrame != 60 && diagnosticFrame != 300) return;
             var pc = FindLocalPlayer();
             if (pc != null)
-                MelonLogger.Msg($"[frame {diagnosticFrame}] body {Format(PlayerPosition(pc))}, {Vector3.Distance(PlayerPosition(pc), teleportTarget):0.0}m from target");
+                ModLog.Msg($"[frame {diagnosticFrame}] body {Format(PlayerPosition(pc))}, {Vector3.Distance(PlayerPosition(pc), teleportTarget):0.0}m from target");
             if (diagnosticFrame >= 300) diagnosticFrame = -1;
         }
 
@@ -259,7 +254,7 @@ namespace BigWalkTeleport
         {
             var rb = pc.rb;
             var body = Body(pc);
-            MelonLogger.Msg(
+            ModLog.Msg(
                 $"[{when}] '{pc.name}' local={pc.isLocalPlayer} owned={pc.isOwned} " +
                 $"root={Format(pc.transform.position)} kernal={(pc.kernal != null ? $"'{pc.kernal.name}' {Format(pc.kernal.position)} childOfRoot={pc.kernal.IsChildOf(pc.transform)}" : "null")} " +
                 $"rb={(rb != null ? $"'{rb.name}' {Format(rb.position)} kinematic={rb.isKinematic} interp={rb.interpolation}" : "null")} " +
@@ -282,9 +277,9 @@ namespace BigWalkTeleport
         void TeleportWhereLooking()
         {
             var pc = FindLocalPlayer();
-            if (pc == null) { status = "No local player found"; MelonLogger.Warning($"Look-teleport: {status}"); return; }
+            if (pc == null) { status = "No local player found"; ModLog.Warning($"Look-teleport: {status}"); return; }
             var cam = PlayerCamera();
-            if (cam == null) { status = "Couldn't find the camera"; MelonLogger.Warning(status); return; }
+            if (cam == null) { status = "Couldn't find the camera"; ModLog.Warning(status); return; }
 
             var ray = new Ray(cam.transform.position, cam.transform.forward);
             var hits = Physics.RaycastAll(ray, lookTeleportRange.Value, ~0, QueryTriggerInteraction.Ignore);
@@ -302,10 +297,10 @@ namespace BigWalkTeleport
             if (bestDistance == float.MaxValue)
             {
                 status = "Nothing in range to teleport to";
-                MelonLogger.Msg($"{status} (camera '{cam.name}' at {Format(ray.origin)}, {hits.Length} hits, all on you)");
+                ModLog.Msg($"{status} (camera '{cam.name}' at {Format(ray.origin)}, {hits.Length} hits, all on you)");
                 return;
             }
-            MelonLogger.Msg($"Look-teleport: camera '{cam.name}' hit '{best.collider.name}' {best.distance:0.0}m away at {Format(best.point)}");
+            ModLog.Msg($"Look-teleport: camera '{cam.name}' hit '{best.collider.name}' {best.distance:0.0}m away at {Format(best.point)}");
 
             // Step back off walls so you don't land inside them, then stand on top of what you hit.
             var target = best.point;
@@ -361,7 +356,7 @@ namespace BigWalkTeleport
                 godVoice = false;
                 status = "Voice of god off";
             }
-            MelonLogger.Msg($"{status} (isServer={net.isServer})");
+            ModLog.Msg($"{status} (isServer={net.isServer})");
             // The host's answer comes back as a synced value; check it once it's had time to arrive.
             godVoiceCheckAt = Time.unscaledTime + 1.5f;
         }
@@ -376,37 +371,37 @@ namespace BigWalkTeleport
         {
             try
             {
-                if (!Il2CppRewired.ReInput.isReady) { MelonLogger.Msg("Bindings: Rewired isn't ready yet"); return; }
-                var player = FindLocalPlayer()?.inputPlayer ?? Il2CppRewired.ReInput.players.GetPlayer(0);
-                if (player == null) { MelonLogger.Msg("Bindings: no Rewired player found"); return; }
+                if (!RW.ReInput.isReady) { ModLog.Msg("Bindings: Rewired isn't ready yet"); return; }
+                var player = FindLocalPlayer()?.inputPlayer ?? RW.ReInput.players.GetPlayer(0);
+                if (player == null) { ModLog.Msg("Bindings: no Rewired player found"); return; }
                 dumpedBindings = true;
 
-                var maps = new Il2CppSystem.Collections.Generic.List<Il2CppRewired.ControllerMap>();
+                var maps = new Il2CppSystem.Collections.Generic.List<RW.ControllerMap>();
                 player.controllers.maps.GetAllMaps(maps);
-                MelonLogger.Msg($"===== Game bindings for Rewired player '{player.name}' ({maps.Count} maps) =====");
+                ModLog.Msg($"===== Game bindings for Rewired player '{player.name}' ({maps.Count} maps) =====");
                 for (int i = 0; i < maps.Count; i++)
                 {
                     var map = maps[i];
                     if (map == null) continue;
-                    string category = Il2CppRewired.ReInput.mapping.GetMapCategory(map.categoryId)?.name ?? map.categoryId.ToString();
+                    string category = RW.ReInput.mapping.GetMapCategory(map.categoryId)?.name ?? map.categoryId.ToString();
                     var controller = map.controller;
-                    MelonLogger.Msg($"--- {map.controllerType} '{controller?.name}' / {category}{(map.enabled ? "" : " (disabled)")}");
+                    ModLog.Msg($"--- {map.controllerType} '{controller?.name}' / {category}{(map.enabled ? "" : " (disabled)")}");
                     var elements = map.ElementMaps;
                     for (int j = 0; elements != null && j < map.elementMapCount; j++)
                     {
                         var aem = elements[j];
                         if (aem == null) continue;
-                        string action = Il2CppRewired.ReInput.mapping.GetAction(aem.actionId)?.name ?? aem.actionId.ToString();
-                        string pole = aem.axisContribution == Il2CppRewired.Pole.Negative ? " (-)" : "";
-                        MelonLogger.Msg($"    {aem.elementIdentifierName,-22} -> {action}{pole}{(aem.enabled ? "" : " (disabled)")}");
+                        string action = RW.ReInput.mapping.GetAction(aem.actionId)?.name ?? aem.actionId.ToString();
+                        string pole = aem.axisContribution == RW.Pole.Negative ? " (-)" : "";
+                        ModLog.Msg($"    {aem.elementIdentifierName,-22} -> {action}{pole}{(aem.enabled ? "" : " (disabled)")}");
                     }
                 }
-                MelonLogger.Msg("===== end of bindings =====");
+                ModLog.Msg("===== end of bindings =====");
             }
             catch (Exception e)
             {
                 dumpedBindings = true;
-                MelonLogger.Error($"Bindings dump failed: {e}");
+                ModLog.Error($"Bindings dump failed: {e}");
             }
         }
 
@@ -432,13 +427,13 @@ namespace BigWalkTeleport
 
             var me = FindLocalPlayer();
             if (me == null) { status = "No local player found"; return; }
-            if (!me.isServer) { status = "Outfit disco only works when you're hosting"; MelonLogger.Msg(status); return; }
+            if (!me.isServer) { status = "Outfit disco only works when you're hosting"; ModLog.Msg(status); return; }
 
             discoActive = true;
             discoEveryone = everyone;
             nextDiscoTick = 0;
             status = everyone ? "Outfit disco: everyone!" : "Outfit disco!";
-            MelonLogger.Msg(status);
+            ModLog.Msg(status);
         }
 
         void StopDisco()
@@ -454,7 +449,7 @@ namespace BigWalkTeleport
             }
             discoOriginals.Clear();
             status = "Disco over, outfits restored";
-            MelonLogger.Msg(status);
+            ModLog.Msg(status);
         }
 
         void UpdateDisco()
@@ -513,7 +508,7 @@ namespace BigWalkTeleport
                 hiddenRenderers.Clear();
                 status = "Player model visible";
             }
-            MelonLogger.Msg(status);
+            ModLog.Msg(status);
         }
 
         // Re-scanned regularly because the game swaps outfit parts and parents props to your hands.
@@ -551,7 +546,7 @@ namespace BigWalkTeleport
 
         // -------------------------------------------------------------------- UI
 
-        public override void OnGUI()
+        internal void Gui()
         {
             var pc = FindLocalPlayer();
 
@@ -628,7 +623,7 @@ namespace BigWalkTeleport
                 if (GUI.Button(new Rect(x + w - 164, y, 52, 22), "Save") && pc != null)
                 {
                     slots[i].Value = Serialize(PlayerPosition(pc));
-                    MelonPreferences.Save();
+                    Settings.Save();
                     status = $"Saved spot {i + 1}";
                 }
                 if (has && GUI.Button(new Rect(x + w - 108, y, 52, 22), "Go")) Teleport(saved);

@@ -1,5 +1,3 @@
-using Il2Cpp;
-using MelonLoader;
 using UnityEngine;
 
 namespace BigWalkTeleport
@@ -10,8 +8,8 @@ namespace BigWalkTeleport
     // so the game's own movement step can't undo them.
     public partial class Mod
     {
-        MelonPreferences_Entry<KeyCode> flyKey, moonKey, sonicKey, rocketKey;
-        MelonPreferences_Entry<float> flySpeed, flySprintSpeed, moonJumpMultiplier, moonGravity, sonicMultiplier, rocketSpeed, slowFallSpeed;
+        Setting<KeyCode> flyKey, moonKey, sonicKey, rocketKey;
+        Setting<float> flySpeed, flySprintSpeed, moonJumpMultiplier, moonGravity, sonicMultiplier, rocketSpeed, slowFallSpeed;
 
         bool flying, moon, sonic;
         // Rocket: 0 = off, 1 = going up, 2 = drifting down slowly.
@@ -23,7 +21,7 @@ namespace BigWalkTeleport
         System.IntPtr tuningsOwner;
         float baseForward, baseSprint, baseCrouch, baseCrouchSprint, baseSwim, baseSwimSprint, baseGhostSprint, baseJump, baseMaxUp;
 
-        void CreateMovementPrefs(MelonPreferences_Category cat)
+        void CreateMovementPrefs(SettingsCategory cat)
         {
             flyKey = cat.CreateEntry("FlyKey", KeyCode.F1, "Toggle flight (move to steer, jump = up, crouch = down, sprint = fast)");
             moonKey = cat.CreateEntry("MoonKey", KeyCode.F2, "Toggle moon mode (big jumps, low gravity)");
@@ -47,7 +45,7 @@ namespace BigWalkTeleport
             if (KeyDown(rocketKey)) LaunchRocket();
         }
 
-        static bool KeyDown(MelonPreferences_Entry<KeyCode> key) => key.Value != KeyCode.None && Input.GetKeyDown(key.Value);
+        static bool KeyDown(Setting<KeyCode> key) => key.Value != KeyCode.None && Input.GetKeyDown(key.Value);
 
         void SetFlying(bool on)
         {

@@ -1,9 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Build:  dotnet build -c Release -p:GameDir="C:\Program Files (x86)\Steam\steamapps\common\Big Walk"
-    GameDir must contain MelonLoader\Il2CppAssemblies (created the first time the game runs with MelonLoader).
-    InteropDir can be passed instead to point straight at a folder of interop assemblies.
+    MelonLoader build (default):
+      dotnet build -c Release -p:GameDir="E:\SteamLibrary\steamapps\common\Big Walk"
+      needs GameDir\MelonLoader\Il2CppAssemblies (made the first time the game runs with MelonLoader).
+
+    BepInEx build (for Gale / Thunderstore):
+      dotnet build -c Release -p:Loader=BepInEx -p:GameDir="<Gale profile folder>"
+      needs GameDir\BepInEx\interop and GameDir\BepInEx\core (made the first time the game runs with BepInEx).
+
+    InteropDir / BepInExCoreDir can be passed instead to point straight at those folders.
   -->
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -11,22 +17,39 @@
     <RootNamespace>BigWalkTeleport</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <InteropDir Condition="'$(InteropDir)' == ''">$(GameDir)\MelonLoader\Il2CppAssemblies</InteropDir>
   </PropertyGroup>
 
-  <ItemGroup>
+  <PropertyGroup Condition="'$(Loader)' == 'BepInEx'">
+    <DefineConstants>$(DefineConstants);BEPINEX</DefineConstants>
+    <InteropDir Condition="'$(InteropDir)' == ''">$(GameDir)\BepInEx\interop</InteropDir>
+    <BepInExCoreDir Condition="'$(BepInExCoreDir)' == ''">$(GameDir)\BepInEx\core</BepInExCoreDir>
+    <MirrorAssembly>Mirror</MirrorAssembly>
+    <RewiredAssembly>Rewired_Core</RewiredAssembly>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Loader)' != 'BepInEx'">
+    <InteropDir Condition="'$(InteropDir)' == ''">$(GameDir)\MelonLoader\Il2CppAssemblies</InteropDir>
+    <MirrorAssembly>Il2CppMirror</MirrorAssembly>
+    <RewiredAssembly>Il2CppRewired_Core</RewiredAssembly>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(Loader)' == 'BepInEx'">
+    <Reference Include="$(BepInExCoreDir)\BepInEx.Core.dll" Private="false" />
+    <Reference Include="$(BepInExCoreDir)\BepInEx.Unity.IL2CPP.dll" Private="false" />
+    <PackageReference Include="HarmonyX" Version="2.10.2" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Loader)' != 'BepInEx'">
     <PackageReference Include="LavaGang.MelonLoader" Version="0.7.3" ExcludeAssets="runtime" PrivateAssets="all" />
-    <PackageReference Include="Il2CppInterop.Runtime" Version="1.5.3" ExcludeAssets="runtime" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Il2CppInterop.Runtime" Version="1.5.3" ExcludeAssets="runtime" PrivateAssets="all" />
     <Reference Include="$(InteropDir)\Assembly-CSharp.dll" Private="false" />
     <Reference Include="$(InteropDir)\Il2Cppmscorlib.dll" Private="false" />
-    <Reference Include="$(InteropDir)\Il2CppMirror.dll" Private="false" />
-    <Reference Include="$(InteropDir)\Il2CppRewired_Core.dll" Private="false" />
+    <Reference Include="$(InteropDir)\$(MirrorAssembly).dll" Private="false" />
+    <Reference Include="$(InteropDir)\$(RewiredAssembly).dll" Private="false" />
     <Reference Include="$(InteropDir)\UnityEngine.CoreModule.dll" Private="false" />
     <Reference Include="$(InteropDir)\UnityEngine.PhysicsModule.dll" Private="false" />
     <Reference Include="$(InteropDir)\UnityEngine.IMGUIModule.dll" Private="false" />

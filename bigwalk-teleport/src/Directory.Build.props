@@ -1,0 +1,9 @@
+<Project>
+  <!-- Separate obj/bin per loader so the MelonLoader and BepInEx builds don't share restore output. -->
+  <PropertyGroup>
+    <Loader Condition="'$(Loader)' == ''">MelonLoader</Loader>
+    <BaseIntermediateOutputPath>obj\$(Loader)\</BaseIntermediateOutputPath>
+    <BaseOutputPath>bin\$(Loader)\</BaseOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj/**;bin/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>
