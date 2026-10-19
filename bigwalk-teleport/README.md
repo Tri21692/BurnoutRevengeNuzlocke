@@ -13,8 +13,8 @@ A MelonLoader mod for Big Walk: teleporting and saved spots, plus three solo pac
 
 | Key | What it does |
 | --- | --- |
-| **F8** | Open or close the teleport window (frees the mouse while open) |
-| **F7** | Show or hide your X / Y / Z in the top-left corner |
+| **F7** | Open or close the mod window (frees the mouse while open) |
+| **F5** | Show or hide your X / Y / Z in the top-left corner |
 | **I** | Hide or show your player model |
 | **O** | Outfit disco on yourself: your colours change every 0.6s for everyone to see (host only) |
 | **B** | Voice of god: everyone hears your voice at full volume, wherever they are (works as a guest) |
@@ -28,7 +28,7 @@ A MelonLoader mod for Big Walk: teleporting and saved spots, plus three solo pac
 | **F6** | Friend markers |
 | **F10** | Auto-walk |
 
-The F8 window has five tabs.
+The F7 window has five tabs.
 
 **Teleport**
 - Type **X, Y, Z** and press **Teleport**. Leave **Y** blank to drop onto the ground at that X/Z.
@@ -58,7 +58,7 @@ The F8 window has five tabs.
 - **Auto-walk**: walks forward for you. Pull back on movement to stop.
 - **Teleport to a friend**: a **Go** button for each player lands you just behind them.
 
-You can change every key, plus flight, moon, sonic and rocket strengths, nap timing, head-swivel size, disco speed, look-teleport range, ground offset and saved spots, in `UserData/MelonPreferences.cfg` under `[BigWalkTeleport]`.
+You can change every key (the window key is `WindowKey`, the coordinates key is `CoordsKey`), plus flight, moon, sonic and rocket strengths, nap timing, head-swivel size, disco speed, look-teleport range, ground offset and saved spots, in `UserData/MelonPreferences.cfg` under `[BigWalkTeleport]`.
 
 ## Things to know
 

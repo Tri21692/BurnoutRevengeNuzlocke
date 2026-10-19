@@ -43,8 +43,9 @@ namespace BigWalkTeleport
         public override void OnInitializeMelon()
         {
             var cat = MelonPreferences.CreateCategory("BigWalkTeleport", "Big Walk Teleport");
-            menuKey = cat.CreateEntry("MenuKey", KeyCode.F8, "Key that opens the teleport window");
-            hudKey = cat.CreateEntry("HudKey", KeyCode.F7, "Key that toggles the coordinate readout");
+            // New names (were MenuKey = F8 / HudKey = F7) so the new defaults apply over saved configs.
+            menuKey = cat.CreateEntry("WindowKey", KeyCode.F7, "Key that opens the mod window");
+            hudKey = cat.CreateEntry("CoordsKey", KeyCode.F5, "Key that toggles the coordinate readout");
             invisibleKey = cat.CreateEntry("InvisibleKey", KeyCode.I, "Key that toggles your player model on and off");
             showHud = cat.CreateEntry("ShowHud", false, "Show your coordinates in the corner at all times");
             discoKey = cat.CreateEntry("DiscoKey", KeyCode.O, "Key that toggles outfit disco on yourself (host only)");
